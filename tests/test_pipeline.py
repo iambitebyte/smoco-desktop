@@ -109,3 +109,39 @@ def test_pipeline_handles_transcriber_error_without_dying():
     asyncio.run(pipe.run())     # 不应抛
     assert tr.count == 2        # 两个 chunk 都尝试过，错误被吞
     assert tr.closed
+
+
+def test_pipeline_drops_oldest_under_backpressure():
+    # 慢 transcriber + 小队列(=1) -> drop_oldest 丢掉部分 chunk，pipeline 仍正常结束
+    class SlowTranscriber:
+        sample_rate = 16000
+        def __init__(self):
+            self.received: list[str] = []
+            self.closed = False
+        async def transcribe(self, chunk):
+            await asyncio.sleep(0.05)   # 慢：每 chunk 50ms
+            self.received.append(chunk.id)
+            return TranscriptResult(chunk_id=chunk.id, text="",
+                                    start_time=chunk.start_time,
+                                    end_time=chunk.end_time,
+                                    is_final=chunk.is_final, error=None)
+        async def close(self):
+            self.closed = True
+
+    # 产生 5 个 chunk：(8 speech + 12 silence) × 5
+    frames, vad = [], []
+    for _ in range(5):
+        f, v = _frames([("s", 8), (".", 12)])
+        frames += f
+        vad += v
+    cfg = Config(min_chunk_ms=200, silence_ms=300, pad_ms=0,
+                 chunk_queue_size=1, drop_policy="drop_oldest")
+    src = FakeSource(frames, _FMT)
+    tr = SlowTranscriber()
+    pipe = Pipeline(src, Chunker(FakeVad(vad), _FMT,
+                                 silence_ms=cfg.silence_ms,
+                                 min_chunk_ms=cfg.min_chunk_ms, pad_ms=cfg.pad_ms),
+                    tr, cfg)
+    asyncio.run(pipe.run())
+    assert tr.closed
+    assert 1 <= len(tr.received) < 5    # 慢消费 + 队列=1 -> 必有丢弃，但不至于全丢

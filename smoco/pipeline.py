@@ -2,7 +2,6 @@ from __future__ import annotations
 import asyncio
 import logging
 import threading
-from typing import Iterable
 from .audio import AudioChunk
 from .chunker import Chunker, Vad
 from .config import Config
