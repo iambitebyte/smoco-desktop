@@ -18,4 +18,4 @@ class Config:
     chunk_queue_size: int = 64
     transcriber_concurrency: int = 1
     shutdown_timeout: float = 5.0
-    drop_policy: str = "drop_oldest"   # drop_oldest | drop_newest | block
+    drop_policy: str = "drop_oldest"   # drop_oldest | drop_newest

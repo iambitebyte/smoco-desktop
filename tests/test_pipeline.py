@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from smoco.audio import AudioFormat, AudioChunk
 from smoco.chunker import Chunker, FakeVad
 from smoco.config import Config
@@ -111,7 +112,7 @@ def test_pipeline_handles_transcriber_error_without_dying():
     assert tr.closed
 
 
-def test_pipeline_drops_oldest_under_backpressure():
+def test_pipeline_drops_oldest_under_backpressure(caplog):
     # 慢 transcriber + 小队列(=1) -> drop_oldest 丢掉部分 chunk，pipeline 仍正常结束
     class SlowTranscriber:
         sample_rate = 16000
@@ -142,6 +143,8 @@ def test_pipeline_drops_oldest_under_backpressure():
                                  silence_ms=cfg.silence_ms,
                                  min_chunk_ms=cfg.min_chunk_ms, pad_ms=cfg.pad_ms),
                     tr, cfg)
-    asyncio.run(pipe.run())
+    with caplog.at_level(logging.WARNING, logger="smoco.pipeline"):
+        asyncio.run(pipe.run())
     assert tr.closed
     assert 1 <= len(tr.received) < 5    # 慢消费 + 队列=1 -> 必有丢弃，但不至于全丢
+    assert any("chunkQ 满" in r.message for r in caplog.records)   # 确实触发了丢弃路径

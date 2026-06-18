@@ -87,9 +87,9 @@ class WASAPILoopbackSource:
         bpf = self._target.frame_bytes()
         try:
             arr = np.frombuffer(bytes(self._accum), dtype="<i2").astype(np.float32) / 32768.0
-            self._accum = bytearray()
             if self._channels > 1:
                 arr = arr.reshape(-1, self._channels)
+            self._accum = bytearray()
             mono = to_mono(arr)
             res = resample(mono, self._rate_in, self._target.sample_rate)
             encoded = encode_s16le(res)
@@ -119,11 +119,17 @@ class WASAPILoopbackSource:
 
     def stop(self) -> None:
         self._stop.set()
+        stream, self._stream = self._stream, None
+        pa, self._pa = self._pa, None
         try:
-            if self._stream is not None:
-                self._stream.stop_stream()
-                self._stream.close()
+            if stream is not None:
+                stream.stop_stream()
+                stream.close()
+        except Exception:  # noqa: BLE001
+            log.exception("WASAPI stop_stream/close 失败")
         finally:
-            if self._pa is not None:
-                self._pa.terminate()
-                self._pa = None
+            if pa is not None:
+                try:
+                    pa.terminate()
+                except Exception:  # noqa: BLE001
+                    log.exception("WASAPI terminate 失败")

@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
 import itertools
+import math
 from .audio import AudioFormat, AudioChunk
 
 
@@ -51,8 +52,8 @@ class Chunker:
         self._vad = vad
         self._fmt = fmt
         self._frame_s = fmt.frame_ms / 1000.0
-        self._silence_frames = max(1, silence_ms // fmt.frame_ms)
-        self._max_frames = max(1, max_chunk_ms // fmt.frame_ms)
+        self._silence_frames = max(1, math.ceil(silence_ms / fmt.frame_ms))
+        self._max_frames = max(1, math.ceil(max_chunk_ms / fmt.frame_ms))
         self._min_ms = min_chunk_ms
         self._pad_s = pad_ms / 1000.0
         self._ids = counter or itertools.count(1)

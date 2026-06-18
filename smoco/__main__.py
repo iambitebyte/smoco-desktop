@@ -51,6 +51,10 @@ def cmd_run(args) -> int:
         asyncio.run(pipe.run())
     except KeyboardInterrupt:
         logging.getLogger("smoco").info("已中断")
+        return 0
+    if pipe.error is not None:
+        logging.getLogger("smoco").error("采集源错误: %s", pipe.error)
+        return 1
     return 0
 
 

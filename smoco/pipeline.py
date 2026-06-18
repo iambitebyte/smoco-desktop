@@ -3,7 +3,7 @@ import asyncio
 import logging
 import threading
 from .audio import AudioChunk
-from .chunker import Chunker, Vad
+from .chunker import Chunker
 from .config import Config
 from .source.base import AudioSource, SourceError
 from .transcriber.base import Transcriber
@@ -35,10 +35,27 @@ class Pipeline:
         try:
             await loop.run_in_executor(None, capture.join)
         finally:
+            # 令采集线程退出阻塞读（对真机 WASAPI 关键）：stop() 后 read_frame 尽快返回 None
+            try:
+                self._source.stop()
+            except Exception:  # noqa: BLE001
+                log.exception("shutdown: source.stop() 失败")
             for _ in range(n_workers):
                 await q.put(None)            # 各 worker 一个哨兵
-            await asyncio.gather(*workers, return_exceptions=True)
-            await self._transcriber.close()
+            try:
+                await asyncio.wait_for(
+                    asyncio.gather(*workers, return_exceptions=True),
+                    timeout=self._cfg.shutdown_timeout)
+            except asyncio.TimeoutError:
+                log.warning("workers 未在 shutdown_timeout=%.1fs 内结束，强制取消",
+                            self._cfg.shutdown_timeout)
+                for w in workers:
+                    w.cancel()
+            try:
+                await self._transcriber.close()
+            except Exception:  # noqa: BLE001
+                log.exception("shutdown: transcriber.close() 失败")
+            capture.join(timeout=self._cfg.shutdown_timeout)
 
     def _capture_loop(self, loop, q: asyncio.Queue, n_workers: int) -> None:
         self._source.start()
@@ -81,7 +98,7 @@ class Pipeline:
                 try:
                     q.put_nowait(chunk)
                 except asyncio.QueueFull:
-                    log.warning("chunkQ 满且策略 block，仍丢弃以避免死锁")
+                    log.warning("chunkQ 满，丢弃以避免死锁")
         loop.call_soon_threadsafe(_put)
 
     async def _transcribe_loop(self, q: asyncio.Queue) -> None:

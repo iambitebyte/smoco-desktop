@@ -77,3 +77,18 @@ def test_chunk_ids_are_unique():
     ch = Chunker(FakeVad(vad), _FMT, silence_ms=300, min_chunk_ms=200, pad_ms=0)
     chunks = _run(ch, frames)
     assert len({c.id for c in chunks}) == len(chunks)
+
+
+def test_webrtcvad_runs_on_real_frames():
+    # webrtcvad 是硬运行时依赖；这里只断言它能跑通、返回布尔，
+    # 不强依赖具体判定结果（不同 webrtcvad 版本/平台可能不同）。
+    import numpy as np
+    from smoco.chunker import WebRtcVad
+
+    vad = WebRtcVad(aggressiveness=2, sample_rate=16000)
+    n = _FMT.frame_samples()                       # 480
+    silence = np.zeros(n, dtype="<i2").tobytes()
+    rng = np.random.RandomState(0)
+    speech = (rng.uniform(-0.8, 0.8, n) * 32767).astype("<i2").tobytes()
+    assert isinstance(vad.is_speech(silence), bool)
+    assert isinstance(vad.is_speech(speech), bool)
