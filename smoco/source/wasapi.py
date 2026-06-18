@@ -30,6 +30,7 @@ class WASAPILoopbackSource:
         self._stream = None
         self._frames: _q.Queue[bytes] = _q.Queue(maxsize=64)
         self._accum = bytearray()
+        self._leftover = bytearray()      # 跨 callback 的 sub-frame 尾巴（已编码 S16LE）
         self._stop = threading.Event()
         # 流参数，在 start() 中据实际打开的流赋值
         self._channels = 2
@@ -92,13 +93,18 @@ class WASAPILoopbackSource:
             mono = to_mono(arr)
             res = resample(mono, self._rate_in, self._target.sample_rate)
             encoded = encode_s16le(res)
-            for i in range(0, len(encoded) - bpf + 1, bpf):
-                frame = encoded[i:i + bpf]
+            # 把上一轮的 sub-frame 尾巴拼到本轮输出前，整体切成整帧，余数留到下轮
+            buf = bytes(self._leftover) + encoded
+            self._leftover = bytearray()
+            n = (len(buf) // bpf) * bpf
+            for i in range(0, n, bpf):
+                frame = buf[i:i + bpf]
                 try:
                     self._frames.put_nowait(frame)
                 except _q.Full:
                     self._frames.get_nowait()        # 丢最旧
                     self._frames.put_nowait(frame)
+            self._leftover = bytearray(buf[n:])
         except Exception:  # noqa: BLE001
             log.exception("WASAPI 帧转换失败")
         return (b"", pyaudio.paContinue)
