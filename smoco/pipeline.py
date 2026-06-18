@@ -51,6 +51,7 @@ class Pipeline:
                             self._cfg.shutdown_timeout)
                 for w in workers:
                     w.cancel()
+                await asyncio.gather(*workers, return_exceptions=True)
             try:
                 await self._transcriber.close()
             except Exception:  # noqa: BLE001
