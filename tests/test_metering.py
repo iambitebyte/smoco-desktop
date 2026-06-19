@@ -1,0 +1,67 @@
+import numpy as np
+from smoco.audio import AudioFormat
+from smoco.source.metering import MeteringSource
+
+
+class _FakeSource:
+    def __init__(self, frames, fmt):
+        self._frames = list(frames)
+        self._i = 0
+        self.audio_format = fmt
+        self.started = False
+        self.stopped = False
+
+    def start(self):
+        self.started = True
+
+    def stop(self):
+        self.stopped = True
+
+    def read_frame(self):
+        if self._i >= len(self._frames):
+            return None
+        f = self._frames[self._i]
+        self._i += 1
+        return f
+
+
+_FMT = AudioFormat()
+
+
+def _full_frame():
+    return np.full(_FMT.frame_samples(), 32767, dtype="<i2").tobytes()
+
+
+def _silent_frame():
+    return b"\x00" * _FMT.frame_bytes()
+
+
+def test_metering_updates_rms_and_passes_through():
+    src = _FakeSource([_full_frame(), _silent_frame()], _FMT)
+    m = MeteringSource(src)
+    m.start()
+    assert src.started
+    f1 = m.read_frame()
+    assert f1 == _full_frame()              # 帧原样透传
+    assert m.latest_rms > 0.9
+    assert abs(m.latest_peak - m.latest_rms) < 1e-6
+    m.read_frame()                          # 静音帧
+    assert m.latest_rms == 0.0
+    assert m.latest_peak > 0.9             # peak 不衰减
+    assert m.read_frame() is None          # 源结束
+    m.stop()
+    assert src.stopped
+
+
+def test_metering_delegates_audio_format():
+    src = _FakeSource([], _FMT)
+    m = MeteringSource(src)
+    assert m.audio_format is _FMT
+
+
+def test_metering_none_frame_keeps_levels():
+    src = _FakeSource([], _FMT)
+    m = MeteringSource(src)
+    assert m.read_frame() is None
+    assert m.latest_rms == 0.0
+    assert m.latest_peak == 0.0
