@@ -64,7 +64,11 @@ class Pipeline:
             while True:
                 frame = self._source.read_frame()
                 if frame is None:
-                    break
+                    # 没有帧（可能是静音期间），继续监听
+                    # 但如果 source 已停止，则退出
+                    if hasattr(self._source, '_stop') and self._source._stop.is_set():
+                        break
+                    continue
                 for chunk in self._chunker.feed(frame):
                     if not chunk.pcm:        # 被 min_chunk_ms 丢弃
                         continue

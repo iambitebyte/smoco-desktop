@@ -49,37 +49,81 @@ class WASAPILoopbackSource:
         pa = pyaudio.PyAudio()
         try:
             wasapi = pa.get_host_api_info_by_type(pyaudio.paWASAPI)
-            default_out = int(wasapi["defaultOutputDevice"])
+            if not wasapi:
+                return []
+            default_out_index = int(wasapi["defaultOutputDevice"])
+            # 先拿到默认渲染设备名
+            try:
+                default_out_info = pa.get_device_info_by_index(default_out_index)
+                default_out_name = str(default_out_info["name"])
+            except Exception:
+                default_out_name = None
+
             out = []
-            for i in range(pa.get_device_count()):
-                info = pa.get_device_info_by_index(i)
-                if int(info.get("hostApi", -1)) != int(wasapi["index"]):
-                    continue
-                if int(info.get("maxOutputChannels", 0)) <= 0:   # 只要渲染端点
-                    continue
+            # 直接遍历 loopback 设备
+            for lb in pa.get_loopback_device_info_generator():
+                # loopback 名字格式：原名 [Loopback] 或原名 - Loopback
+                lb_name = str(lb["name"])
+                # 提取原始设备名（去掉 [Loopback] 或 - Loopback 后缀）
+                if "[Loopback]" in lb_name:
+                    original_name = lb_name.replace("[Loopback]", "").strip()
+                elif " - Loopback" in lb_name or "- Loopback" in lb_name:
+                    original_name = lb_name.split("Loopback")[0].strip().rstrip(" -")
+                else:
+                    original_name = lb_name
+
                 out.append({
-                    "index": int(info["index"]),
-                    "name": str(info["name"]),
-                    "sample_rate": int(info["defaultSampleRate"]),
-                    "channels": int(info["maxOutputChannels"]),
-                    "is_default": int(info["index"]) == default_out,
+                    "index": int(lb["index"]),
+                    "name": original_name,
+                    "sample_rate": int(lb["defaultSampleRate"]),
+                    "channels": int(lb["maxInputChannels"]),
+                    "is_default": (default_out_name is not None and
+                                   original_name == default_out_name),
                 })
             return out
         finally:
             pa.terminate()
 
     def start(self) -> None:
+        log.debug("WASAPILoopbackSource.start: 开始")
         self._pa = pyaudio.PyAudio()
-        try:
-            info = self._pa.get_host_api_info_by_type(pyaudio.paWASAPI)
-            default = self._pa.get_device_info_by_index(info["defaultOutputDevice"])
-            dev = self._device_index if self._device_index is not None else default["index"]
-        except Exception as e:  # noqa: BLE001
-            raise SourceError(f"找不到 WASAPI 默认输出设备: {e}") from e
 
-        # 据默认输出设备保存实际流参数（_callback 用）
-        self._channels = int(default.get("maxInputChannels") or 2)
-        self._rate_in = int(default["defaultSampleRate"])
+        # 确定要用的 loopback 设备 index 和参数
+        if self._device_index is not None:
+            # 用户指定的 index（来自 list_devices，已经是 loopback index）
+            dev = self._device_index
+            log.debug(f"使用用户指定的设备 index: {dev}")
+            dev_info = self._pa.get_device_info_by_index(dev)
+        else:
+            # 没指定时，找默认渲染设备的 loopback 版本
+            try:
+                wasapi_info = self._pa.get_host_api_info_by_type(pyaudio.paWASAPI)
+                default_out_info = self._pa.get_device_info_by_index(wasapi_info["defaultOutputDevice"])
+                default_out_name = str(default_out_info["name"])
+            except Exception as e:
+                raise SourceError(f"无法获取默认输出设备: {e}") from e
+
+            dev = None
+            dev_info = None
+            for loopback in self._pa.get_loopback_device_info_generator():
+                lb_name = str(loopback["name"])
+                # 提取原始设备名（去掉 [Loopback] 或 - Loopback 后缀）
+                if "[Loopback]" in lb_name:
+                    original_name = lb_name.replace("[Loopback]", "").strip()
+                elif " - Loopback" in lb_name or "- Loopback" in lb_name:
+                    original_name = lb_name.split("Loopback")[0].strip().rstrip(" -")
+                else:
+                    original_name = lb_name
+                if original_name == default_out_name:
+                    dev = int(loopback["index"])
+                    dev_info = loopback
+                    break
+            if dev is None or dev_info is None:
+                raise SourceError(f"找不到默认设备的 loopback: {default_out_name}")
+
+        # 保存实际流参数（_callback 用）
+        self._channels = int(dev_info.get("maxInputChannels") or 2)
+        self._rate_in = int(dev_info["defaultSampleRate"])
 
         try:
             self._stream = self._pa.open(
@@ -88,17 +132,18 @@ class WASAPILoopbackSource:
                 rate=self._rate_in,
                 input=True,
                 input_device_index=dev,
-                as_loopback=True,
                 frames_per_buffer=1024,
                 stream_callback=self._callback,
             )
             self._stream.start_stream()
+            log.info("WASAPI 流已启动")
         except Exception as e:  # noqa: BLE001
             raise SourceError(f"无法打开 loopback 流: {e}") from e
 
     def _callback(self, in_data, frame_count, time_info, status):  # noqa: ANN001
         if self._stop.is_set():
             return (b"", pyaudio.paComplete)
+        # log.debug(f"callback: 收到 {len(in_data)} 字节, frame_count={frame_count}, status={status}")
         self._accum.extend(in_data)
         bpf = self._target.frame_bytes()
         try:
@@ -124,6 +169,18 @@ class WASAPILoopbackSource:
         except Exception:  # noqa: BLE001
             log.exception("WASAPI 帧转换失败")
         return (b"", pyaudio.paContinue)
+
+    def read_frame(self) -> bytes | None:
+        """读取一帧。只在显式停止时返回 None，超时时继续等待（持续监听模式）。"""
+        if self._stop.is_set() and self._frames.empty():
+            return None
+        try:
+            # 使用较长的超时，避免频繁返回 None
+            frame = self._frames.get(timeout=1.0)
+            return frame
+        except _q.Empty:
+            # 超时不是错误，继续等待（持续监听模式）
+            return None
 
     def read_frame(self) -> bytes | None:
         if self._stop.is_set() and self._frames.empty():

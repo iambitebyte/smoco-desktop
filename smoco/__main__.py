@@ -113,6 +113,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--stub-out", help="StubTranscriber 落 wav 目录")
     p_run.add_argument("--device", type=int, help="直接指定 WASAPI 设备 index（跳过交互选择）")
     p_run.add_argument("--meter", action="store_true", help="显示实时音量条（确认采集通路）")
+    p_run.add_argument("--debug", action="store_true", help="启用调试日志")
 
     sub.add_parser("list-devices", help="列出 WASAPI loopback 设备（Windows）")
     return p
@@ -166,9 +167,11 @@ def cmd_list_devices() -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    logging.basicConfig(level=logging.INFO,
-                        format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     args = _build_parser().parse_args(argv)
+    # 根据 --debug 设置日志级别
+    level = logging.DEBUG if getattr(args, 'debug', False) else logging.INFO
+    logging.basicConfig(level=level,
+                        format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     if args.cmd == "run":
         return cmd_run(args)
     if args.cmd == "list-devices":
