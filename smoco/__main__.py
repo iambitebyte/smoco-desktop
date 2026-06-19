@@ -52,6 +52,20 @@ def _prompt_for_device(devices: list[dict], input_fn=input, max_tries: int = 3) 
     return None
 
 
+def _resolve_device(args, list_devices_fn, input_fn=None) -> int | None:
+    """决定 --wasapi 用哪个设备 index。失败（无设备/重试用尽）返回 None。"""
+    if input_fn is None:
+        import builtins
+        input_fn = builtins.input
+    if args.device is not None:
+        return args.device
+    devices = list_devices_fn()
+    if not devices:
+        print("找不到 WASAPI 渲染设备（用 list-devices 查看详情）")
+        return None
+    return _prompt_for_device(devices, input_fn)
+
+
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="smoco",
                                 description="采集系统声音 → VAD 切块 → 转写")
@@ -62,26 +76,29 @@ def _build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--wasapi", action="store_true",
                        help="用 Windows WASAPI loopback 源")
     p_run.add_argument("--stub-out", help="StubTranscriber 落 wav 目录")
+    p_run.add_argument("--device", type=int, help="直接指定 WASAPI 设备 index（跳过交互选择）")
 
     sub.add_parser("list-devices", help="列出 WASAPI loopback 设备（Windows）")
     return p
 
 
-def _make_source(args, fmt: AudioFormat):
-    if args.file:
-        return FileSource(args.file, target=fmt)
-    if args.wasapi:
-        from .source.wasapi import WASAPILoopbackSource, _AVAILABLE
-        if not _AVAILABLE:
-            raise SystemExit("WASAPI 源不可用（需 Windows + pyaudiowpatch）")
-        return WASAPILoopbackSource(target=fmt)
-    raise SystemExit("请指定 --file 或 --wasapi")
-
-
 def cmd_run(args) -> int:
     fmt = AudioFormat()
     cfg = Config()
-    source = _make_source(args, fmt)
+    if args.wasapi:
+        from .source.wasapi import WASAPILoopbackSource, _AVAILABLE
+        if not _AVAILABLE:
+            print("WASAPI 源不可用（需 Windows + pyaudiowpatch）")
+            return 1
+        device_index = _resolve_device(args, WASAPILoopbackSource.list_devices)
+        if device_index is None:
+            return 1
+        source = WASAPILoopbackSource(target=fmt, device_index=device_index)
+    elif args.file:
+        source = FileSource(args.file, target=fmt)
+    else:
+        print("请指定 --file 或 --wasapi")
+        return 1
     vad = WebRtcVad(aggressiveness=cfg.vad_aggressiveness, sample_rate=fmt.sample_rate)
     chunker = Chunker(vad, fmt, silence_ms=cfg.silence_ms,
                       max_chunk_ms=cfg.max_chunk_ms, min_chunk_ms=cfg.min_chunk_ms,
