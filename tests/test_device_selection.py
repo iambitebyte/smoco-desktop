@@ -41,3 +41,34 @@ def test_no_default_and_empty_choice_raises():
     devs = [{"index": 1, "name": "x", "sample_rate": 48000, "channels": 2, "is_default": False}]
     with pytest.raises(ValueError):
         pick_device(devs, "")
+
+
+from smoco.__main__ import _prompt_for_device
+
+
+def test_prompt_first_try_valid(capsys):
+    inputs = iter(["2"])
+    idx = _prompt_for_device(DEVS, input_fn=lambda _p: next(inputs))
+    assert idx == 9
+    out = capsys.readouterr().out
+    assert "Headphones" in out
+    assert "*" in out  # 默认设备标记
+
+
+def test_prompt_retries_then_succeeds(capsys):
+    inputs = iter(["abc", "99", "1"])
+    idx = _prompt_for_device(DEVS, input_fn=lambda _p: next(inputs), max_tries=3)
+    assert idx == 5
+
+
+def test_prompt_exhausts_tries_returns_none(capsys):
+    inputs = iter(["x", "y", "z"])
+    idx = _prompt_for_device(DEVS, input_fn=lambda _p: next(inputs), max_tries=3)
+    assert idx is None
+
+
+def test_prompt_eof_returns_none(capsys):
+    def boom(_p):
+        raise EOFError
+    idx = _prompt_for_device(DEVS, input_fn=boom)
+    assert idx is None

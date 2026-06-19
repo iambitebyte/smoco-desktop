@@ -33,6 +33,25 @@ def pick_device(devices: list[dict], choice: str) -> int:
     return int(devices[n - 1]["index"])
 
 
+def _prompt_for_device(devices: list[dict], input_fn=input, max_tries: int = 3) -> int | None:
+    """打印编号菜单，循环读取用户选择。成功返回设备 index，用尽重试/EOF 返回 None。"""
+    print("可用的 WASAPI 输出设备：")
+    for i, d in enumerate(devices, 1):
+        mark = "*" if d.get("is_default") else " "
+        print(f"  {mark} [{i}] {d['name']}  ({d['sample_rate']}Hz, {d['channels']}ch)")
+    print("输入序号选择，回车=默认设备。")
+    for _ in range(max_tries):
+        try:
+            line = input_fn("> ")
+        except EOFError:
+            return None
+        try:
+            return pick_device(devices, line)
+        except ValueError as e:
+            print(f"无效选择: {e}")
+    return None
+
+
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="smoco",
                                 description="采集系统声音 → VAD 切块 → 转写")
