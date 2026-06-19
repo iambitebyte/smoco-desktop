@@ -1,0 +1,17 @@
+[project]
+name = "whisper-server"
+version = "0.1.0"
+description = "Whisper 转写 API 服务器"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "python-multipart>=0.0.32",
+    "uvicorn[standard]>=0.30.0",
+    "openai-whisper>=20230314",
+]
+
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true

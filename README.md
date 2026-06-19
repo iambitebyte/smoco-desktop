@@ -4,7 +4,17 @@
 
 - 目标平台：**Windows**（WASAPI loopback）。
 - 开发/测试：macOS 上用 `FileSource`（喂 wav）+ `StubTranscriber` 跑通整条链路与全部单测；只有 `WASAPILoopbackSource` 是 Windows 专属。
-- ASR 引擎抽象为 `Transcriber` 接口，先带 `StubTranscriber`；后续接本地 Whisper / 云端 API 只需新增一个实现。
+- ASR 引擎抽象为 `Transcriber` 接口，支持：
+  - `StubTranscriber`：本地落盘 wav（开发/测试用）
+  - `WhisperRemoteTranscriber`：调用远程 Whisper API 服务
+
+## 功能
+
+- **实时采集**：Windows WASAPI loopback 采集系统声音
+- **VAD 切块**：WebRTC VAD 检测静音，智能分段
+- **远程转写**：调用 GPU 服务器的 Whisper 模型转写
+- **多语言**：支持日语、中文、英语等 99 种语言
+- **实时音量条**：`--meter` 显示音量律动
 
 ## 安装
 
@@ -32,13 +42,26 @@ ls /tmp/smoco-stub
 
 ## Windows 用法
 
-采集系统声音（默认输出设备）并转写：
+### 采集系统声音（本地落盘）
 
 ```bash
 smoco run --wasapi --stub-out ./chunks
 ```
 
-列出 WASAPI loopback 设备：
+### 实时转写（调用远程 Whisper）
+
+```bash
+smoco run --wasapi --meter --whisper-url http://your-server:8000 --whisper-lang ja
+```
+
+**参数说明：**
+- `--wasapi`：使用 WASAPI loopback 采集
+- `--meter`：显示实时音量条
+- `--whisper-url`：Whisper API 服务地址
+- `--whisper-lang`：语言代码（ja=日语, zh=中文, en=英语）
+- `--debug`：显示调试日志
+
+### 列出 WASAPI 设备
 
 ```bash
 smoco list-devices
@@ -53,20 +76,44 @@ CI 跑不了真实设备，请在 Windows 机器上按以下清单手动验证�
 3. `StubTranscriber` 落盘的 wav 能听到声音、且按静音切成多段；
 4. 停止播放时不再产生新 chunk（VAD 正确判定静音）；
 5. Ctrl-C 后进程在 5 s 内干净退出，无僵尸线程/设备占用残留；
-6. 拔掉/切换默认输出设备时给出明确错误而非崩溃。
-7. `smoco run --wasapi` 能列出渲染端点、默认设备标注正确；
-8. 输入序号后采集的是**所选设备**的声音（可把 Teams 输出指到该设备验证）；
-9. 回车默认采集的是系统默认输出设备；
-10. `--device N` 与交互选择结果一致；
-11. 越界/非数字输入给出清晰提示并可重试。
-12. `smoco run --wasapi --meter` 选设备后，音量条随系统声音起伏；
-13. 不播放声音时条很低（接近空）、播放时升高，证明采集通路正常；
-14. Ctrl-C 后音量条干净收尾换行，无残留。
+6. `smoco run --wasapi --meter` 选设备后，音量条随系统声音起伏；
+7. 播放日语音频时，Whisper 转写能正确输出日语文本；
+8. Ctrl-C 后音量条干净收尾换行，无残留。
+
+## Whisper API 服务器
+
+`whisper-server/` 目录包含 GPU 服务器上的 Whisper API 服务。
+
+### 安装
+
+```bash
+cd whisper-server
+uv sync
+```
+
+### 运行
+
+```bash
+# 使用 medium 模型
+CUDA_VISIBLE_DEVICES=2 python whisper_api_server.py --model-name medium --port 8000
+
+# 或使用本地模型文件
+CUDA_VISIBLE_DEVICES=2 python whisper_api_server.py --model-path ~/models/whisper/medium.pt --port 8000
+```
+
+详见 `whisper-server/README.md`。
 
 ## 架构
 
 ```
-AudioSource(同步,线程) → Chunker(VAD分段) → asyncio.Queue → Transcriber(异步)
+Windows: WASAPILoopbackSource(线程) → Chunker(VAD) → Queue → WhisperRemoteTranscriber → HTTP API → GPU服务器
+macOS:   FileSource(线程) → Chunker(VAD) → Queue → StubTranscriber → 落盘wav
 ```
+
+**组件：**
+- `AudioSource`：音频采集（WASAPILoopbackSource / FileSource）
+- `Chunker`：WebRTC VAD 检测静音，智能分段
+- `Transcriber`：转写接口（StubTranscriber / WhisperRemoteTranscriber）
+- `Pipeline`：协调整条链路
 
 `AudioSource` 与 `Transcriber` 均为可替换协议；`pipeline.py` 只依赖这两个协议。详见 `docs/superpowers/specs/` 与 `docs/superpowers/plans/`。

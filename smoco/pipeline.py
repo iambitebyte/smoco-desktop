@@ -120,8 +120,13 @@ class Pipeline:
             if result.get("error"):
                 log.warning("转写失败 (chunk=%s): %s", chunk.id, result["error"])
             else:
-                log.info("[%.2f-%.2f] %s", result["start_time"],
-                         result["end_time"], result["text"])
+                text = result.get("text", "").strip()
+                if text:
+                    log.info("[%.2f-%.2f] %s", result["start_time"],
+                             result["end_time"], text)
+                else:
+                    log.debug("[%.2f-%.2f] (空转写结果)", result["start_time"],
+                              result["end_time"])
 
     @property
     def error(self) -> Exception | None:

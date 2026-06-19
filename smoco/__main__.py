@@ -114,6 +114,8 @@ def _build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--device", type=int, help="直接指定 WASAPI 设备 index（跳过交互选择）")
     p_run.add_argument("--meter", action="store_true", help="显示实时音量条（确认采集通路）")
     p_run.add_argument("--debug", action="store_true", help="启用调试日志")
+    p_run.add_argument("--whisper-url", help="Whisper API 服务地址（如 http://server:8000）")
+    p_run.add_argument("--whisper-lang", default="ja", help="Whisper 语言代码（ja=日语, zh=中文）")
 
     sub.add_parser("list-devices", help="列出 WASAPI loopback 设备（Windows）")
     return p
@@ -143,7 +145,17 @@ def cmd_run(args) -> int:
     chunker = Chunker(vad, fmt, silence_ms=cfg.silence_ms,
                       max_chunk_ms=cfg.max_chunk_ms, min_chunk_ms=cfg.min_chunk_ms,
                       pad_ms=cfg.pad_ms)
-    transcriber = StubTranscriber(out_dir=args.stub_out)
+
+    # 选择转写器
+    if args.whisper_url:
+        from .transcriber.whisper_remote import WhisperRemoteTranscriber
+        transcriber = WhisperRemoteTranscriber(
+            api_url=args.whisper_url,
+            language=args.whisper_lang,
+        )
+    else:
+        transcriber = StubTranscriber(out_dir=args.stub_out)
+
     pipe = Pipeline(source, chunker, transcriber, cfg)
     try:
         asyncio.run(_run_with_meter(pipe, source, args.meter))
