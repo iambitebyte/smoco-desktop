@@ -11,6 +11,13 @@ from .source.file import FileSource
 from .transcriber.stub import StubTranscriber
 
 
+def meter_bar(rms: float, width: int = 24) -> str:
+    """把 [0,1] 电平渲染成条：[████████░░░░░░░░░░░░░░░░]"""
+    level = max(0.0, min(1.0, rms))
+    filled = int(round(level * width))
+    return "[" + "█" * filled + "░" * (width - filled) + "]"
+
+
 def pick_device(devices: list[dict], choice: str) -> int:
     """把用户的菜单输入解析成底层设备 index。
     - 空白输入        -> 默认设备的 index（需存在默认设备）

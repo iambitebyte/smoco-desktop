@@ -65,3 +65,25 @@ def test_metering_none_frame_keeps_levels():
     assert m.read_frame() is None
     assert m.latest_rms == 0.0
     assert m.latest_peak == 0.0
+
+
+from smoco.__main__ import meter_bar
+
+
+def test_meter_bar_empty():
+    assert meter_bar(0.0) == "[" + "░" * 24 + "]"
+
+
+def test_meter_bar_full():
+    assert meter_bar(1.0) == "[" + "█" * 24 + "]"
+
+
+def test_meter_bar_half():
+    bar = meter_bar(0.5, width=24)
+    assert bar.count("█") == 12
+    assert bar.count("░") == 12
+
+
+def test_meter_bar_clamps_out_of_range():
+    assert meter_bar(-0.5) == "[" + "░" * 24 + "]"
+    assert meter_bar(1.5) == "[" + "█" * 24 + "]"
