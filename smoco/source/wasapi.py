@@ -42,13 +42,29 @@ class WASAPILoopbackSource:
 
     @staticmethod
     def list_devices() -> list[dict]:
+        """枚举 WASAPI 渲染端点（loopback 可采集的输出设备）。
+        返回 [{index, name, sample_rate, channels, is_default}, ...]。"""
         if not _AVAILABLE:
             return []
         pa = pyaudio.PyAudio()
         try:
-            return [pa.get_device_info_by_index(i)
-                    for i in range(pa.get_device_count())
-                    if pa.get_device_info_by_index(i).get("maxInputChannels", 0) > 0]
+            wasapi = pa.get_host_api_info_by_type(pyaudio.paWASAPI)
+            default_out = int(wasapi["defaultOutputDevice"])
+            out = []
+            for i in range(pa.get_device_count()):
+                info = pa.get_device_info_by_index(i)
+                if int(info.get("hostApi", -1)) != int(wasapi["index"]):
+                    continue
+                if int(info.get("maxOutputChannels", 0)) <= 0:   # 只要渲染端点
+                    continue
+                out.append({
+                    "index": int(info["index"]),
+                    "name": str(info["name"]),
+                    "sample_rate": int(info["defaultSampleRate"]),
+                    "channels": int(info["maxOutputChannels"]),
+                    "is_default": int(info["index"]) == default_out,
+                })
+            return out
         finally:
             pa.terminate()
 

@@ -11,6 +11,61 @@ from .source.file import FileSource
 from .transcriber.stub import StubTranscriber
 
 
+def pick_device(devices: list[dict], choice: str) -> int:
+    """把用户的菜单输入解析成底层设备 index。
+    - 空白输入        -> 默认设备的 index（需存在默认设备）
+    - "1".."n"        -> devices[n-1]["index"]
+    - 越界/非数字/空列表/无默认 -> ValueError
+    """
+    if not devices:
+        raise ValueError("没有可选设备")
+    choice = (choice or "").strip()
+    if choice == "":
+        for d in devices:
+            if d.get("is_default"):
+                return int(d["index"])
+        raise ValueError("没有默认设备，请输入序号")
+    if not choice.isdigit():
+        raise ValueError(f"无效输入（需数字）: {choice!r}")
+    n = int(choice)
+    if not (1 <= n <= len(devices)):
+        raise ValueError(f"序号超出范围: {n}（可选 1..{len(devices)}）")
+    return int(devices[n - 1]["index"])
+
+
+def _prompt_for_device(devices: list[dict], input_fn=input, max_tries: int = 3) -> int | None:
+    """打印编号菜单，循环读取用户选择。成功返回设备 index，用尽重试/EOF 返回 None。"""
+    print("可用的 WASAPI 输出设备：")
+    for i, d in enumerate(devices, 1):
+        mark = "*" if d.get("is_default") else " "
+        print(f"  {mark} [{i}] {d['name']}  ({d['sample_rate']}Hz, {d['channels']}ch)")
+    print("输入序号选择，回车=默认设备。")
+    for _ in range(max_tries):
+        try:
+            line = input_fn("> ")
+        except EOFError:
+            return None
+        try:
+            return pick_device(devices, line)
+        except ValueError as e:
+            print(f"无效选择: {e}")
+    return None
+
+
+def _resolve_device(args, list_devices_fn, input_fn=None) -> int | None:
+    """决定 --wasapi 用哪个设备 index。失败（无设备/重试用尽）返回 None。"""
+    if input_fn is None:
+        import builtins
+        input_fn = builtins.input
+    if args.device is not None:
+        return args.device
+    devices = list_devices_fn()
+    if not devices:
+        print("找不到 WASAPI 渲染设备（用 list-devices 查看详情）")
+        return None
+    return _prompt_for_device(devices, input_fn)
+
+
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="smoco",
                                 description="采集系统声音 → VAD 切块 → 转写")
@@ -21,26 +76,29 @@ def _build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--wasapi", action="store_true",
                        help="用 Windows WASAPI loopback 源")
     p_run.add_argument("--stub-out", help="StubTranscriber 落 wav 目录")
+    p_run.add_argument("--device", type=int, help="直接指定 WASAPI 设备 index（跳过交互选择）")
 
     sub.add_parser("list-devices", help="列出 WASAPI loopback 设备（Windows）")
     return p
 
 
-def _make_source(args, fmt: AudioFormat):
-    if args.file:
-        return FileSource(args.file, target=fmt)
-    if args.wasapi:
-        from .source.wasapi import WASAPILoopbackSource, _AVAILABLE
-        if not _AVAILABLE:
-            raise SystemExit("WASAPI 源不可用（需 Windows + pyaudiowpatch）")
-        return WASAPILoopbackSource(target=fmt)
-    raise SystemExit("请指定 --file 或 --wasapi")
-
-
 def cmd_run(args) -> int:
     fmt = AudioFormat()
     cfg = Config()
-    source = _make_source(args, fmt)
+    if args.wasapi:
+        from .source.wasapi import WASAPILoopbackSource, _AVAILABLE
+        if not _AVAILABLE:
+            print("WASAPI 源不可用（需 Windows + pyaudiowpatch）")
+            return 1
+        device_index = _resolve_device(args, WASAPILoopbackSource.list_devices)
+        if device_index is None:
+            return 1
+        source = WASAPILoopbackSource(target=fmt, device_index=device_index)
+    elif args.file:
+        source = FileSource(args.file, target=fmt)
+    else:
+        print("请指定 --file 或 --wasapi")
+        return 1
     vad = WebRtcVad(aggressiveness=cfg.vad_aggressiveness, sample_rate=fmt.sample_rate)
     chunker = Chunker(vad, fmt, silence_ms=cfg.silence_ms,
                       max_chunk_ms=cfg.max_chunk_ms, min_chunk_ms=cfg.min_chunk_ms,
