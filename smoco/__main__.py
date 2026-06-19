@@ -11,6 +11,28 @@ from .source.file import FileSource
 from .transcriber.stub import StubTranscriber
 
 
+def pick_device(devices: list[dict], choice: str) -> int:
+    """把用户的菜单输入解析成底层设备 index。
+    - 空白输入        -> 默认设备的 index（需存在默认设备）
+    - "1".."n"        -> devices[n-1]["index"]
+    - 越界/非数字/空列表/无默认 -> ValueError
+    """
+    if not devices:
+        raise ValueError("没有可选设备")
+    choice = (choice or "").strip()
+    if choice == "":
+        for d in devices:
+            if d.get("is_default"):
+                return int(d["index"])
+        raise ValueError("没有默认设备，请输入序号")
+    if not choice.isdigit():
+        raise ValueError(f"无效输入（需数字）: {choice!r}")
+    n = int(choice)
+    if not (1 <= n <= len(devices)):
+        raise ValueError(f"序号超出范围: {n}（可选 1..{len(devices)}）")
+    return int(devices[n - 1]["index"])
+
+
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="smoco",
                                 description="采集系统声音 → VAD 切块 → 转写")
