@@ -53,3 +53,12 @@ def encode_s16le(samples: np.ndarray) -> bytes:
     """float32 [-1,1] -> little-endian int16 bytes, clipping to [-1,1]."""
     clipped = np.clip(samples, -1.0, 1.0)
     return (clipped * 32767.0).astype("<i2").tobytes()
+
+
+def frame_rms(pcm: bytes, sample_width: int = 2) -> float:
+    """S16LE（默认）PCM 帧的 RMS 电平，归一化到 [0,1]。
+    全静音 -> 0.0；满幅 -> ≈1.0；空数据 -> 0.0。"""
+    if not pcm:
+        return 0.0
+    arr = np.frombuffer(pcm, dtype="<i2").astype(np.float32) / 32768.0
+    return float(np.sqrt(np.mean(arr * arr)))

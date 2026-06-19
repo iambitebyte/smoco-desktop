@@ -49,3 +49,27 @@ def test_encode_s16le_clips_and_round_trips():
     assert arr[0] == 0
     assert arr[3] == 32767                      # 1.0 -> full scale
     assert arr[5] == 32767                      # 1.5 clipped
+
+
+def test_frame_rms_silence_is_zero():
+    from smoco.audio import frame_rms
+    pcm = np.zeros(480, dtype="<i2").tobytes()
+    assert frame_rms(pcm) == 0.0
+
+
+def test_frame_rms_full_scale_near_one():
+    from smoco.audio import frame_rms
+    pcm = np.full(480, 32767, dtype="<i2").tobytes()
+    assert abs(frame_rms(pcm) - 1.0) < 1e-3
+
+
+def test_frame_rms_known_constant():
+    from smoco.audio import frame_rms
+    val = int(0.5 * 32767)
+    pcm = np.full(480, val, dtype="<i2").tobytes()
+    assert abs(frame_rms(pcm) - (val / 32768.0)) < 1e-3
+
+
+def test_frame_rms_empty_is_zero():
+    from smoco.audio import frame_rms
+    assert frame_rms(b"") == 0.0
