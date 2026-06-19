@@ -8,6 +8,7 @@ from .chunker import Chunker, WebRtcVad
 from .config import Config
 from .pipeline import Pipeline
 from .source.file import FileSource
+from .source.metering import MeteringSource
 from .transcriber.stub import StubTranscriber
 
 
@@ -16,6 +17,33 @@ def meter_bar(rms: float, width: int = 24) -> str:
     level = max(0.0, min(1.0, rms))
     filled = int(round(level * width))
     return "[" + "█" * filled + "░" * (width - filled) + "]"
+
+
+async def _render_meter(source) -> None:
+    """持续刷新音量条，直到被取消。"""
+    while True:
+        rms = source.latest_rms
+        sys.stdout.write("\r" + meter_bar(rms) + f" rms={rms:.3f}  ")
+        sys.stdout.flush()
+        await asyncio.sleep(0.05)
+
+
+async def _run_with_meter(pipe, source, meter: bool) -> None:
+    """meter=False 时直接跑管线；True 时并发跑渲染，管线结束后收尾换行。"""
+    if not meter:
+        await pipe.run()
+        return
+    task = asyncio.create_task(_render_meter(source))
+    try:
+        await pipe.run()
+    finally:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+        sys.stdout.write("\n")
+        sys.stdout.flush()
 
 
 def pick_device(devices: list[dict], choice: str) -> int:
@@ -84,6 +112,7 @@ def _build_parser() -> argparse.ArgumentParser:
                        help="用 Windows WASAPI loopback 源")
     p_run.add_argument("--stub-out", help="StubTranscriber 落 wav 目录")
     p_run.add_argument("--device", type=int, help="直接指定 WASAPI 设备 index（跳过交互选择）")
+    p_run.add_argument("--meter", action="store_true", help="显示实时音量条（确认采集通路）")
 
     sub.add_parser("list-devices", help="列出 WASAPI loopback 设备（Windows）")
     return p
@@ -106,6 +135,9 @@ def cmd_run(args) -> int:
     else:
         print("请指定 --file 或 --wasapi")
         return 1
+    if args.meter:
+        source = MeteringSource(source)
+        logging.getLogger("smoco").setLevel(logging.WARNING)
     vad = WebRtcVad(aggressiveness=cfg.vad_aggressiveness, sample_rate=fmt.sample_rate)
     chunker = Chunker(vad, fmt, silence_ms=cfg.silence_ms,
                       max_chunk_ms=cfg.max_chunk_ms, min_chunk_ms=cfg.min_chunk_ms,
@@ -113,7 +145,7 @@ def cmd_run(args) -> int:
     transcriber = StubTranscriber(out_dir=args.stub_out)
     pipe = Pipeline(source, chunker, transcriber, cfg)
     try:
-        asyncio.run(pipe.run())
+        asyncio.run(_run_with_meter(pipe, source, args.meter))
     except KeyboardInterrupt:
         logging.getLogger("smoco").info("已中断")
         return 0

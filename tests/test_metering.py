@@ -87,3 +87,59 @@ def test_meter_bar_half():
 def test_meter_bar_clamps_out_of_range():
     assert meter_bar(-0.5) == "[" + "░" * 24 + "]"
     assert meter_bar(1.5) == "[" + "█" * 24 + "]"
+
+
+import asyncio
+from smoco.__main__ import _run_with_meter
+
+
+def test_run_with_meter_no_meter_just_runs_pipe():
+    ran = []
+
+    class FakePipe:
+        error = None
+
+        async def run(self):
+            ran.append(True)
+
+    asyncio.run(_run_with_meter(FakePipe(), None, meter=False))
+    assert ran == [True]
+
+
+def test_run_with_meter_renders_and_completes(capsys):
+    class FakeSrc:
+        audio_format = _FMT
+
+        def start(self):
+            pass
+
+        def stop(self):
+            pass
+
+        def read_frame(self):
+            return None
+
+    class FakePipe:
+        error = None
+
+        async def run(self):
+            await asyncio.sleep(0.1)   # 让渲染协程至少画一帧
+
+    src = MeteringSource(FakeSrc())
+    asyncio.run(_run_with_meter(FakePipe(), src, meter=True))
+    out = capsys.readouterr().out
+    assert "rms=" in out
+    assert out.endswith("\n")           # 收尾换行
+
+
+def test_cmd_run_file_meter_shows_bar(tmp_path, capsys):
+    import soundfile as sf
+    from smoco.__main__ import cmd_run, _build_parser
+
+    wav = tmp_path / "a.wav"
+    sf.write(str(wav),
+             (np.random.RandomState(0).uniform(-0.5, 0.5, 16000)).astype("float32"),
+             16000)
+    args = _build_parser().parse_args(["run", "--file", str(wav), "--meter"])
+    assert cmd_run(args) == 0
+    assert "rms=" in capsys.readouterr().out
