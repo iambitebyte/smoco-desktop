@@ -1,0 +1,328 @@
+"""
+多语言支持
+"""
+
+TRANSLATIONS = {
+    "zh": {
+        # 主窗口
+        "window_title": "Smoco Desktop",
+        # 设备选择页
+        "select_device": "选择音频设备",
+        "select_device_desc": "选择要采集的扬声器设备：",
+        "start_transcription": "开始转录",
+        "no_devices": "未找到音频设备",
+        "loading_devices": "加载设备中...",
+        # 转录页
+        "realtime_transcript": "实时转录",
+        "stop": "停止",
+        "waiting": "等待转录结果...",
+        # 错误
+        "no_device_selected": "请先选择设备",
+        "start_failed": "启动失败",
+        "audio_error": "音频错误",
+        "audio_capture_failed": "音频采集失败：",
+        # 语言选择
+        "language": "语言",
+        "language_zh": "简体中文",
+        "language_ja": "日本語",
+        "language_en": "English",
+        # 设置
+        "settings": "设置",
+        "whisper_servers": "Whisper 服务器列表",
+        "add_server": "添加",
+        "remove_server": "删除",
+        "set_default": "设为默认",
+        "new_server_url": "新服务器 URL:",
+        "server_name_optional": "名称（可选）:",
+        "server_url_placeholder": "http://your-server:port",
+        "server_name_placeholder": "可选：服务器名称",
+        "vad_parameters": "VAD 参数",
+        "silence_duration": "静音时长",
+        "max_chunk_duration": "最大块时长",
+        "min_chunk_duration": "最小块时长",
+        "padding_duration": "填充时长",
+        # 本地 Whisper
+        "local_whisper_model": "本地 Whisper 模型",
+        "local_model_size": "模型尺寸",
+        "local_port": "服务端口",
+        "local_cpu_warning": "注意：本地模型使用 CPU 运行，速度较慢",
+        "local_start": "启动服务",
+        "local_stop": "停止服务",
+        "local_status": "状态",
+        "local_status_stopped": "已停止",
+        "local_status_starting": "启动中...",
+        "local_status_running": "运行中",
+        "local_status_downloading": "下载模型中...",
+        "local_already_running": "服务已在运行",
+        "local_starting": "正在启动服务",
+        "local_running": "运行中",
+        "local_stopped": "已停止",
+        "local_start_timeout": "启动超时，请检查日志",
+        "local_server_name": "本地 Whisper 服务",
+        "save": "保存",
+        "cancel": "取消",
+        "hint_enter_url": "请输入服务器 URL",
+        "hint_server_exists": "该服务器已存在",
+        "hint_cannot_delete_default": "无法删除默认服务器，请先设置其他服务器为默认",
+        "hint_select_server": "请先选择一个服务器",
+        "hint_need_server": "请至少添加一个 Whisper 服务器",
+        # 启动对话框
+        "startup_title": "启动转录",
+        "select_whisper_server": "选择 Whisper 服务器:",
+        "current_server": "当前服务器:",
+        "service_status": "服务状态",
+        "service_checking": "检查中...",
+        "checking": "检查中",
+        "service_normal": "服务正常",
+        "service_error": "服务错误",
+        "service_timeout": "连接超时",
+        "service_connection_error": "无法连接到服务器",
+        "service_check_failed": "检查失败",
+        "select_language": "选择转录语言:",
+        "japanese": "日语 (Japanese)",
+        "english": "英语",
+        "start": "开始转录",
+        "service_unavailable": "服务不可用",
+        "service_unavailable_msg": "无法连接到 API 服务，请选择其他服务器或检查配置",
+        # 转录交互
+        "copy_transcript": "复制转录文本",
+        "copy_with_timestamp": "复制带时间戳",
+        # 通用
+        "hint": "提示",
+        "warning": "警告",
+        "error": "错误",
+        "success": "成功",
+        "failed": "失败",
+        "loading": "加载中...",
+        "please_wait": "请稍候",
+        # 错误消息
+        "need_server_config": "请先在设置中添加 Whisper 服务器",
+        "unable_to_start": "无法启动转录：",
+    },
+    "ja": {
+        # 主窗口
+        "window_title": "Smoco Desktop",
+        # 设备选择页
+        "select_device": "オーディオデバイスを選択",
+        "select_device_desc": "録音するスピーカーデバイスを選択：",
+        "start_transcription": "文字起こし開始",
+        "no_devices": "オーディオデバイスが見つかりません",
+        "loading_devices": "デバイスをロード中...",
+        # 转录页
+        "realtime_transcript": "リアルタイム文字起こし",
+        "stop": "停止",
+        "waiting": "文字起こし結果を待っています...",
+        # 错误
+        "no_device_selected": "デバイスを選択してください",
+        "start_failed": "起動に失敗しました",
+        "audio_error": "オーディオエラー",
+        "audio_capture_failed": "オーディオ録音に失敗：",
+        # 语言选择
+        "language": "言語",
+        "language_zh": "简体中文",
+        "language_ja": "日本語",
+        "language_en": "English",
+        # 设置
+        "settings": "設定",
+        "whisper_servers": "Whisper サーバーリスト",
+        "add_server": "追加",
+        "remove_server": "削除",
+        "set_default": "デフォルトに設定",
+        "new_server_url": "新サーバー URL:",
+        "server_name_optional": "名前（任意）:",
+        "server_url_placeholder": "http://your-server:port",
+        "server_name_placeholder": "任意：サーバー名",
+        "vad_parameters": "VAD パラメータ",
+        "silence_duration": "無音時間",
+        "max_chunk_duration": "最大チャンク時間",
+        "min_chunk_duration": "最小チャンク時間",
+        "padding_duration": "パディング時間",
+        # 本地 Whisper
+        "local_whisper_model": "ローカル Whisper モデル",
+        "local_model_size": "モデルサイズ",
+        "local_port": "サービスポート",
+        "local_cpu_warning": "注意：ローカルモデルは CPU で実行されるため、速度が遅いです",
+        "local_start": "サービス開始",
+        "local_stop": "サービス停止",
+        "local_status": "ステータス",
+        "local_status_stopped": "停止中",
+        "local_status_starting": "起動中...",
+        "local_status_running": "実行中",
+        "local_status_downloading": "モデルダウンロード中...",
+        "local_already_running": "サービスは既に実行中です",
+        "local_starting": "サービスを起動中",
+        "local_running": "実行中",
+        "local_stopped": "停止済み",
+        "local_start_timeout": "起動タイムアウト、ログを確認してください",
+        "local_server_name": "ローカル Whisper サービス",
+        "save": "保存",
+        "cancel": "キャンセル",
+        "hint_enter_url": "サーバー URL を入力してください",
+        "hint_server_exists": "このサーバーは既に存在します",
+        "hint_cannot_delete_default": "デフォルトサーバーは削除できません。先に他のサーバーをデフォルトに設定してください",
+        "hint_select_server": "サーバーを選択してください",
+        "hint_need_server": "少なくとも1つの Whisper サーバーを追加してください",
+        # 启动对话框
+        "startup_title": "文字起こし開始",
+        "select_whisper_server": "Whisper サーバーを選択:",
+        "current_server": "現在のサーバー:",
+        "service_status": "サーバー状態",
+        "service_checking": "確認中...",
+        "checking": "確認中",
+        "service_normal": "正常",
+        "service_error": "エラー",
+        "service_timeout": "接続タイムアウト",
+        "service_connection_error": "サーバーに接続できません",
+        "service_check_failed": "確認失敗",
+        "select_language": "文字起こし言語を選択:",
+        "japanese": "日本語",
+        "english": "英語",
+        "start": "開始",
+        "service_unavailable": "サービス利用不可",
+        "service_unavailable_msg": "API サービスに接続できません。他のサーバーを選択するか設定を確認してください",
+        # 转录交互
+        "copy_transcript": "テキストをコピー",
+        "copy_with_timestamp": "タイムスタンプ付きでコピー",
+        # 通用
+        "hint": "ヒント",
+        "warning": "警告",
+        "error": "エラー",
+        "success": "成功",
+        "failed": "失敗",
+        "loading": "ロード中...",
+        "please_wait": "お待ちください",
+        # 错误消息
+        "need_server_config": "設定で Whisper サーバーを追加してください",
+        "unable_to_start": "開始できません：",
+    },
+    "en": {
+        # Main window
+        "window_title": "Smoco Desktop",
+        # Device selection page
+        "select_device": "Select Audio Device",
+        "select_device_desc": "Select the speaker device to capture:",
+        "start_transcription": "Start Transcription",
+        "no_devices": "No audio devices found",
+        "loading_devices": "Loading devices...",
+        # Transcript page
+        "realtime_transcript": "Real-time Transcript",
+        "stop": "Stop",
+        "waiting": "Waiting for transcription...",
+        # Errors
+        "no_device_selected": "Please select a device first",
+        "start_failed": "Start Failed",
+        "audio_error": "Audio Error",
+        "audio_capture_failed": "Audio capture failed:",
+        # Language selection
+        "language": "Language",
+        "language_zh": "简体中文",
+        "language_ja": "日本語",
+        "language_en": "English",
+        # Settings
+        "settings": "Settings",
+        "whisper_servers": "Whisper Server List",
+        "add_server": "Add",
+        "remove_server": "Remove",
+        "set_default": "Set as Default",
+        "new_server_url": "New Server URL:",
+        "server_name_optional": "Name (Optional):",
+        "server_url_placeholder": "http://your-server:port",
+        "server_name_placeholder": "Optional: Server name",
+        "vad_parameters": "VAD Parameters",
+        "silence_duration": "Silence Duration",
+        "max_chunk_duration": "Max Chunk Duration",
+        "min_chunk_duration": "Min Chunk Duration",
+        "padding_duration": "Padding Duration",
+        # Local Whisper
+        "local_whisper_model": "Local Whisper Model",
+        "local_model_size": "Model Size",
+        "local_port": "Service Port",
+        "local_cpu_warning": "Note: Local model runs on CPU, slower performance",
+        "local_start": "Start Service",
+        "local_stop": "Stop Service",
+        "local_status": "Status",
+        "local_status_stopped": "Stopped",
+        "local_status_starting": "Starting...",
+        "local_status_running": "Running",
+        "local_status_downloading": "Downloading model...",
+        "local_already_running": "Service already running",
+        "local_starting": "Starting service",
+        "local_running": "Running",
+        "local_stopped": "Stopped",
+        "local_start_timeout": "Start timeout, please check logs",
+        "local_server_name": "Local Whisper Service",
+        "save": "Save",
+        "cancel": "Cancel",
+        "hint_enter_url": "Please enter server URL",
+        "hint_server_exists": "This server already exists",
+        "hint_cannot_delete_default": "Cannot delete default server, please set another server as default first",
+        "hint_select_server": "Please select a server first",
+        "hint_need_server": "Please add at least one Whisper server",
+        # Startup dialog
+        "startup_title": "Start Transcription",
+        "select_whisper_server": "Select Whisper Server:",
+        "current_server": "Current Server:",
+        "service_status": "Service Status",
+        "service_checking": "Checking...",
+        "checking": "Checking",
+        "service_normal": "Normal",
+        "service_error": "Error",
+        "service_timeout": "Connection Timeout",
+        "service_connection_error": "Cannot connect to server",
+        "service_check_failed": "Check Failed",
+        "select_language": "Select Transcription Language:",
+        "japanese": "Japanese",
+        "english": "English",
+        "start": "Start",
+        "service_unavailable": "Service Unavailable",
+        "service_unavailable_msg": "Cannot connect to API service, please select another server or check configuration",
+        # Transcript interaction
+        "copy_transcript": "Copy Transcript Text",
+        "copy_with_timestamp": "Copy with Timestamp",
+        # General
+        "hint": "Hint",
+        "warning": "Warning",
+        "error": "Error",
+        "success": "Success",
+        "failed": "Failed",
+        "loading": "Loading...",
+        "please_wait": "Please wait",
+        # Error messages
+        "need_server_config": "Please add a Whisper server in settings first",
+        "unable_to_start": "Unable to start:",
+    },
+}
+
+LANGUAGES = [
+    ("zh", "简体中文"),
+    ("ja", "日本語"),
+    ("en", "English"),
+]
+
+
+class I18n:
+    """国际化管理器"""
+
+    def __init__(self):
+        self._current_lang = "zh"
+
+    @property
+    def current_lang(self):
+        return self._current_lang
+
+    def set_language(self, lang: str):
+        """设置当前语言"""
+        if lang in TRANSLATIONS:
+            self._current_lang = lang
+
+    def t(self, key: str) -> str:
+        """翻译文本"""
+        return TRANSLATIONS.get(self._current_lang, {}).get(key, key)
+
+    def __getitem__(self, key: str) -> str:
+        """支持 i18n[key] 语法"""
+        return self.t(key)
+
+
+# 全局实例
+i18n = I18n()

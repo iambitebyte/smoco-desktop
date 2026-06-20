@@ -102,9 +102,9 @@ def interactive_mode():
 
     # 选择模型
     model_name, _ = get_choice(
-        "请选择模型 (1-7，回车默认 4): ",
+        "请选择模型 (1-7，回车默认 3): ",
         MODELS,
-        default=4
+        default=3
     )
 
     # 选择语言
@@ -205,7 +205,7 @@ def main():
     p.add_argument(
         "--model",
         type=str,
-        default="medium",
+        default="small",
         help="模型名称"
     )
     p.add_argument(
@@ -249,7 +249,7 @@ def main():
         model_name,
         device="cpu",
         compute_type="int8",
-        download_root=None,
+        download_root=None,  # 使用默认缓存目录
     )
 
     model_config = {"path": model_name, "language": language}

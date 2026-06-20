@@ -6,3 +6,16 @@ build/
 dist/
 .venv/
 uv.lock
+
+# smoco-gui 生成文件
+smoco-gui/.venv/
+smoco-gui/__pycache__/
+smoco-gui/smoco_gui.egg-info/
+smoco-gui/uv.lock
+smoco-gui/settings.json
+
+# 其他
+*.bak
+*.swp
+*~
+.DS_Store
