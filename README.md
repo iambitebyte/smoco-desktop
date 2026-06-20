@@ -48,16 +48,43 @@ ls /tmp/smoco-stub
 smoco run --wasapi --stub-out ./chunks
 ```
 
-### 实时转写（调用远程 Whisper）
+### 实时转写
+
+#### 方式 1：远程 Whisper API
 
 ```bash
-smoco run --wasapi --meter --whisper-url http://your-server:8000 --whisper-lang ja
+uv run smoco run --wasapi --meter --whisper-url http://your-server:8000 --whisper-lang ja
+```
+
+#### 方式 2：本地 Whisper（进程内 CPU）
+
+```bash
+# 安装本地 Whisper 支持
+uv sync --extra whisper
+
+# 运行（模型加载在进程内）
+uv run smoco run --wasapi --meter --whisper-local --whisper-model medium --whisper-lang ja
+```
+
+#### 方式 3：本地 Whisper API 服务（推荐）
+
+```bash
+# 终端 1：启动本地 API 服务器
+cd whisper-local
+uv sync
+uv run python whisper_local_api.py --interactive
+
+# 终端 2：运行 smoco
+uv run smoco run --wasapi --meter --whisper-local-api --whisper-lang ja
 ```
 
 **参数说明：**
 - `--wasapi`：使用 WASAPI loopback 采集
 - `--meter`：显示实时音量条
-- `--whisper-url`：Whisper API 服务地址
+- `--whisper-url`：远程 Whisper API 地址
+- `--whisper-local`：进程内本地 Whisper
+- `--whisper-local-api`：本地 Whisper API 服务
+- `--whisper-model`：本地模型（medium, large-v3-turbo, distil-large-v3 等）
 - `--whisper-lang`：语言代码（ja=日语, zh=中文, en=英语）
 - `--debug`：显示调试日志
 
@@ -103,17 +130,52 @@ CUDA_VISIBLE_DEVICES=2 python whisper_api_server.py --model-path ~/models/whispe
 
 详见 `whisper-server/README.md`。
 
+## Whisper 本地转写
+
+`whisper-local/` 目录包含 Windows 本地 Whisper 转写器（CPU 模式）。
+
+### 安装
+
+```bash
+cd whisper-local
+python -m venv .venv
+.venv\Scripts\activate
+pip install faster-whisper
+```
+
+### 运行
+
+```bash
+# 交互式选择模型
+start.bat
+
+# 或命令行
+python whisper_local_transcriber.py --model medium --language ja
+```
+
+**支持的模型：**
+- `medium`：平衡速度和准确率（推荐）
+- `large-v3-turbo`：快速且准确
+- `distil-large-v3`：蒸馏版本，更快
+- `tiny`, `base`, `small`：更小的模型
+
+详见 `whisper-local/README.md`。
+
 ## 架构
 
 ```
-Windows: WASAPILoopbackSource(线程) → Chunker(VAD) → Queue → WhisperRemoteTranscriber → HTTP API → GPU服务器
-macOS:   FileSource(线程) → Chunker(VAD) → Queue → StubTranscriber → 落盘wav
+Windows (远程转写): WASAPILoopbackSource → Chunker(VAD) → Queue → WhisperRemoteTranscriber → HTTP → GPU服务器
+Windows (本地转写): WASAPILoopbackSource → Chunker(VAD) → Queue → WhisperLocalTranscriber → CPU
+macOS   (开发测试):   FileSource → Chunker(VAD) → Queue → StubTranscriber → 落盘wav
 ```
 
 **组件：**
 - `AudioSource`：音频采集（WASAPILoopbackSource / FileSource）
 - `Chunker`：WebRTC VAD 检测静音，智能分段
-- `Transcriber`：转写接口（StubTranscriber / WhisperRemoteTranscriber）
+- `Transcriber`：转写接口
+  - `StubTranscriber`：开发测试，落盘 wav
+  - `WhisperRemoteTranscriber`：远程 GPU 服务器
+  - `WhisperLocalTranscriber`：本地 CPU 转写
 - `Pipeline`：协调整条链路
 
 `AudioSource` 与 `Transcriber` 均为可替换协议；`pipeline.py` 只依赖这两个协议。详见 `docs/superpowers/specs/` 与 `docs/superpowers/plans/`。

@@ -1,0 +1,18 @@
+[project]
+name = "whisper-local"
+version = "0.1.0"
+description = "本地 Whisper 转写器（Windows CPU）"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "faster-whisper>=1.0.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+]
+
+[project.scripts]
+whisper-local = "whisper_local_transcriber:main"
+whisper-local-api = "whisper_local_api:main"
+
+[tool.uv]
+dev-dependencies = []

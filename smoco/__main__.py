@@ -114,7 +114,10 @@ def _build_parser() -> argparse.ArgumentParser:
     p_run.add_argument("--device", type=int, help="直接指定 WASAPI 设备 index（跳过交互选择）")
     p_run.add_argument("--meter", action="store_true", help="显示实时音量条（确认采集通路）")
     p_run.add_argument("--debug", action="store_true", help="启用调试日志")
-    p_run.add_argument("--whisper-url", help="Whisper API 服务地址（如 http://server:8000）")
+    p_run.add_argument("--whisper-url", help="Whisper API 服务地址（远程转写）")
+    p_run.add_argument("--whisper-local-api", action="store_true", help="使用本地 Whisper API 服务（需先启动）")
+    p_run.add_argument("--whisper-local", action="store_true", help="使用本地 Whisper 转写（进程内 CPU）")
+    p_run.add_argument("--whisper-model", default="medium", help="本地 Whisper 模型（medium, large-v3-turbo 等）")
     p_run.add_argument("--whisper-lang", default="ja", help="Whisper 语言代码（ja=日语, zh=中文）")
 
     sub.add_parser("list-devices", help="列出 WASAPI loopback 设备（Windows）")
@@ -147,7 +150,22 @@ def cmd_run(args) -> int:
                       pad_ms=cfg.pad_ms)
 
     # 选择转写器
-    if args.whisper_url:
+    if args.whisper_local_api:
+        # 使用本地 Whisper API 服务
+        from .transcriber.whisper_remote import WhisperRemoteTranscriber
+        transcriber = WhisperRemoteTranscriber(
+            api_url="http://127.0.0.1:8000",  # 本地 API 服务
+            language=args.whisper_lang,
+        )
+    elif args.whisper_local:
+        # 使用进程内本地 Whisper
+        from .transcriber.whisper_local import WhisperLocalTranscriber
+        transcriber = WhisperLocalTranscriber(
+            model_name=args.whisper_model,
+            language=args.whisper_lang,
+        )
+    elif args.whisper_url:
+        # 使用远程 Whisper API
         from .transcriber.whisper_remote import WhisperRemoteTranscriber
         transcriber = WhisperRemoteTranscriber(
             api_url=args.whisper_url,
