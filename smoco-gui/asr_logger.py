@@ -89,6 +89,47 @@ class ASRLogger:
 
             return entry_id
 
+    def save_translations(self, translations: list):
+        """保存翻译结果
+        Args:
+            translations: 翻译结果列表，格式 [{"id": 1, "translation": "..."}, ...]
+        """
+        with self._lock:
+            if not self._session_dir:
+                return
+
+            # 生成翻译文件名
+            if translations:
+                first_id = translations[0]["id"]
+                translate_file = self._session_dir / f"translate_{first_id:04d}.json"
+                with open(translate_file, "w", encoding="utf-8") as f:
+                    json.dump(translations, f, ensure_ascii=False, indent=2)
+
+                # 同时保存为最新版本
+                latest_file = self._session_dir / "translate_latest.json"
+                with open(latest_file, "w", encoding="utf-8") as f:
+                    json.dump(translations, f, ensure_ascii=False, indent=2)
+
+    def save_translation_error(self, entries: list, error_msg: str):
+        """保存翻译错误"""
+        with self._lock:
+            if not self._session_dir:
+                return
+
+            error_file = self._session_dir / "translate_error.json"
+            error_data = {
+                "timestamp": datetime.now().isoformat(),
+                "error": error_msg,
+                "entries": entries
+            }
+            with open(error_file, "w", encoding="utf-8") as f:
+                json.dump(error_data, f, ensure_ascii=False, indent=2)
+
+    @property
+    def session_dir(self) -> Path:
+        """获取当前会话目录"""
+        return self._session_dir
+
     def _save_metadata(self, metadata: dict):
         """保存会话元数据"""
         if self._session_dir:

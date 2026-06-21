@@ -75,7 +75,7 @@ class HealthCheckWorker(QThread):
 class ASRStartupDialog(QDialog):
     """ASR 启动对话框"""
 
-    def __init__(self, servers: list, last_server: str = "", parent=None):
+    def __init__(self, servers: list, last_server: str = "", llm_config_ok: bool = False, parent=None):
         super().__init__(parent)
 
         self.setWindowTitle(i18n.t("startup_title"))
@@ -85,6 +85,7 @@ class ASRStartupDialog(QDialog):
         self.selected_server = None
         self.selected_language = "ja"
         self.health_ok = False
+        self.llm_config_ok = llm_config_ok
 
         layout = QVBoxLayout()
         layout.setSpacing(15)
@@ -167,6 +168,33 @@ class ASRStartupDialog(QDialog):
         lang_layout.addWidget(self.radio_en)
 
         layout.addLayout(lang_layout)
+
+        # 翻译语言选择
+        translate_lang_label = QLabel(i18n.t("select_translate_language") + ":")
+        layout.addWidget(translate_lang_label)
+
+        translate_lang_layout = QHBoxLayout()
+        self.translate_lang_group = QButtonGroup()
+
+        self.radio_translate_zh = QRadioButton(i18n.t("chinese"))
+        self.translate_lang_group.addButton(self.radio_translate_zh, 1)
+        translate_lang_layout.addWidget(self.radio_translate_zh)
+
+        self.radio_translate_none = QRadioButton("无翻译")
+        self.translate_lang_group.addButton(self.radio_translate_none, 0)
+        translate_lang_layout.addWidget(self.radio_translate_none)
+
+        # 根据 LLM 配置状态设置翻译选项
+        if not self.llm_config_ok:
+            # LLM 未配置，禁用翻译选项
+            self.radio_translate_zh.setEnabled(False)
+            self.radio_translate_none.setChecked(True)
+        else:
+            # LLM 已配置，启用翻译选项
+            self.radio_translate_zh.setEnabled(True)
+            self.radio_translate_zh.setChecked(True)
+
+        layout.addLayout(translate_lang_layout)
 
         # 按钮
         btn_layout = QHBoxLayout()
@@ -297,6 +325,13 @@ class ASRStartupDialog(QDialog):
     def get_selected_language(self) -> str:
         """获取选中的语言"""
         return self.selected_language
+
+    def get_selected_translate_language(self) -> str:
+        """获取选中的翻译语言"""
+        if self.radio_translate_zh.isChecked():
+            return "zh"
+        else:
+            return None  # 不翻译
 
     def closeEvent(self, event):
         """关闭对话框时停止健康检查线程"""

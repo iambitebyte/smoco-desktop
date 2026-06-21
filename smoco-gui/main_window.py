@@ -8,7 +8,8 @@ from pathlib import Path
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QListWidget, QPushButton, QLabel, QProgressBar, QMessageBox,
-    QTextEdit, QStackedWidget, QComboBox, QDialog
+    QTextEdit, QStackedWidget, QComboBox, QDialog, QTableWidget,
+    QTableWidgetItem, QHeaderView
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QPixmap, QIcon
@@ -20,6 +21,7 @@ from paths import get_settings_path
 from startup_dialog import ASRStartupDialog
 from transcript_edit import InteractiveTranscriptEdit
 from local_whisper_manager import get_local_whisper_manager
+from translation_worker import TranslationController
 from PyQt6.QtCore import QTimer
 
 # 添加父目录到 Python 路径
@@ -276,25 +278,60 @@ class TranscriptPage(QWidget):
         self.audio_meter = CompactAudioMeter()
         layout.addWidget(self.audio_meter)
 
-        # 转录显示区
-        self.transcript_edit = InteractiveTranscriptEdit()
-        self.transcript_edit.setPlaceholderText(i18n.t("waiting"))
-        layout.addWidget(self.transcript_edit)
+        # 转录翻译表格
+        self.transcript_table = QTableWidget()
+        self.transcript_table.setColumnCount(3)
+        self.transcript_table.setHorizontalHeaderLabels(["时间", "转录文本", "翻译"])
+        self.transcript_table.horizontalHeader().setStretchLastSection(True)
+        self.transcript_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.transcript_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        # 启用自动换行
+        self.transcript_table.setWordWrap(True)
+        # 自适应行高
+        self.transcript_table.resizeRowsToContents()
+        self.transcript_table.setStyleSheet("""
+            QTableWidget {
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                gridline-color: #e0e0e0;
+            }
+            QTableWidget::item {
+                padding: 8px;
+            }
+            QHeaderView::section {
+                background-color: #f5f5f5;
+                padding: 8px;
+                border: none;
+                border-bottom: 1px solid #ccc;
+                font-weight: bold;
+            }
+        """)
+        # 设置列宽
+        header = self.transcript_table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        # 设置行高自适应
+        self.transcript_table.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+
+        layout.addWidget(self.transcript_table)
 
         self.setLayout(layout)
 
         self._start_time = None
+        # 存储转录数据 {row_id: {entry_id, timestamp, asr_text, translation}}
+        self._transcript_data = {}
 
     def update_ui(self):
         """更新 UI 文本"""
         self._title_label.setText(i18n.t("realtime_transcript"))
         self.btn_stop.setText(i18n.t("stop"))
-        self.transcript_edit.setPlaceholderText(i18n.t("waiting"))
 
     def start_recording(self):
         """开始录制"""
         self._start_time = time.time()
-        self.transcript_edit.clear()
+        self.transcript_table.setRowCount(0)
+        self._transcript_data.clear()
 
     def append_text(self, text: str, chunk_start_time: float, entry_id: int = 0):
         """追加转录文本（带时间戳）"""
@@ -310,12 +347,57 @@ class TranscriptPage(QWidget):
         seconds = int(total_seconds % 60)
         timestamp = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
-        # 使用可交互组件添加行
-        self.transcript_edit.append_line(timestamp, text, entry_id)
+        # 添加到表格
+        row = self.transcript_table.rowCount()
+        self.transcript_table.insertRow(row)
+
+        # 时间戳
+        time_item = QTableWidgetItem(timestamp)
+        time_item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.transcript_table.setItem(row, 0, time_item)
+
+        # ASR 文本
+        asr_item = QTableWidgetItem(text)
+        asr_item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.transcript_table.setItem(row, 1, asr_item)
+
+        # 翻译（初始为空）
+        trans_item = QTableWidgetItem("")
+        trans_item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.transcript_table.setItem(row, 2, trans_item)
+
+        # 存储数据
+        self._transcript_data[row] = {
+            "entry_id": entry_id,
+            "timestamp": timestamp,
+            "asr_text": text,
+            "translation": "",
+            "row": row
+        }
+
+        # 调整行高以适应内容
+        self.transcript_table.resizeRowToContents(row)
 
         # 滚动到底部
-        scrollbar = self.transcript_edit.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+        self.transcript_table.scrollToBottom()
+
+    def update_translation(self, translations: list):
+        """更新翻译文本
+        Args:
+            translations: [(entry_id, translation), ...]
+        """
+        for entry_id, translation in translations:
+            # 查找对应的行
+            for row_id, data in self._transcript_data.items():
+                if data["entry_id"] == entry_id:
+                    # 更新翻译
+                    trans_item = self.transcript_table.item(data["row"], 2)
+                    if trans_item:
+                        trans_item.setText(translation)
+                        data["translation"] = translation
+                        # 调整行高以适应新内容
+                        self.transcript_table.resizeRowToContents(data["row"])
+                    break
 
 
 class MainWindow(QMainWindow):
@@ -345,7 +427,9 @@ class MainWindow(QMainWindow):
         # 控制器
         self._meter_controller = AudioMeterController()
         self._asr_controller = ASRController()
+        self._translation_controller = TranslationController()
         self._is_running = False
+        self._translate_lang = None  # 翻译语言
 
         # 设置
         self._settings = {
@@ -382,15 +466,24 @@ class MainWindow(QMainWindow):
 
             last_server = self._settings.get("last_server", "")
 
+            # 自动验证 LLM 配置
+            from llm_client import get_llm_client
+            llm_client = get_llm_client()
+            llm_ok, llm_msg = llm_client.validate()
+            print(f"[LLM 自动验证] {'成功' if llm_ok else '失败'}: {llm_msg}")
+
             # 显示启动对话框（服务器选择 + 健康检查 + 语言选择）
-            dialog = ASRStartupDialog(servers, last_server, self)
+            dialog = ASRStartupDialog(servers, last_server, llm_ok, self)
             if dialog.exec() != QDialog.DialogCode.Accepted:
                 return
 
             selected_server = dialog.get_selected_server()
             selected_lang = dialog.get_selected_language()
+            selected_translate_lang = dialog.get_selected_translate_language()
 
             # 更新上次使用的服务器
+            self._settings["last_server"] = selected_server
+            self._translate_lang = selected_translate_lang
             self._settings["last_server"] = selected_server
 
             # 应用设置到 ASR 控制器
@@ -412,9 +505,17 @@ class MainWindow(QMainWindow):
 
             # 启动 ASR
             self._asr_controller.start(
-                transcript_callback=self._page_transcript.append_text,
+                transcript_callback=self._on_transcript_ready,
                 error_callback=self._on_asr_error
             )
+
+            # 启动翻译（如果选择了翻译语言）
+            if self._translate_lang:
+                self._translation_controller.set_language(self._translate_lang)
+                self._translation_controller.start(
+                    translation_callback=self._page_transcript.update_translation,
+                    error_callback=self._on_translation_error
+                )
 
             # 连接音频到 ASR
             if hasattr(self._meter_controller, '_worker') and self._meter_controller._worker:
@@ -435,6 +536,7 @@ class MainWindow(QMainWindow):
         """停止 ASR"""
         self._asr_controller.stop()
         self._meter_controller.stop()
+        self._translation_controller.stop()
         self._is_running = False
         self._stack.setCurrentWidget(self._page_selection)
 
@@ -452,6 +554,33 @@ class MainWindow(QMainWindow):
         # 不停止，只显示警告
         print(f"ASR 错误: {msg}")
 
+    def _on_transcript_ready(self, text: str, chunk_start_time: float, entry_id: int):
+        """转录完成回调"""
+        # 添加到表格
+        self._page_transcript.append_text(text, chunk_start_time, entry_id)
+
+        # 提交翻译任务（带上下文）
+        if self._translate_lang and self._translation_controller._worker:
+            # 获取最近的 5 条转录作为上下文
+            recent_entries = []
+            transcript_data = self._page_transcript._transcript_data
+            for row_id in sorted(transcript_data.keys())[-5:]:
+                data = transcript_data[row_id]
+                recent_entries.append({
+                    "id": data["entry_id"],
+                    "text": data["asr_text"]
+                })
+
+            # 提交翻译
+            if recent_entries:
+                from asr_logger import get_asr_logger
+                session_dir = get_asr_logger()._session_dir
+                self._translation_controller.submit(recent_entries, session_dir)
+
+    def _on_translation_error(self, entry_id: int, error_msg: str):
+        """翻译错误"""
+        print(f"翻译错误 (entry_id={entry_id}): {error_msg}")
+
     def _load_settings(self):
         """加载设置"""
         import json
@@ -460,6 +589,18 @@ class MainWindow(QMainWindow):
             try:
                 with open(config_file, "r", encoding="utf-8") as f:
                     self._settings = json.load(f)
+
+                # 配置 LLM 客户端
+                llm_config = self._settings.get("llm", {})
+                if llm_config:
+                    from llm_client import get_llm_client
+                    llm_client = get_llm_client()
+                    llm_client.set_config(
+                        base_url=llm_config.get("base_url", ""),
+                        api_key=llm_config.get("api_key", ""),
+                        model=llm_config.get("model", "")
+                    )
+                    print(f"[设置] LLM 配置已加载: {llm_config.get('model', 'unknown')}")
             except Exception as e:
                 print(f"加载设置失败: {e}")
 
@@ -468,6 +609,18 @@ class MainWindow(QMainWindow):
         dialog = SettingsDialog(self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self._settings = dialog.get_settings()
+
+            # 配置 LLM 客户端
+            llm_config = self._settings.get("llm", {})
+            if llm_config:
+                from llm_client import get_llm_client
+                llm_client = get_llm_client()
+                llm_client.set_config(
+                    base_url=llm_config.get("base_url", ""),
+                    api_key=llm_config.get("api_key", ""),
+                    model=llm_config.get("model", "")
+                )
+                print(f"[设置] LLM 配置已更新: {llm_config.get('model', 'unknown')}")
 
     def closeEvent(self, event):
         """窗口关闭时停止"""

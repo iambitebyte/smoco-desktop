@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
     QGroupBox, QFormLayout, QListWidget, QMessageBox,
     QAbstractItemView, QTabWidget, QWidget, QComboBox, QTextEdit
 )
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal
 
 # 添加父目录到 Python 路径
 _smoco_root = Path(__file__).parent.parent
@@ -20,6 +20,7 @@ sys.path.insert(0, str(_smoco_root))
 from i18n import i18n
 from paths import get_settings_path
 from local_whisper_manager import get_local_whisper_manager, MODELS
+from llm_client import get_llm_client
 
 
 class SettingsDialog(QDialog):
@@ -253,11 +254,63 @@ class SettingsDialog(QDialog):
         local_tab.setLayout(local_layout)
         self.tab_widget.addTab(local_tab, i18n.t("local_whisper_model"))
 
+        # === 选项卡 4: LLM 配置 ===
+        llm_tab = QWidget()
+        llm_layout = QVBoxLayout()
+        llm_layout.setSpacing(15)
+        llm_layout.setContentsMargins(20, 20, 20, 20)
+
+        # 说明
+        llm_info = QLabel(i18n.t("llm_instructions"))
+        llm_info.setStyleSheet("color: #666; font-style: italic; padding: 8px;")
+        llm_layout.addWidget(llm_info)
+
+        # 配置表单
+        llm_form = QFormLayout()
+
+        # Base URL
+        self.llm_base_url_input = QLineEdit()
+        self.llm_base_url_input.setPlaceholderText(i18n.t("llm_base_url_placeholder"))
+        llm_form.addRow(i18n.t("llm_base_url"), self.llm_base_url_input)
+
+        # API Key
+        self.llm_api_key_input = QLineEdit()
+        self.llm_api_key_input.setPlaceholderText(i18n.t("llm_api_key_placeholder"))
+        self.llm_api_key_input.setEchoMode(QLineEdit.EchoMode.Password)
+        llm_form.addRow(i18n.t("llm_api_key"), self.llm_api_key_input)
+
+        # Model ID
+        self.llm_model_input = QLineEdit()
+        self.llm_model_input.setPlaceholderText(i18n.t("llm_model_placeholder"))
+        llm_form.addRow(i18n.t("llm_model"), self.llm_model_input)
+
+        llm_layout.addLayout(llm_form)
+
+        # 验证按钮
+        llm_btn_layout = QHBoxLayout()
+
+        self.llm_validate_btn = QPushButton(i18n.t("llm_validate"))
+        self.llm_validate_btn.clicked.connect(self._on_llm_validate)
+        llm_btn_layout.addWidget(self.llm_validate_btn)
+
+        self.llm_validate_status = QLabel("")
+        llm_btn_layout.addWidget(self.llm_validate_status)
+        llm_btn_layout.addStretch()
+
+        llm_layout.addLayout(llm_btn_layout)
+        llm_layout.addStretch()
+
+        llm_tab.setLayout(llm_layout)
+        self.tab_widget.addTab(llm_tab, i18n.t("llm_config"))
+
         # 连接本地服务状态变化信号
         local_manager = get_local_whisper_manager()
         local_manager.status_changed.connect(self._on_local_status_changed)
         local_manager.error_occurred.connect(self._on_local_error)
         local_manager.output_received.connect(self._on_local_output)
+
+        # 验证线程
+        self._validation_thread = None
 
         # 添加选项卡到主布局
         layout.addWidget(self.tab_widget)
@@ -352,6 +405,15 @@ class SettingsDialog(QDialog):
                     self._on_local_status_changed("stopped", i18n.t("local_status_stopped"))
             except Exception as e:
                 print(f"加载设置失败: {e}")
+
+            try:
+                # 加载 LLM 配置
+                llm_config = settings.get("llm", {})
+                self.llm_base_url_input.setText(llm_config.get("base_url", ""))
+                self.llm_api_key_input.setText(llm_config.get("api_key", ""))
+                self.llm_model_input.setText(llm_config.get("model", ""))
+            except Exception as e:
+                print(f"加载 LLM 配置失败: {e}")
 
     def _load_servers(self, servers: list):
         """加载服务器列表到 UI"""
@@ -489,6 +551,11 @@ class SettingsDialog(QDialog):
                     "model": "small",  # 固定使用 small 模型
                     "port": self.local_port_spin.value(),
                     "enabled": get_local_whisper_manager().is_running,
+                },
+                "llm": {
+                    "base_url": self.llm_base_url_input.text().strip(),
+                    "api_key": self.llm_api_key_input.text().strip(),
+                    "model": self.llm_model_input.text().strip(),
                 }
             }
             with open(config_file, "w", encoding="utf-8") as f:
@@ -546,6 +613,11 @@ class SettingsDialog(QDialog):
                 "model": "small",  # 固定使用 small 模型
                 "port": self.local_port_spin.value(),
                 "enabled": get_local_whisper_manager().is_running,
+            },
+            "llm": {
+                "base_url": self.llm_base_url_input.text().strip(),
+                "api_key": self.llm_api_key_input.text().strip(),
+                "model": self.llm_model_input.text().strip(),
             }
         }
 
@@ -609,3 +681,73 @@ class SettingsDialog(QDialog):
         # 自动滚动到底部
         cursor = self.local_log_output.textCursor()
         self.local_log_output.setTextCursor(cursor)
+
+    def _on_llm_validate(self):
+        """验证 LLM 配置"""
+        base_url = self.llm_base_url_input.text().strip()
+        api_key = self.llm_api_key_input.text().strip()
+        model = self.llm_model_input.text().strip()
+
+        if not all([base_url, api_key, model]):
+            QMessageBox.warning(self, i18n.t("hint"), i18n.t("llm_config_incomplete"))
+            return
+
+        self.llm_validate_btn.setEnabled(False)
+        self.llm_validate_status.setText(i18n.t("llm_validating"))
+        self.llm_validate_status.setStyleSheet("color: #f57c00;")
+
+        llm_client = get_llm_client()
+        llm_client.set_config(base_url, api_key, model)
+
+        # 清理旧线程
+        if self._validation_thread and self._validation_thread.isRunning():
+            self._validation_thread.quit()
+            self._validation_thread.wait()
+
+        # 异步验证
+        self._validation_thread = LLMValidationThread(llm_client)
+        self._validation_thread.finished.connect(
+            self._on_llm_validation_finished,
+            Qt.ConnectionType.QueuedConnection
+        )
+        self._validation_thread.start()
+
+    def _on_llm_validation_finished(self, result: tuple[bool, str]):
+        """LLM 验证完成"""
+        # 检查对话框是否还存在
+        if not self.isVisible():
+            return
+
+        self.llm_validate_btn.setEnabled(True)
+        success, message = result
+
+        if success:
+            self.llm_validate_status.setText(message)
+            self.llm_validate_status.setStyleSheet("color: #28a745;")
+        else:
+            self.llm_validate_status.setText(message)
+            self.llm_validate_status.setStyleSheet("color: #dc3545;")
+
+
+class LLMValidationThread(QThread):
+    """LLM 配置验证线程"""
+
+    finished = pyqtSignal(tuple)  # (success, message)
+
+    def __init__(self, llm_client):
+        super().__init__()
+        self._llm_client = llm_client
+
+    def run(self):
+        """执行验证"""
+        result = self._llm_client.validate()
+        self.finished.emit(result)
+
+    def closeEvent(self, event):
+        """对话框关闭时清理线程"""
+        # 清理验证线程
+        if self._validation_thread and self._validation_thread.isRunning():
+            self._validation_thread.quit()
+            self._validation_thread.wait()
+        super().closeEvent(event)
+
