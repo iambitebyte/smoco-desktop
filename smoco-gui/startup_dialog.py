@@ -11,9 +11,10 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 
-# 添加父目录到 Python 路径
-_smoco_root = Path(__file__).parent.parent
-sys.path.insert(0, str(_smoco_root))
+# 只在开发环境中修改 sys.path
+if not getattr(sys, 'frozen', False):
+    _smoco_root = Path(__file__).parent.parent
+    sys.path.insert(0, str(_smoco_root))
 
 from i18n import i18n
 from local_whisper_manager import get_local_whisper_manager

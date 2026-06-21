@@ -15,12 +15,17 @@ from PyQt6.QtWidgets import QApplication
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-# 添加父目录到 Python 路径
-_smoco_root = Path(__file__).parent.parent
-sys.path.insert(0, str(_smoco_root))
+# 只在开发环境中修改 sys.path
+if not getattr(sys, 'frozen', False):
+    _smoco_root = Path(__file__).parent.parent
+    sys.path.insert(0, str(_smoco_root))
 
 from asr_chunker import AudioChunker
 from asr_logger import get_asr_logger
+from gui_logger import get_gui_logger
+
+# 获取日志记录器
+logger = get_gui_logger(__name__)
 
 
 class ASRWorker(QObject):
@@ -93,10 +98,9 @@ class ASRWorker(QObject):
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
             }
 
-            print(f"[ASR] POST {url}")
-            print(f"[ASR] Params: {params}")
-            print(f"[ASR] Headers: {headers}")
-            print(f"[ASR] Audio size: {len(audio_data)} bytes")
+            logger.debug(f"ASR POST {url}")
+            logger.debug(f"ASR Params: {params}")
+            logger.debug(f"ASR Audio size: {len(audio_data)} bytes")
 
             response = requests.post(
                 url,
@@ -106,7 +110,7 @@ class ASRWorker(QObject):
                 timeout=10.0
             )
 
-            print(f"[ASR] Response: {response.status_code}")
+            logger.debug(f"ASR Response: {response.status_code}")
 
             processing_time = time.time() - request_start
 

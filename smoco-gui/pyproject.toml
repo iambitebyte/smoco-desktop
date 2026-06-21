@@ -25,4 +25,7 @@ build-backend = "setuptools.build_meta"
 include = ["smoco*"]
 
 [tool.uv]
-dev-dependencies = []
+dev-dependencies = [
+    "pillow>=12.2.0",
+    "pyinstaller>=6.21.0",
+]

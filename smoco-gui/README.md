@@ -344,6 +344,44 @@ max_chunk_ms=15000  # 最大 15 秒
 min_chunk_ms=500    # 最小 500ms
 ```
 
+## 打包为可执行文件
+
+Smoco Desktop 可以打包为 Windows 可执行文件，无需 Python 环境即可运行。
+
+### 快速打包
+
+```bash
+cd smoco-gui
+
+# 标准版（推荐，支持远程 Whisper）
+build.bat
+
+# 完整版（包含 Local Whisper）
+build_with_local_whisper.bat
+```
+
+详细打包说明请参阅 [BUILD.md](BUILD.md)。
+
+### 分发版本
+
+**标准版** (~100MB)：
+- 支持远程 Whisper 服务器
+- 体积小，下载快
+- 启动快速
+
+**完整版** (~400MB+)：
+- 包含 Local Whisper 功能
+- 开箱即用
+- 支持离线使用
+
+### 用户要求
+
+- **操作系统**: Windows 10/11（64位）
+- **无需** Python 环境
+- **无需** 安装任何依赖
+
+详见 [BUILD.md](BUILD.md) 了解更多打包细节。
+
 ## 依赖
 
 - PyQt6 >= 6.6.0
@@ -370,5 +408,5 @@ min_chunk_ms=500    # 最小 500ms
 - ✅ 启动对话框（服务器选择 + 健康检查 + 语言选择 + 翻译选项）
 - ✅ 转录文本交互（右键复制功能）
 - ✅ LLM 自动验证（启动时自动检查配置）
-- 🚧 本地 Whisper 支持
-- 🚧 打包为 exe
+- ✅ 本地 Whisper 支持（可选功能）
+- ✅ Windows 可执行文件打包（标准版 + 完整版）

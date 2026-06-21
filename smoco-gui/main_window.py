@@ -4,6 +4,7 @@
 
 import sys
 import time
+import logging
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
@@ -23,10 +24,15 @@ from transcript_edit import InteractiveTranscriptEdit
 from local_whisper_manager import get_local_whisper_manager
 from translation_worker import TranslationController
 from PyQt6.QtCore import QTimer
+from gui_logger import get_gui_logger
 
-# 添加父目录到 Python 路径
-_smoco_root = Path(__file__).parent.parent
-sys.path.insert(0, str(_smoco_root))
+# 只在开发环境中修改 sys.path
+if not getattr(sys, 'frozen', False):
+    _smoco_root = Path(__file__).parent.parent
+    sys.path.insert(0, str(_smoco_root))
+
+# 获取日志记录器
+logger = get_gui_logger(__name__)
 
 
 class CompactAudioMeter(QWidget):
@@ -526,6 +532,7 @@ class MainWindow(QMainWindow):
             self._stack.setCurrentWidget(self._page_transcript)
 
         except Exception as e:
+            logger.exception(f"启动 ASR 失败: {e}")
             QMessageBox.critical(
                 self,
                 i18n.t("start_failed"),
@@ -542,6 +549,7 @@ class MainWindow(QMainWindow):
 
     def _on_meter_error(self, msg: str):
         """音频错误"""
+        logger.error(f"音频采集错误: {msg}")
         self._stop_asr()
         QMessageBox.critical(
             self,
@@ -551,8 +559,8 @@ class MainWindow(QMainWindow):
 
     def _on_asr_error(self, msg: str):
         """ASR 错误"""
-        # 不停止，只显示警告
-        print(f"ASR 错误: {msg}")
+        # 不停止，只记录警告
+        logger.warning(f"ASR 错误: {msg}")
 
     def _on_transcript_ready(self, text: str, chunk_start_time: float, entry_id: int):
         """转录完成回调"""
@@ -579,7 +587,7 @@ class MainWindow(QMainWindow):
 
     def _on_translation_error(self, entry_id: int, error_msg: str):
         """翻译错误"""
-        print(f"翻译错误 (entry_id={entry_id}): {error_msg}")
+        logger.error(f"翻译错误 (entry_id={entry_id}): {error_msg}")
 
     def _load_settings(self):
         """加载设置"""
@@ -600,15 +608,16 @@ class MainWindow(QMainWindow):
                         api_key=llm_config.get("api_key", ""),
                         model=llm_config.get("model", "")
                     )
-                    print(f"[设置] LLM 配置已加载: {llm_config.get('model', 'unknown')}")
+                    logger.info(f"LLM 配置已加载: {llm_config.get('model', 'unknown')}")
             except Exception as e:
-                print(f"加载设置失败: {e}")
+                logger.error(f"加载设置失败: {e}")
 
     def _show_settings(self):
         """显示设置对话框"""
         dialog = SettingsDialog(self)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self._settings = dialog.get_settings()
+            logger.info("设置已保存")
 
             # 配置 LLM 客户端
             llm_config = self._settings.get("llm", {})
@@ -620,7 +629,7 @@ class MainWindow(QMainWindow):
                     api_key=llm_config.get("api_key", ""),
                     model=llm_config.get("model", "")
                 )
-                print(f"[设置] LLM 配置已更新: {llm_config.get('model', 'unknown')}")
+                logger.info(f"LLM 配置已更新: {llm_config.get('model', 'unknown')}")
 
     def closeEvent(self, event):
         """窗口关闭时停止"""

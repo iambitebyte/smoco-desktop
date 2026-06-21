@@ -161,6 +161,37 @@ python whisper_local_transcriber.py --model medium --language ja
 
 详见 `whisper-local/README.md`。
 
+---
+
+## Smoco Desktop GUI
+
+`smoco-gui/` 目录包含 Smoco 的图形界面版本，提供完整的 Windows 桌面应用体验。
+
+### 主要功能
+
+- **图形界面**: 基于 PyQt6 的现代桌面应用
+- **实时转录**: Windows 系统音频实时转录
+- **多语言支持**: 界面支持中文、日文、英文
+- **实时翻译**: LLM 驱动的实时翻译功能
+- **本地 Whisper**: 可选的本地 Whisper 转写支持
+- **Windows 打包**: 可打包为独立可执行文件
+
+### 快速开始
+
+```bash
+cd smoco-gui
+uv run python main.py
+```
+
+### 打包为可执行文件
+
+```bash
+cd smoco-gui
+build.bat
+```
+
+详见 [smoco-gui/README.md](smoco-gui/README.md) 和 [smoco-gui/BUILD.md](smoco-gui/BUILD.md)。
+
 ## 架构
 
 ```

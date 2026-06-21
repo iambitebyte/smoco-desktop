@@ -7,9 +7,10 @@ from pathlib import Path
 logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
 log = logging.getLogger(__name__)
 
-# 添加父目录到 Python 路径，以便导入 smoco 模块
-_smoco_root = Path(__file__).parent.parent
-sys.path.insert(0, str(_smoco_root))
+# 只在开发环境中修改 sys.path
+if not getattr(sys, 'frozen', False):
+    _smoco_root = Path(__file__).parent.parent
+    sys.path.insert(0, str(_smoco_root))
 
 
 def load_wasapi_devices():

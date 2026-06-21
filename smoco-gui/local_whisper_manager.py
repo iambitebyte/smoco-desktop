@@ -12,11 +12,20 @@ from pathlib import Path
 from PyQt6.QtCore import QObject, pyqtSignal, QThread
 from PyQt6.QtWidgets import QApplication
 
-# 添加父目录到 Python 路径
-_smoco_root = Path(__file__).parent.parent
-sys.path.insert(0, str(_smoco_root))
+# 只在开发环境中修改 sys.path
+if not getattr(sys, 'frozen', False):
+    _smoco_root = Path(__file__).parent.parent
+    sys.path.insert(0, str(_smoco_root))
 
+from paths import get_smoco_root
 from i18n import i18n
+from gui_logger import get_gui_logger
+
+# 使用支持打包环境的根目录
+_smoco_root = get_smoco_root()
+
+# 获取日志记录器
+logger = get_gui_logger(__name__)
 
 # 支持的模型
 MODELS = {
@@ -39,7 +48,9 @@ class LocalWhisperStarter(QThread):
         try:
             # 检查端口是否可用
             if not self._manager._is_port_available():
-                self._manager.error_occurred.emit(f"端口 {self._manager._config.get('port', 8000)} 已被占用，请先停止其他服务或更改端口")
+                error_msg = f"端口 {self._manager._config.get('port', 8000)} 已被占用，请先停止其他服务或更改端口"
+                logger.error(error_msg)
+                self._manager.error_occurred.emit(error_msg)
                 self.finished.emit(False)
                 return
 
@@ -50,7 +61,9 @@ class LocalWhisperStarter(QThread):
             else:
                 self.finished.emit(False)
         except Exception as e:
-            self._manager.error_occurred.emit(f"启动失败: {e}")
+            error_msg = f"启动失败: {e}"
+            logger.error(error_msg)
+            self._manager.error_occurred.emit(error_msg)
             self.finished.emit(False)
 
 
@@ -195,13 +208,32 @@ class LocalWhisperManager(QObject):
         """实际启动进程（在后台线程中调用）"""
         self._is_stopping = False
 
+        logger.debug(f"开始启动 Local Whisper 服务，项目根目录: {_smoco_root}")
+
         # 检查 API 文件
         api_file = _smoco_root / "whisper-local" / "whisper_local_api.py"
+        logger.debug(f"检查 API 文件: {api_file}")
+
         if not api_file.exists():
-            raise Exception(f"API 文件不存在: {api_file}")
+            error_msg = f"API 文件不存在: {api_file}"
+            logger.error(error_msg)
+            # 在打包环境中，提示用户如何设置 whisper-local
+            if getattr(sys, 'frozen', False):
+                exe_dir = Path(sys.executable).parent
+                hint = f"\n请将 whisper-local 文件夹放置在以下位置之一:\n" \
+                       f"  1. {exe_dir.parent}/whisper-local/\n" \
+                       f"  2. {exe_dir}/_internal/whisper-local/ (推荐)\n" \
+                       f"  3. {exe_dir}/whisper-local/\n" \
+                       f"并确保该文件夹包含 whisper_local_api.py。"
+                logger.error(f"Local Whisper API 文件未找到。{hint}")
+                raise Exception(f"Local Whisper API 文件未找到。\n{hint}\n期望位置: {api_file}")
+            else:
+                raise Exception(f"API 文件不存在: {api_file}")
 
         # 查找 whisper-local 的 Python 解释器
         whisper_local_venv = _smoco_root / "whisper-local" / ".venv"
+        logger.debug(f"检查 Python 环境: {whisper_local_venv}")
+
         if whisper_local_venv.exists():
             # Windows: .venv\Scripts\python.exe
             # Linux/Mac: .venv/bin/python
@@ -211,9 +243,27 @@ class LocalWhisperManager(QObject):
                 python_exe = whisper_local_venv / "bin" / "python"
 
             if not python_exe.exists():
-                raise Exception(f"Python 解释器不存在: {python_exe}")
+                error_msg = f"Python 解释器不存在: {python_exe}"
+                logger.error(error_msg)
+                raise Exception(error_msg)
+
+            logger.info(f"找到 Python 解释器: {python_exe}")
         else:
-            raise Exception("whisper-local/.venv 不存在，请先在 whisper-local 目录运行 'uv sync'")
+            error_msg = f"whisper-local/.venv 不存在: {whisper_local_venv}"
+            logger.error(error_msg)
+            # 在打包环境中，给出更清晰的提示
+            if getattr(sys, 'frozen', False):
+                hint = (
+                    f"Local Whisper 功能需要虚拟环境，但当前未安装。\n\n"
+                    f"Local Whisper 是可选功能，你可以使用远程 Whisper 服务器。\n"
+                    f"如果需要使用 Local Whisper，请:\n"
+                    f"1. 从源码的 whisper-local 目录复制 .venv 到：{_smoco_root}/whisper-local/\n"
+                    f"2. 或在该目录运行 'uv sync' 安装依赖"
+                )
+                logger.error(hint)
+                raise Exception(hint)
+            else:
+                raise Exception("whisper-local/.venv 不存在，请先在 whisper-local 目录运行 'uv sync'")
 
         self.status_changed.emit("starting", i18n.t("local_starting"))
 
@@ -224,7 +274,14 @@ class LocalWhisperManager(QObject):
             "PYTHONUNBUFFERED": "1",
         }
 
+        logger.info(f"启动进程: {python_exe} {api_file} --model {self._config['model']} --port {self._config['port']}")
+
         # 启动子进程（使用字节模式以更好处理编码）
+        # 设置创建标志以隐藏控制台窗口并防止 CTRL+C 信号
+        creation_flags = 0
+        if sys.platform == "win32":
+            creation_flags = subprocess.CREATE_NO_WINDOW
+
         self._process = subprocess.Popen(
             [str(python_exe), str(api_file),
              "--model", self._config["model"],
@@ -235,6 +292,7 @@ class LocalWhisperManager(QObject):
             bufsize=1,  # 行缓冲
             cwd=str(_smoco_root / "whisper-local"),
             env=env,
+            creationflags=creation_flags,
         )
 
         # 启动监控线程
@@ -273,7 +331,9 @@ class LocalWhisperManager(QObject):
             time.sleep(check_interval)
 
         # 超时
-        self.error_occurred.emit(i18n.t("local_start_timeout"))
+        error_msg = i18n.t("local_start_timeout")
+        logger.error(error_msg)
+        self.error_occurred.emit(error_msg)
         return False
 
     def stop(self):
@@ -304,7 +364,7 @@ class LocalWhisperManager(QObject):
 
     def _on_output(self, line: str):
         """处理输出"""
-        print(f"[Local Whisper] {line}")
+        logger.info(f"[Local Whisper] {line}")
         self.output_received.emit(line)  # 发出输出信号
 
         # 检测下载进度
@@ -318,7 +378,9 @@ class LocalWhisperManager(QObject):
             self.status_changed.emit("stopped", i18n.t("local_stopped"))
         elif exit_code != 0:
             # 只有非主动停止且非零退出码才报错
-            self.error_occurred.emit(f"进程异常退出 (exit code: {exit_code})")
+            error_msg = f"进程异常退出 (exit code: {exit_code})"
+            logger.error(error_msg)
+            self.error_occurred.emit(error_msg)
         else:
             self.status_changed.emit("stopped", i18n.t("local_stopped"))
         self._process = None

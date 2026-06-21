@@ -5,14 +5,20 @@ LLM 客户端 - 翻译调用
 import sys
 import json
 import requests
+import logging
 from pathlib import Path
 from PyQt6.QtCore import QObject, pyqtSignal
 
-# 添加父目录到 Python 路径
-_smoco_root = Path(__file__).parent.parent
-sys.path.insert(0, str(_smoco_root))
+# 只在开发环境中修改 sys.path
+if not getattr(sys, 'frozen', False):
+    _smoco_root = Path(__file__).parent.parent
+    sys.path.insert(0, str(_smoco_root))
 
 from i18n import i18n
+from gui_logger import get_gui_logger
+
+# 获取日志记录器
+logger = get_gui_logger(__name__)
 
 
 class LLMClient(QObject):
@@ -68,14 +74,14 @@ class LLMClient(QObject):
                 headers=headers,
                 timeout=10.0
             )
-            print(f"[LLM 验证] 请求 URL: {url}")
-            print(f"[LLM 验证] 模型: {self._config['model']}")
+            logger.debug(f"LLM 验证请求 URL: {url}")
+            logger.debug(f"LLM 验证模型: {self._config['model']}")
 
             if response.status_code == 200:
                 return True, i18n.t("llm_config_ok")
             else:
-                print(f"[LLM 验证] 响应状态码: {response.status_code}")
-                print(f"[LLM 验证] 响应内容: {response.text[:200]}")
+                logger.warning(f"LLM 验证响应状态码: {response.status_code}")
+                logger.warning(f"LLM 验证响应内容: {response.text[:200]}")
                 return False, f"{i18n.t('llm_config_error')} {response.status_code}"
 
         except requests.exceptions.Timeout:

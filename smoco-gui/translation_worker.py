@@ -9,16 +9,18 @@ from pathlib import Path
 from PyQt6.QtCore import QObject, pyqtSignal, QThread
 from concurrent.futures import ThreadPoolExecutor
 
-# 添加父目录到 Python 路径
-_smoco_root = Path(__file__).parent.parent
-sys.path.insert(0, str(_smoco_root))
+# 只在开发环境中修改 sys.path
+if not getattr(sys, 'frozen', False):
+    _smoco_root = Path(__file__).parent.parent
+    sys.path.insert(0, str(_smoco_root))
 
 from llm_client import get_llm_client
 from paths import get_smoco_data_dir
 from asr_logger import get_asr_logger
+from gui_logger import get_gui_logger
 
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(__name__)
+# 获取日志记录器
+log = get_gui_logger(__name__)
 
 
 class TranslationWorker(QObject):

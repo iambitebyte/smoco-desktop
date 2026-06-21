@@ -9,11 +9,13 @@ import math
 from dataclasses import dataclass, field
 from pathlib import Path
 
-# 添加父目录到 Python 路径
-_smoco_root = Path(__file__).parent.parent
-sys.path.insert(0, str(_smoco_root))
+# 只在开发环境中修改 sys.path
+if not getattr(sys, 'frozen', False):
+    _smoco_root = Path(__file__).parent.parent
+    sys.path.insert(0, str(_smoco_root))
 
 from smoco.audio import AudioChunk
+import webrtcvad  # 显式导入，确保 PyInstaller 能检测到
 
 logging.getLogger("webrtcvad").setLevel(logging.WARNING)
 
@@ -21,7 +23,6 @@ logging.getLogger("webrtcvad").setLevel(logging.WARNING)
 class WebRtcVad:
     """WebRTC VAD 包装"""
     def __init__(self, aggressiveness: int = 2, sample_rate: int = 16000):
-        import webrtcvad
         self._vad = webrtcvad.Vad(aggressiveness)
         self._rate = sample_rate
 
