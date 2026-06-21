@@ -632,52 +632,64 @@ class MainWindow(QMainWindow):
                 logger.info(f"LLM 配置已更新: {llm_config.get('model', 'unknown')}")
 
     def closeEvent(self, event):
-        """窗口关闭时停止"""
+        """窗口关闭时检查 Local Whisper 状态"""
+        logger.info("应用正在关闭...")
+
         if self._is_running:
             self._stop_asr()
 
-        # 停止本地 Whisper 服务
+        # 检查 Local Whisper 服务状态
         local_manager = get_local_whisper_manager()
-        if local_manager.is_running:
-            # 创建自定义等待对话框
-            wait_widget = QWidget()
-            wait_widget.setWindowTitle(i18n.t("please_wait"))
-            wait_widget.setWindowModality(Qt.WindowModality.ApplicationModal)
-            wait_widget.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.CustomizeWindowHint)
-            wait_widget.setFixedSize(300, 100)
+        port = local_manager._config.get('port', 8000)
 
-            layout = QVBoxLayout()
-            layout.setContentsMargins(20, 20, 20, 20)
+        # 检查服务是否还在运行
+        has_service = self._check_local_whisper_service(port)
 
-            label = QLabel("正在关闭本地 Whisper 服务...")
-            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            label.setStyleSheet("font-size: 14px;")
-            layout.addWidget(label)
+        if has_service:
+            logger.warning(f"Local Whisper 服务仍在运行 (端口 {port})")
+            self._show_local_whisper_running_warning(port)
+            event.ignore()  # 阻止窗口关闭
+            return
 
-            info_label = QLabel("请稍候，这可能需要几秒钟。")
-            info_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            info_label.setStyleSheet("color: #666; font-size: 12px;")
-            layout.addWidget(info_label)
-
-            wait_widget.setLayout(layout)
-            wait_widget.show()
-
-            # 强制更新 UI
-            wait_widget.raise_()
-            wait_widget.activateWindow()
-            QApplication.processEvents()
-
-            # 关闭服务
-            import time
-            local_manager.stop()
-
-            # 等待服务完全关闭（最多 3 秒）
-            for _ in range(30):
-                QApplication.processEvents()
-                if not local_manager.is_running:
-                    break
-                time.sleep(0.1)
-
-            wait_widget.close()
-
+        logger.info("应用关闭完成")
         super().closeEvent(event)
+
+    def _check_local_whisper_service(self, port: int) -> bool:
+        """检查本地 Whisper 服务是否正在运行"""
+        try:
+            import requests
+            response = requests.get(f"http://127.0.0.1:{port}/health", timeout=1)
+            return response.status_code == 200
+        except:
+            return False
+
+    def _show_local_whisper_running_warning(self, port: int):
+        """显示 Local Whisper 仍在运行的警告"""
+        from PyQt6.QtWidgets import QMessageBox
+
+        logger.warning(f"阻止关闭应用：Local Whisper 服务正在运行 (端口 {port})")
+
+        message = (
+            f"Local Whisper 服务正在运行 (端口 {port})\n\n"
+            f"请先手动停止服务后再关闭应用：\n"
+            f"1. 点击「设定」按钮\n"
+            f"2. 切换到「本地 Whisper 模型」选项卡\n"
+            f"3. 点击「停止服务」按钮\n\n"
+            f"是否强制关闭应用？\n"
+            f"(可能会导致服务残留，需要手动终止进程)"
+        )
+
+        reply = QMessageBox.question(
+            self,
+            "Local Whisper 服务正在运行",
+            message,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            logger.warning("用户选择强制关闭应用（可能有服务残留）")
+            # 允许关闭
+        else:
+            logger.info("用户取消关闭，需要先停止 Local Whisper 服务")
+            # 阻止关闭 - 已经在 closeEvent 中调用 event.ignore()

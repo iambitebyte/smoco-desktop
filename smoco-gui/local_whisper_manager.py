@@ -342,25 +342,57 @@ class LocalWhisperManager(QObject):
 
         if self._process:
             try:
-                # 先尝试优雅关闭
-                self._process.terminate()
-                try:
-                    self._process.wait(timeout=3)
-                except subprocess.TimeoutExpired:
-                    # 强制终止
-                    self._process.kill()
-                    self._process.wait(timeout=2)
-            except:
-                pass
-            finally:
+                process_id = self._process.pid
+                logger.info(f"正在停止 Local Whisper 进程 (PID: {process_id})...")
+
+                # Windows: 使用 taskkill 强制终止进程树
+                if sys.platform == "win32":
+                    import subprocess
+                    try:
+                        # 终止进程及其所有子进程
+                        subprocess.run(
+                            ["taskkill", "/F", "/T", "/PID", str(process_id)],
+                            capture_output=True,
+                            timeout=5
+                        )
+                        logger.info(f"已通过 taskkill 终止进程树 (PID: {process_id})")
+                    except subprocess.TimeoutExpired:
+                        logger.warning(f"taskkill 超时 (PID: {process_id})")
+                    except Exception as e:
+                        logger.error(f"taskkill 失败: {e}")
+                else:
+                    # Unix-like: 先尝试优雅关闭
+                    self._process.terminate()
+                    try:
+                        self._process.wait(timeout=3)
+                    except subprocess.TimeoutExpired:
+                        # 强制终止
+                        self._process.kill()
+                        self._process.wait(timeout=2)
+
+                # 清理进程引用
+                self._process = None
+                logger.info("Local Whisper 进程已停止")
+
+            except Exception as e:
+                logger.error(f"停止 Local Whisper 进程时出错: {e}")
+                # 确保清理
                 self._process = None
 
         if self._monitor_thread:
-            self._monitor_thread.quit()
-            self._monitor_thread.wait(timeout=1000)
-            self._monitor_thread = None
+            try:
+                self._monitor_thread.quit()
+                self._monitor_thread.wait(timeout=1000)
+                self._monitor_thread = None
+            except Exception as e:
+                logger.warning(f"清理监控线程时出错: {e}")
 
         self.status_changed.emit("stopped", i18n.t("local_stopped"))
+
+        # 额外清理：确保端口被释放
+        if self._check_port():
+            logger.warning(f"端口 {self._config.get('port', 8000)} 仍被占用，尝试清理...")
+            self._kill_port_process(self._config.get('port', 8000))
 
     def _on_output(self, line: str):
         """处理输出"""

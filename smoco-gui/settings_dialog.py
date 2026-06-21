@@ -4,6 +4,7 @@
 
 import sys
 import json
+import requests
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel,
@@ -38,6 +39,7 @@ class SettingsDialog(QDialog):
 
         # 创建选项卡
         self.tab_widget = QTabWidget()
+        self.tab_widget.currentChanged.connect(self._on_tab_changed)
 
         # === 选项卡 1: 服务器列表 ===
         server_tab = QWidget()
@@ -312,6 +314,9 @@ class SettingsDialog(QDialog):
 
         # 验证线程
         self._validation_thread = None
+
+        # Local Whisper 健康检查线程
+        self._health_check_thread = None
 
         # 添加选项卡到主布局
         layout.addWidget(self.tab_widget)
@@ -669,19 +674,66 @@ class SettingsDialog(QDialog):
                 border-radius: 4px;
             """)
 
+    def _on_tab_changed(self, index: int):
+        """选项卡切换时触发"""
+        # Local Whisper 是第3个选项卡（索引2）
+        if index == 2:
+            # 延迟一点触发，让界面先显示出来
+            QTimer.singleShot(100, self._check_local_health)
+
+    def _check_local_health(self):
+        """检查 Local Whisper 服务健康状态"""
+        # 使用 Local Whisper Manager 的实际配置端口，而不是 spinbox 的值
+        local_manager = get_local_whisper_manager()
+        port = local_manager._config.get('port', 8000)
+
+        # 清理旧线程
+        if self._health_check_thread and self._health_check_thread.isRunning():
+            self._health_check_thread.quit()
+            self._health_check_thread.wait()
+
+        # 显示检查中状态
+        self.local_status_label.setText(f"检查中 (端口 {port})...")
+        self.local_status_label.setStyleSheet("""
+            padding: 4px 12px;
+            background-color: #FFF3CD;
+            color: #856404;
+            border-radius: 4px;
+        """)
+        self.local_start_btn.setEnabled(False)
+        self.local_stop_btn.setEnabled(False)
+
+        # 添加调试信息到日志区域
+        from gui_logger import get_gui_logger
+        logger = get_gui_logger(__name__)
+        logger.info(f"开始检查 Local Whisper 服务状态 (端口: {port})")
+
+        # 启动健康检查线程
+        self._health_check_thread = LocalWhisperHealthCheckThread(port)
+        self._health_check_thread.finished.connect(self._on_health_check_finished)
+        self._health_check_thread.start()
+
+    def _on_health_check_finished(self, is_running: bool, message: str):
+        """健康检查完成"""
+        if is_running:
+            self._on_local_status_changed("running", message)
+        else:
+            self._on_local_status_changed("stopped", message)
+
     def _on_local_error(self, message: str):
         """本地服务错误"""
         QMessageBox.warning(self, i18n.t("error"), message)
 
     def _on_local_output(self, line: str):
         """本地服务输出"""
-        # 添加时间戳
+        # 添加时间戳并显示日志
         from datetime import datetime
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.local_log_output.append(f"[{timestamp}] {line}")
         # 自动滚动到底部
         cursor = self.local_log_output.textCursor()
         self.local_log_output.setTextCursor(cursor)
+        self.local_log_output.ensureCursorVisible()
 
     def _on_llm_validate(self):
         """验证 LLM 配置"""
@@ -730,6 +782,49 @@ class SettingsDialog(QDialog):
             self.llm_validate_status.setStyleSheet("color: #dc3545;")
 
 
+class LocalWhisperHealthCheckThread(QThread):
+    """Local Whisper 健康检查线程"""
+
+    finished = pyqtSignal(bool, str)  # (is_running, message)
+
+    def __init__(self, port):
+        super().__init__()
+        self.port = port
+
+    def run(self):
+        """执行健康检查"""
+        try:
+            url = f"http://127.0.0.1:{self.port}/health"
+            from gui_logger import get_gui_logger
+            logger = get_gui_logger(__name__)
+            logger.info(f"健康检查请求: {url}")
+
+            response = requests.get(url, timeout=2)
+            logger.info(f"健康检查响应状态: {response.status_code}")
+
+            if response.status_code == 200:
+                data = response.json()
+                model = data.get("model", "unknown")
+                logger.info(f"健康检查成功，模型: {model}")
+                # 只显示模型文件名
+                if "/" in model or "\\" in model:
+                    model = model.split("/")[-1].split("\\")[-1]
+                self.finished.emit(True, f"运行中 ({model})")
+            else:
+                logger.warning(f"健康检查失败，状态码: {response.status_code}")
+                self.finished.emit(False, "已停止")
+        except requests.exceptions.RequestException as e:
+            from gui_logger import get_gui_logger
+            logger = get_gui_logger(__name__)
+            logger.warning(f"健康检查请求失败: {e}")
+            self.finished.emit(False, "已停止")
+        except Exception as e:
+            from gui_logger import get_gui_logger
+            logger = get_gui_logger(__name__)
+            logger.error(f"健康检查异常: {e}")
+            self.finished.emit(False, f"检查失败: {e}")
+
+
 class LLMValidationThread(QThread):
     """LLM 配置验证线程"""
 
@@ -743,6 +838,15 @@ class LLMValidationThread(QThread):
         """执行验证"""
         result = self._llm_client.validate()
         self.finished.emit(result)
+
+    def showEvent(self, event):
+        """对话框显示时检查 Local Whisper 状态"""
+        super().showEvent(event)
+        # 检查是否切换到了 Local Whisper 选项卡
+        current_index = self.tab_widget.currentIndex()
+        # Local Whisper 是第3个选项卡（索引2）
+        if current_index == 2:  # Local Whisper 选项卡
+            self._check_local_health()
 
     def closeEvent(self, event):
         """对话框关闭时清理线程"""
