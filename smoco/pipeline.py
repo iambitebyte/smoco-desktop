@@ -64,11 +64,15 @@ class Pipeline:
             while True:
                 frame = self._source.read_frame()
                 if frame is None:
-                    # 没有帧（可能是静音期间），继续监听
-                    # 但如果 source 已停止，则退出
-                    if hasattr(self._source, '_stop') and self._source._stop.is_set():
-                        break
-                    continue
+                    # 实时源（带 _stop，如 WASAPI loopback）：None 表示此刻无帧，
+                    # 仅在 stop() 置位 _stop 后退出（持续监听）
+                    if hasattr(self._source, '_stop'):
+                        if self._source._stop.is_set():
+                            break
+                        continue
+                    # 有限源（FileSource 等，遵循 AudioSource 契约"返回 None 表示流结束"）：
+                    # 立即退出，否则会在此空转死循环
+                    break
                 for chunk in self._chunker.feed(frame):
                     if not chunk.pcm:        # 被 min_chunk_ms 丢弃
                         continue
