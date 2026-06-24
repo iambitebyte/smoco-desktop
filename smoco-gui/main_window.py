@@ -569,10 +569,11 @@ class MainWindow(QMainWindow):
 
         # 提交翻译任务（带上下文）
         if self._translate_lang and self._translation_controller._worker:
-            # 获取最近的 5 条转录作为上下文
+            # 获取最近的 N 条转录作为上下文
+            context_length = self._settings.get("llm", {}).get("context_length", 5)
             recent_entries = []
             transcript_data = self._page_transcript._transcript_data
-            for row_id in sorted(transcript_data.keys())[-5:]:
+            for row_id in sorted(transcript_data.keys())[-context_length:]:
                 data = transcript_data[row_id]
                 recent_entries.append({
                     "id": data["entry_id"],

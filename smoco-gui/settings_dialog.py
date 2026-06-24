@@ -287,6 +287,13 @@ class SettingsDialog(QDialog):
         self.llm_model_input.setPlaceholderText(i18n.t("llm_model_placeholder"))
         llm_form.addRow(i18n.t("llm_model"), self.llm_model_input)
 
+        # Translation Context Length
+        self.llm_context_length_spin = QSpinBox()
+        self.llm_context_length_spin.setRange(0, 50)
+        self.llm_context_length_spin.setValue(5)
+        self.llm_context_length_spin.setToolTip(i18n.t("llm_context_length_tooltip"))
+        llm_form.addRow(i18n.t("llm_context_length"), self.llm_context_length_spin)
+
         llm_layout.addLayout(llm_form)
 
         # 验证按钮
@@ -418,6 +425,7 @@ class SettingsDialog(QDialog):
                 self.llm_base_url_input.setText(llm_config.get("base_url", ""))
                 self.llm_api_key_input.setText(llm_config.get("api_key", ""))
                 self.llm_model_input.setText(llm_config.get("model", ""))
+                self.llm_context_length_spin.setValue(llm_config.get("context_length", 5))
             except Exception as e:
                 print(f"加载 LLM 配置失败: {e}")
 
@@ -562,6 +570,7 @@ class SettingsDialog(QDialog):
                     "base_url": self.llm_base_url_input.text().strip(),
                     "api_key": self.llm_api_key_input.text().strip(),
                     "model": self.llm_model_input.text().strip(),
+                    "context_length": self.llm_context_length_spin.value(),
                 }
             }
             with open(config_file, "w", encoding="utf-8") as f:
@@ -624,6 +633,7 @@ class SettingsDialog(QDialog):
                 "base_url": self.llm_base_url_input.text().strip(),
                 "api_key": self.llm_api_key_input.text().strip(),
                 "model": self.llm_model_input.text().strip(),
+                "context_length": self.llm_context_length_spin.value(),
             }
         }
 
