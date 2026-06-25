@@ -21,7 +21,7 @@ if not getattr(sys, 'frozen', False):
 
 from i18n import i18n
 from paths import get_settings_path
-from local_whisper_manager import get_local_whisper_manager, MODELS
+from local_whisper_manager import get_local_whisper_manager
 from llm_client import get_llm_client
 
 
@@ -159,10 +159,9 @@ class SettingsDialog(QDialog):
         # 配置表单
         config_form = QFormLayout()
 
-        # 模型显示（固定为 small）
-        for model, desc in MODELS.items():
-            model_label = QLabel(f"{model} - {desc}")
-            model_label.setStyleSheet("font-weight: bold;")
+        # 模型显示（固定为 small OpenVINO）
+        model_label = QLabel("Small OpenVINO (INT8 量化)")
+        model_label.setStyleSheet("font-weight: bold;")
         config_form.addRow(i18n.t("local_model_size") + ":", model_label)
 
         # 端口
@@ -170,6 +169,14 @@ class SettingsDialog(QDialog):
         self.local_port_spin.setRange(1024, 65535)
         self.local_port_spin.setValue(8000)
         config_form.addRow(i18n.t("local_port") + ":", self.local_port_spin)
+
+        # 设备选择
+        self.local_device_combo = QComboBox()
+        self.local_device_combo.addItem(i18n.t("local_device_auto"), "auto")
+        self.local_device_combo.addItem(i18n.t("local_device_gpu"), "GPU")
+        self.local_device_combo.addItem(i18n.t("local_device_cpu"), "CPU")
+        self.local_device_combo.setCurrentIndex(0)  # 默认自动
+        config_form.addRow(i18n.t("local_device") + ":", self.local_device_combo)
 
         local_layout.addLayout(config_form)
 
@@ -389,14 +396,22 @@ class SettingsDialog(QDialog):
 
                 # 加载本地 Whisper 配置
                 local_whisper = settings.get("local_whisper", {})
-                model = "small"  # 固定使用 small 模型
                 port = local_whisper.get("port", 8000)
+                device = local_whisper.get("device", "auto")
 
                 self.local_port_spin.setValue(port)
 
+                # 设置设备选择
+                device_index = 0  # 默认自动
+                if device == "GPU":
+                    device_index = 1
+                elif device == "CPU":
+                    device_index = 2
+                self.local_device_combo.setCurrentIndex(device_index)
+
                 # 检查本地服务实际运行状态
                 local_manager = get_local_whisper_manager()
-                local_manager.set_config(model, port, local_whisper.get("enabled", False))
+                local_manager.set_config("small-ov", port, device, local_whisper.get("enabled", False))
 
                 # 检查实际是否在运行
                 if local_manager.check_running():
@@ -562,8 +577,8 @@ class SettingsDialog(QDialog):
                     "pad_ms": self.pad_ms_spin.value(),
                 },
                 "local_whisper": {
-                    "model": "small",  # 固定使用 small 模型
                     "port": self.local_port_spin.value(),
+                    "device": self.local_device_combo.currentData(),
                     "enabled": get_local_whisper_manager().is_running,
                 },
                 "llm": {
@@ -625,8 +640,8 @@ class SettingsDialog(QDialog):
                 "pad_ms": self.pad_ms_spin.value(),
             },
             "local_whisper": {
-                "model": "small",  # 固定使用 small 模型
                 "port": self.local_port_spin.value(),
+                "device": self.local_device_combo.currentData(),
                 "enabled": get_local_whisper_manager().is_running,
             },
             "llm": {
@@ -639,11 +654,11 @@ class SettingsDialog(QDialog):
 
     def _on_local_start(self):
         """启动本地 Whisper 服务"""
-        model = "small"  # 固定使用 small 模型
         port = self.local_port_spin.value()
+        device = self.local_device_combo.currentData()
 
         local_manager = get_local_whisper_manager()
-        local_manager.set_config(model, port, enabled=True)
+        local_manager.set_config("small-ov", port, device, enabled=True)
         local_manager.start()
 
     def _on_local_stop(self):

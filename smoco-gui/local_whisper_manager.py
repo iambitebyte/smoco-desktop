@@ -29,7 +29,7 @@ logger = get_gui_logger(__name__)
 
 # 支持的模型
 MODELS = {
-    "small": "Small (推荐，较快且准确率好)",
+    "small-ov": "Small OpenVINO (GPU 加速，推荐)",
 }
 
 
@@ -78,14 +78,16 @@ class LocalWhisperManager(QObject):
         super().__init__()
         self._process = None
         self._config = {
-            "model": "small",
+            "model": "small-ov",
             "port": 8000,
             "enabled": False,
+            "device": "auto",  # auto, GPU, CPU
         }
         self._api_url = ""
         self._monitor_thread = None
         self._starter_thread = None
         self._is_stopping = False  # 标记是否正在主动停止
+        self._available_device = None  # 检测到的可用设备
 
     @property
     def is_running(self) -> bool:
@@ -164,11 +166,62 @@ class LocalWhisperManager(QObject):
         """检查服务是否实际运行"""
         return self.is_running
 
-    def set_config(self, model: str, port: int, enabled: bool = False):
+    def _detect_available_device(self) -> str:
+        """检测可用的 OpenVINO 设备
+
+        Returns:
+            str: 可用设备 (GPU/CPU)，优先 GPU
+        """
+        if self._available_device:
+            return self._available_device
+
+        try:
+            from openvino import Core
+            devices = Core().available_devices
+            logger.info(f"检测到的 OpenVINO 设备: {devices}")
+
+            # 优先选择 GPU
+            if "GPU" in devices:
+                self._available_device = "GPU"
+                logger.info("选择使用 GPU 设备")
+            elif "CPU" in devices:
+                self._available_device = "CPU"
+                logger.info("选择使用 CPU 设备")
+            else:
+                # 如果都没有，使用 CPU 作为默认
+                self._available_device = "CPU"
+                logger.warning("未找到 GPU，使用 CPU 作为默认设备")
+
+            return self._available_device
+        except ImportError:
+            logger.warning("无法导入 openvino，使用 CPU 作为默认设备")
+            self._available_device = "CPU"
+            return "CPU"
+        except Exception as e:
+            logger.error(f"检测设备失败: {e}，使用 CPU 作为默认设备")
+            self._available_device = "CPU"
+            return "CPU"
+
+    def get_device_to_use(self) -> str:
+        """获取要使用的设备
+
+        Returns:
+            str: 实际使用的设备 (GPU/CPU)
+        """
+        device_config = self._config.get("device", "auto")
+
+        if device_config == "auto":
+            return self._detect_available_device()
+        else:
+            # 用户手动指定了设备
+            return device_config.upper()
+
+    def set_config(self, model: str, port: int, device: str = "auto", enabled: bool = False):
         """设置配置"""
         self._config = {
             "model": model,
             "port": port,
+            "device": device,
             "enabled": enabled,
         }
         self._api_url = f"http://127.0.0.1:{port}"
@@ -211,27 +264,27 @@ class LocalWhisperManager(QObject):
         logger.debug(f"开始启动 Local Whisper 服务，项目根目录: {_smoco_root}")
 
         # 检查 API 文件
-        api_file = _smoco_root / "whisper-local" / "whisper_local_api.py"
+        api_file = _smoco_root / "whisper-local-npu" / "whisper_npu_api.py"
         logger.debug(f"检查 API 文件: {api_file}")
 
         if not api_file.exists():
             error_msg = f"API 文件不存在: {api_file}"
             logger.error(error_msg)
-            # 在打包环境中，提示用户如何设置 whisper-local
+            # 在打包环境中，提示用户如何设置 whisper-local-npu
             if getattr(sys, 'frozen', False):
                 exe_dir = Path(sys.executable).parent
-                hint = f"\n请将 whisper-local 文件夹放置在以下位置之一:\n" \
-                       f"  1. {exe_dir.parent}/whisper-local/\n" \
-                       f"  2. {exe_dir}/_internal/whisper-local/ (推荐)\n" \
-                       f"  3. {exe_dir}/whisper-local/\n" \
-                       f"并确保该文件夹包含 whisper_local_api.py。"
-                logger.error(f"Local Whisper API 文件未找到。{hint}")
-                raise Exception(f"Local Whisper API 文件未找到。\n{hint}\n期望位置: {api_file}")
+                hint = f"\n请将 whisper-local-npu 文件夹放置在以下位置之一:\n" \
+                       f"  1. {exe_dir.parent}/whisper-local-npu/\n" \
+                       f"  2. {exe_dir}/_internal/whisper-local-npu/ (推荐)\n" \
+                       f"  3. {exe_dir}/whisper-local-npu/\n" \
+                       f"并确保该文件夹包含 whisper_npu_api.py 和 whisper-small-ov 模型目录。"
+                logger.error(f"Local Whisper NPU API 文件未找到。{hint}")
+                raise Exception(f"Local Whisper NPU API 文件未找到。\n{hint}\n期望位置: {api_file}")
             else:
                 raise Exception(f"API 文件不存在: {api_file}")
 
-        # 查找 whisper-local 的 Python 解释器
-        whisper_local_venv = _smoco_root / "whisper-local" / ".venv"
+        # 查找 whisper-local-npu 的 Python 解释器
+        whisper_local_venv = _smoco_root / "whisper-local-npu" / ".venv"
         logger.debug(f"检查 Python 环境: {whisper_local_venv}")
 
         if whisper_local_venv.exists():
@@ -249,23 +302,27 @@ class LocalWhisperManager(QObject):
 
             logger.info(f"找到 Python 解释器: {python_exe}")
         else:
-            error_msg = f"whisper-local/.venv 不存在: {whisper_local_venv}"
+            error_msg = f"whisper-local-npu/.venv 不存在: {whisper_local_venv}"
             logger.error(error_msg)
             # 在打包环境中，给出更清晰的提示
             if getattr(sys, 'frozen', False):
                 hint = (
-                    f"Local Whisper 功能需要虚拟环境，但当前未安装。\n\n"
-                    f"Local Whisper 是可选功能，你可以使用远程 Whisper 服务器。\n"
-                    f"如果需要使用 Local Whisper，请:\n"
-                    f"1. 从源码的 whisper-local 目录复制 .venv 到：{_smoco_root}/whisper-local/\n"
+                    f"Local Whisper NPU 功能需要虚拟环境，但当前未安装。\n\n"
+                    f"Local Whisper NPU 是可选功能，你可以使用远程 Whisper 服务器。\n"
+                    f"如果需要使用 Local Whisper NPU，请:\n"
+                    f"1. 从源码的 whisper-local-npu 目录复制 .venv 到：{_smoco_root}/whisper-local-npu/\n"
                     f"2. 或在该目录运行 'uv sync' 安装依赖"
                 )
                 logger.error(hint)
                 raise Exception(hint)
             else:
-                raise Exception("whisper-local/.venv 不存在，请先在 whisper-local 目录运行 'uv sync'")
+                raise Exception("whisper-local-npu/.venv 不存在，请先在 whisper-local-npu 目录运行 'uv sync'")
 
         self.status_changed.emit("starting", i18n.t("local_starting"))
+
+        # 检测要使用的设备
+        device_to_use = self.get_device_to_use()
+        logger.info(f"检测到的设备: {device_to_use}")
 
         # 设置环境变量（解决编码问题）
         env = {
@@ -274,7 +331,7 @@ class LocalWhisperManager(QObject):
             "PYTHONUNBUFFERED": "1",
         }
 
-        logger.info(f"启动进程: {python_exe} {api_file} --model {self._config['model']} --port {self._config['port']}")
+        logger.info(f"启动进程: {python_exe} {api_file} --model-dir whisper-small-ov --language ja --port {self._config['port']} --device {device_to_use}")
 
         # 启动子进程（使用字节模式以更好处理编码）
         # 设置创建标志以隐藏控制台窗口并防止 CTRL+C 信号
@@ -284,13 +341,15 @@ class LocalWhisperManager(QObject):
 
         self._process = subprocess.Popen(
             [str(python_exe), str(api_file),
-             "--model", self._config["model"],
-             "--port", str(self._config["port"])],
+             "--model-dir", "whisper-small-ov",
+             "--language", "ja",
+             "--port", str(self._config["port"]),
+             "--device", device_to_use],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=False,  # 使用字节模式
             bufsize=1,  # 行缓冲
-            cwd=str(_smoco_root / "whisper-local"),
+            cwd=str(_smoco_root / "whisper-local-npu"),
             env=env,
             creationflags=creation_flags,
         )
