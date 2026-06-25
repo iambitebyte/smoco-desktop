@@ -74,12 +74,16 @@ def _interactive():
 
 
 def create_app(pipe, model_dir: str, device: str):
-    """构建 FastAPI app。pipe 是已加载的 openvino_genai.Whisper（或测试用假对象）。"""
+    """构建 FastAPI app。pipe 是已加载的 openvino_genai.WhisperPipeline（或测试用假对象）。"""
+    import openvino_genai
     from fastapi import FastAPI, HTTPException, Request
     from fastapi.responses import JSONResponse
     import numpy as np
 
     app = FastAPI(title="Whisper Local NPU API")
+
+    # 用于防止并发请求的锁（OpenVINO pipeline 同时只能处理一个请求）
+    generate_lock = asyncio.Lock()
 
     @app.get("/health")
     async def health():
@@ -95,19 +99,42 @@ def create_app(pipe, model_dir: str, device: str):
                 return JSONResponse({
                     "text": "", "segments": [], "language": language, "duration": 0.0,
                 })
+
+            log.info(f"收到音频数据: {len(audio_data)} bytes ({len(audio_data)/2} samples @ 16kHz, {len(audio_data)/2/16000:.2f}s)")
+
             samples = np.frombuffer(audio_data, dtype="<i2").astype(np.float32) / 32768.0
-            # 转写是同步重活，甩线程不卡事件循环
-            result = await asyncio.to_thread(pipe.transcribe, samples, language=language)
+            log.info(f"音频长度: {len(samples)} samples ({len(samples)/16000:.2f}s)")
+
+            # 使用 WhisperPipeline 的 generate 方法
+            # 参考 test_whisper.py 的成功调用方式
+            log.info(f"调用 pipe.generate: samples.shape={samples.shape}, dtype={samples.dtype}")
+
+            # 使用锁防止并发请求（OpenVINO pipeline 同时只能处理一个请求）
+            async with generate_lock:
+                result = await asyncio.to_thread(pipe.generate, samples)
+
+            log.info("pipe.generate 调用完成")
+
+            # 处理结果 - WhisperDecodedResults 有 texts 属性（复数）
+            if hasattr(result, 'texts') and result.texts:
+                text = result.texts[0] if isinstance(result.texts, list) and result.texts else ""
+            else:
+                text = str(result)  # fallback
+
+            log.info(f"识别结果: {text}")
+
             segments = []
-            for ch in getattr(result, "chunks", []) or []:
-                segments.append({
-                    "start": float(getattr(ch, "start", 0.0)),
-                    "end": float(getattr(ch, "end", 0.0)),
-                    "text": getattr(ch, "text", ""),
-                })
+            # 如果有 chunks/segments 信息
+            if hasattr(result, 'chunks') and result.chunks is not None:
+                for ch in result.chunks:
+                    segments.append({
+                        "start": float(getattr(ch, "start", 0.0)),
+                        "end": float(getattr(ch, "end", 0.0)),
+                        "text": getattr(ch, "text", ""),
+                    })
             duration = float(len(samples) / 16000.0)
             return JSONResponse({
-                "text": getattr(result, "text", ""),
+                "text": text,
                 "segments": segments,
                 "language": language,
                 "duration": duration,
@@ -124,19 +151,19 @@ def main():
     p.add_argument("--interactive", action="store_true", help="交互式选择配置")
     p.add_argument("--model-dir", type=str, help="OpenVINO IR 模型目录路径")
     p.add_argument("--language", type=str, default="ja", help="默认语言代码 (ja/zh/en/...)")
-    p.add_argument("--device", type=str, default="NPU", help="OpenVINO 设备 (NPU/GPU/CPU，默认 NPU)")
+    p.add_argument("--device", type=str, default="NPU", help="OpenVINO 设备 (NPU/GPU/CPU，默认 NPU，大小写不敏感)")
     p.add_argument("--host", type=str, default="127.0.0.1", help="监听地址")
     p.add_argument("--port", type=int, default=8000, help="监听端口（默认 8000）")
     args = p.parse_args()
 
     if args.interactive:
         model_dir, language, port = _interactive()
-        host, device = args.host, args.device
+        host, device = args.host, args.device.upper()
     else:
         if not args.model_dir:
             p.error("--model-dir 必填（或使用 --interactive）")
         model_dir, language, port = args.model_dir, args.language, args.port
-        host, device = args.host, args.device
+        host, device = args.host, args.device.upper()
 
     # 懒导入重依赖
     try:
@@ -148,6 +175,7 @@ def main():
     devices = Core().available_devices
     if device not in devices:
         print(f"找不到设备 '{device}'。当前可见设备：{devices}")
+        print(f"提示：设备参数大小写不敏感，支持 NPU/GPU/CPU")
         sys.exit(1)
 
     try:
@@ -158,7 +186,7 @@ def main():
 
     log.info(f"加载模型: {model_dir} (device={device})")
     log.info("首次运行会为 NPU 编译模型，可能耗时较长；可设 OV_CACHE_DIR 加速后续启动")
-    pipe = openvino_genai.Whisper(model_dir, device=device)
+    pipe = openvino_genai.WhisperPipeline(model_dir, device=device)
     log.info("模型加载完成")
 
     import uvicorn

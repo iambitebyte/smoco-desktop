@@ -10,6 +10,7 @@ TRANSLATIONS = {
         "select_device": "选择音频设备",
         "select_device_desc": "选择要采集的扬声器设备：",
         "start_transcription": "开始转录",
+        "refresh_devices": "刷新设备列表",
         "no_devices": "未找到音频设备",
         "loading_devices": "加载设备中...",
         # 转录页
@@ -131,6 +132,7 @@ TRANSLATIONS = {
         "select_device": "オーディオデバイスを選択",
         "select_device_desc": "録音するスピーカーデバイスを選択：",
         "start_transcription": "文字起こし開始",
+        "refresh_devices": "デバイスリストを更新",
         "no_devices": "オーディオデバイスが見つかりません",
         "loading_devices": "デバイスをロード中...",
         # 转录页
@@ -252,6 +254,7 @@ TRANSLATIONS = {
         "select_device": "Select Audio Device",
         "select_device_desc": "Select the speaker device to capture:",
         "start_transcription": "Start Transcription",
+        "refresh_devices": "Refresh Device List",
         "no_devices": "No audio devices found",
         "loading_devices": "Loading devices...",
         # Transcript page

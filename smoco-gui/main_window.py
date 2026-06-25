@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
     QTextEdit, QStackedWidget, QComboBox, QDialog, QTableWidget,
     QTableWidgetItem, QHeaderView
 )
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread
 from PyQt6.QtGui import QPixmap, QIcon
 from audio_meter_worker import AudioMeterController
 from asr_worker import ASRController
@@ -82,6 +82,7 @@ class SpeakerSelectionPage(QWidget):
 
     start_asr = pyqtSignal(dict)  # 信号：开始 ASR，传递设备信息
     settings_requested = pyqtSignal()  # 信号：打开设置
+    devices_refresh_requested = pyqtSignal()  # 信号：刷新设备列表
 
     def __init__(self):
         super().__init__()
@@ -130,8 +131,33 @@ class SpeakerSelectionPage(QWidget):
         layout.addLayout(top_bar)
 
         # 说明
+        desc_layout = QHBoxLayout()
         self.desc = QLabel(i18n.t("select_device_desc"))
-        layout.addWidget(self.desc)
+        desc_layout.addWidget(self.desc)
+        desc_layout.addStretch()
+
+        # 刷新按钮（小图标）
+        self.btn_refresh = QPushButton("🔄")
+        self.btn_refresh.setToolTip(i18n.t("refresh_devices"))
+        self.btn_refresh.setFixedSize(24, 24)
+        self.btn_refresh.setStyleSheet("""
+            QPushButton {
+                border: none;
+                background-color: transparent;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #e0e0e0;
+                border-radius: 12px;
+            }
+            QPushButton:pressed {
+                background-color: #d0d0d0;
+            }
+        """)
+        self.btn_refresh.clicked.connect(self._on_refresh_clicked)
+        desc_layout.addWidget(self.btn_refresh)
+
+        layout.addLayout(desc_layout)
 
         # 设备列表
         self.device_list = QListWidget()
@@ -227,6 +253,18 @@ class SpeakerSelectionPage(QWidget):
         """语言切换"""
         lang_code, _ = LANGUAGES[index]
         i18n.set_language(lang_code)
+
+    def _on_refresh_clicked(self):
+        """刷新设备列表按钮点击"""
+        # 显示刷新状态
+        self.btn_refresh.setEnabled(False)
+        self.btn_refresh.setText("⏳")
+        self.desc.setText(i18n.t("loading_devices"))
+        self.device_list.clear()
+        self.btn_start.setEnabled(False)
+
+        # 发送刷新请求
+        self.devices_refresh_requested.emit()
         self.update_ui()
 
 
@@ -423,6 +461,7 @@ class MainWindow(QMainWindow):
         self._page_selection = SpeakerSelectionPage()
         self._page_selection.start_asr.connect(self._start_asr)
         self._page_selection.settings_requested.connect(self._show_settings)
+        self._page_selection.devices_refresh_requested.connect(self._refresh_devices)
         self._stack.addWidget(self._page_selection)
 
         # 第二页：转录显示
@@ -434,6 +473,7 @@ class MainWindow(QMainWindow):
         self._meter_controller = AudioMeterController()
         self._asr_controller = ASRController()
         self._translation_controller = TranslationController()
+        self._device_refresh_thread = None  # 设备刷新线程
         self._is_running = False
         self._translate_lang = None  # 翻译语言
 
@@ -456,6 +496,27 @@ class MainWindow(QMainWindow):
     def load_devices(self, devices: list):
         """加载设备列表"""
         self._page_selection.load_devices(devices)
+
+    def _refresh_devices(self):
+        """刷新设备列表（异步）"""
+        # 清理旧线程
+        if hasattr(self, '_device_refresh_thread') and self._device_refresh_thread and self._device_refresh_thread.isRunning():
+            self._device_refresh_thread.quit()
+            self._device_refresh_thread.wait()
+
+        # 启动新的刷新线程
+        self._device_refresh_thread = DeviceRefreshThread()
+        self._device_refresh_thread.finished.connect(self._on_device_refresh_finished)
+        self._device_refresh_thread.start()
+
+    def _on_device_refresh_finished(self, devices: list):
+        """设备刷新完成"""
+        self.load_devices(devices)
+
+        # 恢复UI状态
+        self._page_selection.btn_refresh.setEnabled(True)
+        self._page_selection.btn_refresh.setText("🔄")
+        self._page_selection.desc.setText(i18n.t("select_device_desc"))
 
     def _start_asr(self, device: dict):
         """开始 ASR"""
@@ -694,3 +755,21 @@ class MainWindow(QMainWindow):
         else:
             logger.info("用户取消关闭，需要先停止 Local Whisper 服务")
             # 阻止关闭 - 已经在 closeEvent 中调用 event.ignore()
+
+
+class DeviceRefreshThread(QThread):
+    """设备刷新线程 - 异步加载音频设备列表"""
+
+    finished = pyqtSignal(list)  # 信号：刷新完成，传递设备列表
+
+    def run(self):
+        """执行设备刷新"""
+        try:
+            from utils import load_wasapi_devices
+            devices = load_wasapi_devices()
+            self.finished.emit(devices)
+        except Exception as e:
+            from gui_logger import get_gui_logger
+            logger = get_gui_logger(__name__)
+            logger.error(f"设备刷新失败: {e}")
+            self.finished.emit([])  # 出错时返回空列表
