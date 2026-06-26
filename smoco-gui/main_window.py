@@ -23,6 +23,8 @@ from startup_dialog import ASRStartupDialog
 from transcript_edit import InteractiveTranscriptEdit
 from local_whisper_manager import get_local_whisper_manager
 from translation_worker import TranslationController
+from history_page import HistoryListPage
+from history_detail_page import HistoryDetailPage
 from PyQt6.QtCore import QTimer
 from gui_logger import get_gui_logger
 
@@ -83,6 +85,7 @@ class SpeakerSelectionPage(QWidget):
     start_asr = pyqtSignal(dict)  # 信号：开始 ASR，传递设备信息
     settings_requested = pyqtSignal()  # 信号：打开设置
     devices_refresh_requested = pyqtSignal()  # 信号：刷新设备列表
+    history_requested = pyqtSignal()  # 信号：打开转录历史
 
     def __init__(self):
         super().__init__()
@@ -99,6 +102,24 @@ class SpeakerSelectionPage(QWidget):
         top_bar.addWidget(self._title_label)
 
         top_bar.addStretch()
+
+        # 历史按钮
+        self.btn_history = QPushButton("📋")
+        self.btn_history.setToolTip(i18n.t("history"))
+        self.btn_history.setFixedSize(32, 32)
+        self.btn_history.setStyleSheet("""
+            QPushButton {
+                border: none;
+                background-color: transparent;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #e0e0e0;
+                border-radius: 16px;
+            }
+        """)
+        self.btn_history.clicked.connect(self.history_requested.emit)
+        top_bar.addWidget(self.btn_history)
 
         # 设置按钮
         self.btn_settings = QPushButton("⚙")
@@ -469,6 +490,20 @@ class MainWindow(QMainWindow):
         self._page_transcript.stop_requested.connect(self._stop_asr)
         self._stack.addWidget(self._page_transcript)
 
+        # 第三页：转录历史列表
+        self._page_history = HistoryListPage()
+        self._page_history.session_selected.connect(self._show_history_detail)
+        self._page_history.back_requested.connect(lambda: self._stack.setCurrentWidget(self._page_selection))
+        self._stack.addWidget(self._page_history)
+
+        # 第四页：转录历史详情
+        self._page_history_detail = HistoryDetailPage()
+        self._page_history_detail.back_requested.connect(lambda: self._stack.setCurrentWidget(self._page_history))
+        self._stack.addWidget(self._page_history_detail)
+
+        # 历史按钮 → 跳转历史页
+        self._page_selection.history_requested.connect(lambda: self._stack.setCurrentWidget(self._page_history))
+
         # 控制器
         self._meter_controller = AudioMeterController()
         self._asr_controller = ASRController()
@@ -496,6 +531,11 @@ class MainWindow(QMainWindow):
     def load_devices(self, devices: list):
         """加载设备列表"""
         self._page_selection.load_devices(devices)
+
+    def _show_history_detail(self, session_id: str):
+        """切换到 session 详情页"""
+        self._page_history_detail.set_session(session_id)
+        self._stack.setCurrentWidget(self._page_history_detail)
 
     def _refresh_devices(self):
         """刷新设备列表（异步）"""
