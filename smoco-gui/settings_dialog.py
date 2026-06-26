@@ -115,17 +115,17 @@ class SettingsDialog(QDialog):
         self.silence_ms_spin = QSpinBox()
         self.silence_ms_spin.setRange(100, 2000)
         self.silence_ms_spin.setSuffix(" ms")
-        self.silence_ms_spin.setValue(600)
+        self.silence_ms_spin.setValue(300)
 
         self.max_chunk_ms_spin = QSpinBox()
         self.max_chunk_ms_spin.setRange(5000, 30000)
         self.max_chunk_ms_spin.setSuffix(" ms")
-        self.max_chunk_ms_spin.setValue(15000)
+        self.max_chunk_ms_spin.setValue(10000)
 
         self.min_chunk_ms_spin = QSpinBox()
         self.min_chunk_ms_spin.setRange(100, 2000)
         self.min_chunk_ms_spin.setSuffix(" ms")
-        self.min_chunk_ms_spin.setValue(500)
+        self.min_chunk_ms_spin.setValue(1000)
 
         self.pad_ms_spin = QSpinBox()
         self.pad_ms_spin.setRange(0, 500)

@@ -482,9 +482,9 @@ class MainWindow(QMainWindow):
             "servers": [],
             "last_server": "",
             "vad": {
-                "silence_ms": 600,
-                "max_chunk_ms": 15000,
-                "min_chunk_ms": 500,
+                "silence_ms": 300,
+                "max_chunk_ms": 10000,
+                "min_chunk_ms": 1000,
                 "pad_ms": 100,
             }
         }
