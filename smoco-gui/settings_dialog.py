@@ -595,10 +595,6 @@ class SettingsDialog(QDialog):
 
     def accept(self):
         """确定按钮"""
-        if self.server_list.count() == 0:
-            QMessageBox.warning(self, i18n.t("hint"), i18n.t("hint_need_server"))
-            return
-
         self._save_settings()
         super().accept()
 

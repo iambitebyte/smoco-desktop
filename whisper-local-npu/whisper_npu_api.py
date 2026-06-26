@@ -151,7 +151,7 @@ def main():
     p.add_argument("--interactive", action="store_true", help="交互式选择配置")
     p.add_argument("--model-dir", type=str, help="OpenVINO IR 模型目录路径")
     p.add_argument("--language", type=str, default="ja", help="默认语言代码 (ja/zh/en/...)")
-    p.add_argument("--device", type=str, default="NPU", help="OpenVINO 设备 (NPU/GPU/CPU，默认 NPU，大小写不敏感)")
+    p.add_argument("--device", type=str, default="AUTO", help="OpenVINO 设备 (AUTO/NPU/GPU/CPU，默认 AUTO 自动检测)")
     p.add_argument("--host", type=str, default="127.0.0.1", help="监听地址")
     p.add_argument("--port", type=int, default=8000, help="监听端口（默认 8000）")
     args = p.parse_args()
@@ -173,9 +173,20 @@ def main():
         sys.exit(1)
 
     devices = Core().available_devices
-    if device not in devices:
+    if device == "AUTO":
+        # 优先 GPU（推理快），其次 NPU（低功耗），最后 CPU（兼容）
+        if "GPU" in devices:
+            device = "GPU"
+        elif "NPU" in devices:
+            device = "NPU"
+        elif "CPU" in devices:
+            device = "CPU"
+        else:
+            device = "CPU"
+        log.info(f"AUTO 模式选择设备: {device} (可见设备: {devices})")
+    elif device not in devices:
         print(f"找不到设备 '{device}'。当前可见设备：{devices}")
-        print(f"提示：设备参数大小写不敏感，支持 NPU/GPU/CPU")
+        print(f"提示：设备参数大小写不敏感，支持 AUTO/NPU/GPU/CPU")
         sys.exit(1)
 
     try:

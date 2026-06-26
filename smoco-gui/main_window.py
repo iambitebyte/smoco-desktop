@@ -521,9 +521,10 @@ class MainWindow(QMainWindow):
     def _start_asr(self, device: dict):
         """开始 ASR"""
         try:
-            # 检查服务器配置
+            # 检查服务器配置：Local Whisper 已启动时不强制要求外部服务器
             servers = self._settings.get("servers", [])
-            if not servers:
+            local_manager = get_local_whisper_manager()
+            if not servers and not local_manager.is_running:
                 QMessageBox.warning(
                     self,
                     i18n.t("start_failed"),
