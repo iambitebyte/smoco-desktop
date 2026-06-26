@@ -166,6 +166,7 @@ class LocalWhisperManager(QObject):
         """检查服务是否实际运行"""
         return self.is_running
 
+
     def _detect_available_device(self) -> str:
         """检测可用的 OpenVINO 设备
 
@@ -264,59 +265,66 @@ class LocalWhisperManager(QObject):
         logger.debug(f"开始启动 Local Whisper 服务，项目根目录: {_smoco_root}")
 
         # 检查 API 文件
-        api_file = _smoco_root / "whisper-local-npu" / "whisper_npu_api.py"
+        # 打包环境：whisper-local-npu 与 SmocoDesktop.exe 同级
+        # 开发环境：whisper-local-npu 在项目根目录
+
+        if getattr(sys, 'frozen', False):
+            # 打包环境：使用 exe 所在目录
+            app_dir = Path(sys.executable).parent
+            api_dir = app_dir / "whisper-local-npu"
+            api_file = api_dir / "whisper_npu_api.py"
+        else:
+            # 开发环境：使用项目根目录
+            api_dir = _smoco_root / "whisper-local-npu"
+            api_file = api_dir / "whisper_npu_api.py"
+
         logger.debug(f"检查 API 文件: {api_file}")
 
         if not api_file.exists():
             error_msg = f"API 文件不存在: {api_file}"
             logger.error(error_msg)
-            # 在打包环境中，提示用户如何设置 whisper-local-npu
             if getattr(sys, 'frozen', False):
-                exe_dir = Path(sys.executable).parent
-                hint = f"\n请将 whisper-local-npu 文件夹放置在以下位置之一:\n" \
-                       f"  1. {exe_dir.parent}/whisper-local-npu/\n" \
-                       f"  2. {exe_dir}/_internal/whisper-local-npu/ (推荐)\n" \
-                       f"  3. {exe_dir}/whisper-local-npu/\n" \
-                       f"并确保该文件夹包含 whisper_npu_api.py 和 whisper-small-ov 模型目录。"
-                logger.error(f"Local Whisper NPU API 文件未找到。{hint}")
-                raise Exception(f"Local Whisper NPU API 文件未找到。\n{hint}\n期望位置: {api_file}")
+                hint = (
+                    f"Local Whisper NPU 文件未找到。\n\n"
+                    f"请确保 whisper-local-npu 文件夹与应用在同一目录。\n"
+                    f"期望位置: {api_dir}"
+                )
+                raise Exception(f"{hint}\n\n期望位置: {api_file}")
             else:
                 raise Exception(f"API 文件不存在: {api_file}")
 
-        # 查找 whisper-local-npu 的 Python 解释器
-        whisper_local_venv = _smoco_root / "whisper-local-npu" / ".venv"
+        # 查找 Python 解释器（使用 whisper-local-npu/.venv）
+        whisper_local_venv = api_dir / ".venv"
         logger.debug(f"检查 Python 环境: {whisper_local_venv}")
 
-        if whisper_local_venv.exists():
-            # Windows: .venv\Scripts\python.exe
-            # Linux/Mac: .venv/bin/python
-            if sys.platform == "win32":
-                python_exe = whisper_local_venv / "Scripts" / "python.exe"
-            else:
-                python_exe = whisper_local_venv / "bin" / "python"
-
-            if not python_exe.exists():
-                error_msg = f"Python 解释器不存在: {python_exe}"
-                logger.error(error_msg)
-                raise Exception(error_msg)
-
-            logger.info(f"找到 Python 解释器: {python_exe}")
-        else:
-            error_msg = f"whisper-local-npu/.venv 不存在: {whisper_local_venv}"
+        if not whisper_local_venv.exists():
+            error_msg = f"Local Whisper NPU 环境未初始化"
             logger.error(error_msg)
-            # 在打包环境中，给出更清晰的提示
             if getattr(sys, 'frozen', False):
                 hint = (
-                    f"Local Whisper NPU 功能需要虚拟环境，但当前未安装。\n\n"
-                    f"Local Whisper NPU 是可选功能，你可以使用远程 Whisper 服务器。\n"
-                    f"如果需要使用 Local Whisper NPU，请:\n"
-                    f"1. 从源码的 whisper-local-npu 目录复制 .venv 到：{_smoco_root}/whisper-local-npu/\n"
-                    f"2. 或在该目录运行 'uv sync' 安装依赖"
+                    f"{error_msg}\n\n"
+                    f"请先运行初始化脚本:\n"
+                    f"  init-whisper-npu.bat\n\n"
+                    f"该脚本会在 whisper-local-npu 目录创建虚拟环境并安装依赖。\n"
+                    f"预期 .venv 位置: {whisper_local_venv}"
                 )
-                logger.error(hint)
                 raise Exception(hint)
             else:
                 raise Exception("whisper-local-npu/.venv 不存在，请先在 whisper-local-npu 目录运行 'uv sync'")
+
+        # Windows: .venv\Scripts\python.exe
+        # Linux/Mac: .venv/bin/python
+        if sys.platform == "win32":
+            python_exe = whisper_local_venv / "Scripts" / "python.exe"
+        else:
+            python_exe = whisper_local_venv / "bin" / "python"
+
+        if not python_exe.exists():
+            error_msg = f"Python 解释器不存在: {python_exe}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+
+        logger.info(f"找到 Python 解释器: {python_exe}")
 
         self.status_changed.emit("starting", i18n.t("local_starting"))
 
@@ -349,7 +357,7 @@ class LocalWhisperManager(QObject):
             stderr=subprocess.STDOUT,
             text=False,  # 使用字节模式
             bufsize=1,  # 行缓冲
-            cwd=str(_smoco_root / "whisper-local-npu"),
+            cwd=str(api_dir),
             env=env,
             creationflags=creation_flags,
         )

@@ -1,5 +1,5 @@
 @echo off
-REM Smoco Desktop Build - With webrtcvad hook disabled and all fixes
+REM Smoco Desktop Build - With whisper-local-npu included
 
 echo ===================================
 echo   Disabling webrtcvad hook and building
@@ -17,7 +17,7 @@ if exist "%HOOK_PATH%" (
 )
 
 echo.
-echo Building with all fixes (webrtcvad hook disabled)...
+echo Building with whisper-local-npu included...
 
 REM Clean old files
 if exist "build" rmdir /s /q "build"
@@ -40,9 +40,84 @@ uv run pyinstaller --clean --onedir --noconsole --icon=smoco_logo_circle.ico --n
     --add-data="startup_dialog.py;." --add-data="transcript_edit.py;." --add-data="local_whisper_manager.py;." ^
     --add-data="translation_worker.py;." --add-data="llm_client.py;." ^
     --add-data="main.py;." --add-data="bundle.py;." ^
-    --add-data="../whisper-local/whisper_local_api.py;whisper-local" ^
-    --add-data="../whisper-local/whisper_local_transcriber.py;whisper-local" ^
     bundle.py
+
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Build failed!
+    echo Re-enabling webrtcvad hook...
+    move "%HOOK_PATH%.disabled" "%HOOK_PATH%" >nul 2>&1
+    pause
+    exit /b 1
+)
+
+echo.
+echo ===================================
+echo   Copying whisper-local-npu files
+echo ===================================
+
+REM Create whisper-local-npu directory in dist
+if not exist "dist\SmocoDesktop\whisper-local-npu" mkdir "dist\SmocoDesktop\whisper-local-npu"
+
+REM Copy whisper-local-npu files (excluding .venv)
+echo Copying whisper_npu_api.py...
+copy "..\whisper-local-npu\whisper_npu_api.py" "dist\SmocoDesktop\whisper-local-npu\" >nul
+
+echo Copying pyproject.toml...
+copy "..\whisper-local-npu\pyproject.toml" "dist\SmocoDesktop\whisper-local-npu\" >nul
+
+echo Copying uv.lock...
+if exist "..\whisper-local-npu\uv.lock" (
+    copy "..\whisper-local-npu\uv.lock" "dist\SmocoDesktop\whisper-local-npu\" >nul
+) else (
+    echo [WARNING] uv.lock not found, uv sync may take longer
+)
+
+REM Copy model files if exists
+if exist "..\whisper-local-npu\whisper-small-ov" (
+    echo Copying whisper-small-ov model files...
+    xcopy "..\whisper-local-npu\whisper-small-ov" "dist\SmocoDesktop\whisper-local-npu\whisper-small-ov\" /E /I /Y >nul
+) else (
+    echo [WARNING] whisper-small-ov not found, users will need to download models
+)
+
+REM Copy init script to root of dist
+echo Copying init-whisper-npu.bat...
+copy "..\init-whisper-npu.bat" "dist\SmocoDesktop\" >nul
+
+echo.
+echo ===================================
+echo   Build Completed Successfully!
+echo ===================================
+echo.
+echo Output: dist\SmocoDesktop\SmocoDesktop.exe
+echo.
+echo whisper-local-npu files:
+echo   - dist\SmocoDesktop\whisper-local-npu\*
+echo.
+echo User setup:
+echo   1. Run dist\SmocoDesktop\init-whisper-npu.bat
+echo   2. Then start SmocoDesktop.exe
+echo.
+
+dir dist\SmocoDesktop\SmocoDesktop.exe
+echo.
+
+echo Testing executable...
+start dist\SmocoDesktop\SmocoDesktop.exe
+
+echo.
+echo Press any key to open output directory and re-enable hook...
+pause >nul
+
+REM Re-enable the hook
+move "%HOOK_PATH%.disabled" "%HOOK_PATH%" >nul 2>&1
+
+explorer dist\SmocoDesktop
+
+echo.
+echo Hook re-enabled. If app runs successfully, we have a working build!
+echo.
 
 if errorlevel 1 (
     echo.

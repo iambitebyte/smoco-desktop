@@ -5,7 +5,7 @@ a = Analysis(
     ['bundle.py'],
     pathex=[],
     binaries=[],
-    datas=[('smoco_logo_circle.png', '.'), ('main_window.py', '.'), ('gui_logger.py', '.'), ('i18n.py', '.'), ('paths.py', '.'), ('utils.py', '.'), ('audio_meter_worker.py', '.'), ('asr_worker.py', '.'), ('asr_chunker.py', '.'), ('asr_logger.py', '.'), ('settings_dialog.py', '.'), ('startup_dialog.py', '.'), ('transcript_edit.py', '.'), ('local_whisper_manager.py', '.'), ('translation_worker.py', '.'), ('llm_client.py', '.'), ('main.py', '.'), ('bundle.py', '.'), ('temp_whisper', 'whisper-local')],
+    datas=[('smoco_logo_circle.png', '.'), ('main_window.py', '.'), ('gui_logger.py', '.'), ('i18n.py', '.'), ('paths.py', '.'), ('utils.py', '.'), ('audio_meter_worker.py', '.'), ('asr_worker.py', '.'), ('asr_chunker.py', '.'), ('asr_logger.py', '.'), ('settings_dialog.py', '.'), ('startup_dialog.py', '.'), ('transcript_edit.py', '.'), ('local_whisper_manager.py', '.'), ('translation_worker.py', '.'), ('llm_client.py', '.'), ('main.py', '.'), ('bundle.py', '.')],
     hiddenimports=['PyQt6.QtCore', 'PyQt6.QtGui', 'PyQt6.QtWidgets', 'pyaudiowpatch', 'numpy', 'scipy', 'soundfile', 'requests', 'aiohttp', 'logging.handlers', 'webrtcvad', 'main_window', 'gui_logger', 'i18n', 'paths', 'utils', 'audio_meter_worker', 'asr_worker', 'asr_chunker', 'asr_logger', 'settings_dialog', 'startup_dialog', 'transcript_edit', 'local_whisper_manager', 'translation_worker', 'llm_client', 'smoco.audio', 'smoco.source.wasapi'],
     hookspath=[],
     hooksconfig={},
