@@ -34,6 +34,7 @@ uv run pyinstaller --clean --onedir --noconsole --icon=smoco_logo_circle.ico --n
     --hidden-import=transcript_edit --hidden-import=local_whisper_manager --hidden-import=translation_worker ^
     --hidden-import=llm_client --hidden-import=smoco.audio --hidden-import=smoco.source.wasapi ^
     --add-data="smoco_logo_circle.png;." ^
+    --add-data="styles.qss;." ^
     --add-data="main_window.py;." --add-data="gui_logger.py;." --add-data="i18n.py;." --add-data="paths.py;." ^
     --add-data="utils.py;." --add-data="audio_meter_worker.py;." --add-data="asr_worker.py;." ^
     --add-data="asr_chunker.py;." --add-data="asr_logger.py;." --add-data="settings_dialog.py;." ^

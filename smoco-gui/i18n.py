@@ -152,6 +152,15 @@ TRANSLATIONS = {
         "history_original_column": "原文",
         "history_translation_column": "译文",
         "history_detail_title": "转录详情 #{id}",
+        # 日志查看
+        "logs": "日志",
+        "logs_title": "应用日志",
+        "refresh_logs": "刷新",
+        "open_log_dir": "打开日志目录",
+        "error_logs_only": "仅错误日志",
+        "no_logs": "暂无日志文件",
+        "loading_logs": "加载中...",
+        "log_status": "显示最近 {shown} / {total} 行 · 文件大小 {size}",
     },
     "ja": {
         # 主窗口
@@ -302,6 +311,15 @@ TRANSLATIONS = {
         "history_original_column": "原文",
         "history_translation_column": "訳文",
         "history_detail_title": "転録詳細 #{id}",
+        # ログビューア
+        "logs": "ログ",
+        "logs_title": "アプリログ",
+        "refresh_logs": "更新",
+        "open_log_dir": "ログフォルダを開く",
+        "error_logs_only": "エラーログのみ",
+        "no_logs": "ログファイルがありません",
+        "loading_logs": "ロード中...",
+        "log_status": "最新 {shown} / {total} 行表示 · ファイルサイズ {size}",
     },
     "en": {
         # Main window
@@ -453,6 +471,15 @@ TRANSLATIONS = {
         "history_original_column": "Original",
         "history_translation_column": "Translation",
         "history_detail_title": "Entry #{id}",
+        # Logs
+        "logs": "Logs",
+        "logs_title": "Application Logs",
+        "refresh_logs": "Refresh",
+        "open_log_dir": "Open Log Folder",
+        "error_logs_only": "Error logs only",
+        "no_logs": "No log files",
+        "loading_logs": "Loading...",
+        "log_status": "Showing last {shown} / {total} lines · file size {size}",
     },
 }
 

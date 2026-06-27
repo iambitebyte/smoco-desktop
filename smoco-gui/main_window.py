@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem, QHeaderView
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread
-from PyQt6.QtGui import QPixmap, QIcon
+from PyQt6.QtGui import QPixmap, QIcon, QShortcut, QKeySequence
 from audio_meter_worker import AudioMeterController
 from asr_worker import ASRController
 from i18n import i18n, LANGUAGES
@@ -25,6 +25,7 @@ from local_whisper_manager import get_local_whisper_manager
 from translation_worker import TranslationController
 from history_page import HistoryListPage
 from history_detail_page import HistoryDetailPage
+from log_viewer_page import LogViewerPage
 from PyQt6.QtCore import QTimer
 from gui_logger import get_gui_logger
 
@@ -86,6 +87,7 @@ class SpeakerSelectionPage(QWidget):
     settings_requested = pyqtSignal()  # 信号：打开设置
     devices_refresh_requested = pyqtSignal()  # 信号：刷新设备列表
     history_requested = pyqtSignal()  # 信号：打开转录历史
+    logs_requested = pyqtSignal()  # 信号：打开日志查看
 
     def __init__(self):
         super().__init__()
@@ -105,38 +107,32 @@ class SpeakerSelectionPage(QWidget):
 
         # 历史按钮
         self.btn_history = QPushButton("📋")
+        self.btn_history.setObjectName("iconButton")
         self.btn_history.setToolTip(i18n.t("history"))
+        self.btn_history.setAccessibleName(i18n.t("history"))
         self.btn_history.setFixedSize(32, 32)
-        self.btn_history.setStyleSheet("""
-            QPushButton {
-                border: none;
-                background-color: transparent;
-                font-size: 16px;
-            }
-            QPushButton:hover {
-                background-color: #e0e0e0;
-                border-radius: 16px;
-            }
-        """)
         self.btn_history.clicked.connect(self.history_requested.emit)
+        self.btn_history.setShortcut(QKeySequence("Ctrl+H"))
         top_bar.addWidget(self.btn_history)
+
+        # 日志按钮
+        self.btn_logs = QPushButton("📜")
+        self.btn_logs.setObjectName("iconButton")
+        self.btn_logs.setToolTip(i18n.t("logs"))
+        self.btn_logs.setAccessibleName(i18n.t("logs"))
+        self.btn_logs.setFixedSize(32, 32)
+        self.btn_logs.clicked.connect(self.logs_requested.emit)
+        self.btn_logs.setShortcut(QKeySequence("Ctrl+L"))
+        top_bar.addWidget(self.btn_logs)
 
         # 设置按钮
         self.btn_settings = QPushButton("⚙")
+        self.btn_settings.setObjectName("iconButton")
         self.btn_settings.setToolTip(i18n.t("settings"))
+        self.btn_settings.setAccessibleName(i18n.t("settings"))
         self.btn_settings.setFixedSize(32, 32)
-        self.btn_settings.setStyleSheet("""
-            QPushButton {
-                border: none;
-                background-color: transparent;
-                font-size: 18px;
-            }
-            QPushButton:hover {
-                background-color: #e0e0e0;
-                border-radius: 16px;
-            }
-        """)
         self.btn_settings.clicked.connect(self.settings_requested.emit)
+        self.btn_settings.setShortcut(QKeySequence("Ctrl+,"))
         top_bar.addWidget(self.btn_settings)
 
         # 语言选择
@@ -145,6 +141,7 @@ class SpeakerSelectionPage(QWidget):
 
         self.lang_combo = QComboBox()
         self.lang_combo.addItems([name for _, name in LANGUAGES])
+        self.lang_combo.setAccessibleName(i18n.t("language"))
         self.lang_combo.setCurrentIndex(0)
         self.lang_combo.currentIndexChanged.connect(self._on_language_changed)
         top_bar.addWidget(self.lang_combo)
@@ -159,44 +156,20 @@ class SpeakerSelectionPage(QWidget):
 
         # 刷新按钮（小图标）
         self.btn_refresh = QPushButton("🔄")
+        self.btn_refresh.setObjectName("iconButton")
         self.btn_refresh.setToolTip(i18n.t("refresh_devices"))
+        self.btn_refresh.setAccessibleName(i18n.t("refresh_devices"))
         self.btn_refresh.setFixedSize(24, 24)
-        self.btn_refresh.setStyleSheet("""
-            QPushButton {
-                border: none;
-                background-color: transparent;
-                font-size: 16px;
-            }
-            QPushButton:hover {
-                background-color: #e0e0e0;
-                border-radius: 12px;
-            }
-            QPushButton:pressed {
-                background-color: #d0d0d0;
-            }
-        """)
         self.btn_refresh.clicked.connect(self._on_refresh_clicked)
+        self.btn_refresh.setShortcut(QKeySequence("Ctrl+R"))
         desc_layout.addWidget(self.btn_refresh)
 
         layout.addLayout(desc_layout)
 
         # 设备列表
         self.device_list = QListWidget()
-        self.device_list.setStyleSheet("""
-            QListWidget {
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                padding: 4px;
-                font-size: 13px;
-            }
-            QListWidget::item {
-                padding: 10px;
-            }
-            QListWidget::item:selected {
-                background-color: #e3f2fd;
-                color: #000;
-            }
-        """)
+        self.device_list.setObjectName("contentList")
+        self.device_list.setAccessibleName(i18n.t("select_device"))
         layout.addWidget(self.device_list)
 
         # 按钮区
@@ -204,28 +177,10 @@ class SpeakerSelectionPage(QWidget):
         btn_layout.addStretch()
 
         self.btn_start = QPushButton(i18n.t("start_transcription"))
+        self.btn_start.setObjectName("primaryButton")
         self.btn_start.setEnabled(False)
-        self.btn_start.setStyleSheet("""
-            QPushButton {
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                padding: 12px 30px;
-                border-radius: 4px;
-                font-weight: bold;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-            QPushButton:pressed {
-                background-color: #3d8b40;
-            }
-            QPushButton:disabled {
-                background-color: #cccccc;
-            }
-        """)
         self.btn_start.clicked.connect(self._on_start_clicked)
+        self.btn_start.setShortcut(QKeySequence("F5"))
         btn_layout.addWidget(self.btn_start)
 
         layout.addLayout(btn_layout)
@@ -322,19 +277,9 @@ class TranscriptPage(QWidget):
 
         # 停止按钮
         self.btn_stop = QPushButton(i18n.t("stop"))
-        self.btn_stop.setStyleSheet("""
-            QPushButton {
-                background-color: #f44336;
-                color: white;
-                border: none;
-                padding: 6px 12px;
-                border-radius: 4px;
-            }
-            QPushButton:hover {
-                background-color: #d32f2f;
-            }
-        """)
+        self.btn_stop.setObjectName("dangerButton")
         self.btn_stop.clicked.connect(self.stop_requested.emit)
+        self.btn_stop.setShortcut(QKeySequence("Esc"))
         top_bar.addWidget(self.btn_stop)
 
         layout.addLayout(top_bar)
@@ -345,6 +290,8 @@ class TranscriptPage(QWidget):
 
         # 转录翻译表格
         self.transcript_table = QTableWidget()
+        self.transcript_table.setObjectName("contentTable")
+        self.transcript_table.setAccessibleName(i18n.t("realtime_transcript"))
         self.transcript_table.setColumnCount(3)
         self.transcript_table.setHorizontalHeaderLabels(["时间", "转录文本", "翻译"])
         self.transcript_table.horizontalHeader().setStretchLastSection(True)
@@ -354,23 +301,6 @@ class TranscriptPage(QWidget):
         self.transcript_table.setWordWrap(True)
         # 自适应行高
         self.transcript_table.resizeRowsToContents()
-        self.transcript_table.setStyleSheet("""
-            QTableWidget {
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                gridline-color: #e0e0e0;
-            }
-            QTableWidget::item {
-                padding: 8px;
-            }
-            QHeaderView::section {
-                background-color: #f5f5f5;
-                padding: 8px;
-                border: none;
-                border-bottom: 1px solid #ccc;
-                font-weight: bold;
-            }
-        """)
         # 设置列宽
         header = self.transcript_table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
@@ -501,8 +431,16 @@ class MainWindow(QMainWindow):
         self._page_history_detail.back_requested.connect(lambda: self._stack.setCurrentWidget(self._page_history))
         self._stack.addWidget(self._page_history_detail)
 
+        # 第五页：日志查看
+        self._page_logs = LogViewerPage()
+        self._page_logs.back_requested.connect(lambda: self._stack.setCurrentWidget(self._page_selection))
+        self._stack.addWidget(self._page_logs)
+
         # 历史按钮 → 跳转历史页
         self._page_selection.history_requested.connect(lambda: self._stack.setCurrentWidget(self._page_history))
+
+        # 日志按钮 → 跳转日志页
+        self._page_selection.logs_requested.connect(lambda: self._stack.setCurrentWidget(self._page_logs))
 
         # 控制器
         self._meter_controller = AudioMeterController()
@@ -574,11 +512,14 @@ class MainWindow(QMainWindow):
 
             last_server = self._settings.get("last_server", "")
 
-            # 自动验证 LLM 配置
-            from llm_client import get_llm_client
-            llm_client = get_llm_client()
-            llm_ok, llm_msg = llm_client.validate()
-            print(f"[LLM 自动验证] {'成功' if llm_ok else '失败'}: {llm_msg}")
+            # 检查 LLM 配置是否完整（不发 HTTP 请求，避免 UI 卡顿）
+            # 真正的连通性验证留给实际翻译时发现
+            llm_config = self._settings.get("llm", {})
+            llm_ok = bool(
+                llm_config.get("base_url")
+                and llm_config.get("api_key")
+                and llm_config.get("model")
+            )
 
             # 显示启动对话框（服务器选择 + 健康检查 + 语言选择）
             dialog = ASRStartupDialog(servers, last_server, llm_ok, self)

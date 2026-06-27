@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
-from PyQt6.QtGui import QGuiApplication
+from PyQt6.QtGui import QGuiApplication, QShortcut, QKeySequence
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QTableWidget, QTableWidgetItem, QHeaderView,
@@ -25,6 +25,7 @@ from i18n import i18n
 from gui_logger import get_gui_logger
 from history_reader import get_session_entries, get_entry_detail, export_session, build_translation_index, EntrySummary
 from paths import get_smoco_data_dir
+from toast import show_toast
 
 logger = get_gui_logger(__name__)
 
@@ -90,9 +91,10 @@ class EntryDetailDialog(QDialog):
         layout.addWidget(original_label)
 
         self.original_text = QTextEdit()
+        self.original_text.setObjectName("readOnlyText")
         self.original_text.setReadOnly(True)
+        self.original_text.setAccessibleName(i18n.t("history_original_column"))
         self.original_text.setPlainText(self._detail.text)
-        self.original_text.setStyleSheet(self._text_edit_style())
         layout.addWidget(self.original_text)
 
         # 译文（如果有）
@@ -102,34 +104,40 @@ class EntryDetailDialog(QDialog):
             layout.addWidget(translation_label)
 
             self.translation_text = QTextEdit()
+            self.translation_text.setObjectName("readOnlyText")
             self.translation_text.setReadOnly(True)
+            self.translation_text.setAccessibleName(i18n.t("history_translation_column"))
             self.translation_text.setPlainText(self._detail.translation)
-            self.translation_text.setStyleSheet(self._text_edit_style())
             layout.addWidget(self.translation_text)
 
         # 按钮栏
         btn_layout = QHBoxLayout()
 
         self.btn_copy_original = QPushButton(i18n.t("history_copy_original"))
-        self.btn_copy_original.setStyleSheet(self._button_style(primary=True))
+        self.btn_copy_original.setObjectName("primaryButtonCompact")
         self.btn_copy_original.clicked.connect(self._copy_original)
         btn_layout.addWidget(self.btn_copy_original)
 
         if self._detail.translation:
             self.btn_copy_translation = QPushButton(i18n.t("history_copy_translation"))
-            self.btn_copy_translation.setStyleSheet(self._button_style(primary=True))
+            self.btn_copy_translation.setObjectName("primaryButtonCompact")
             self.btn_copy_translation.clicked.connect(self._copy_translation)
             btn_layout.addWidget(self.btn_copy_translation)
 
         btn_layout.addStretch()
 
         self.btn_close = QPushButton(i18n.t("history_close"))
-        self.btn_close.setStyleSheet(self._button_style(primary=False))
+        self.btn_close.setObjectName("secondaryButtonGray")
         self.btn_close.clicked.connect(self.accept)
         btn_layout.addWidget(self.btn_close)
 
         layout.addLayout(btn_layout)
         self.setLayout(layout)
+
+        # 快捷键（Esc 关闭由 QDialog 默认 reject 处理）
+        QShortcut(QKeySequence("Ctrl+1"), self, activated=self._copy_original)
+        if self._detail.translation:
+            QShortcut(QKeySequence("Ctrl+2"), self, activated=self._copy_translation)
 
     def _copy_original(self):
         QGuiApplication.clipboard().setText(self._detail.text)
@@ -145,41 +153,6 @@ class EntryDetailDialog(QDialog):
         original_text = self.btn_close.text()
         self.btn_close.setText(i18n.t("history_copy_done"))
         QTimer.singleShot(1200, lambda: self.btn_close.setText(original_text))
-
-    @staticmethod
-    def _text_edit_style() -> str:
-        return """
-            QTextEdit {
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                padding: 8px;
-                font-size: 14px;
-            }
-        """
-
-    @staticmethod
-    def _button_style(primary: bool = True) -> str:
-        if primary:
-            return """
-                QPushButton {
-                    background-color: #4CAF50;
-                    color: white;
-                    border: none;
-                    padding: 8px 18px;
-                    border-radius: 4px;
-                }
-                QPushButton:hover { background-color: #45a049; }
-            """
-        return """
-            QPushButton {
-                background-color: #757575;
-                color: white;
-                border: none;
-                padding: 8px 18px;
-                border-radius: 4px;
-            }
-            QPushButton:hover { background-color: #616161; }
-        """
 
 
 class HistoryDetailPage(QWidget):
@@ -203,7 +176,7 @@ class HistoryDetailPage(QWidget):
         top_bar = QHBoxLayout()
 
         self.btn_back = QPushButton("← " + i18n.t("history_back"))
-        self.btn_back.setStyleSheet(self._link_button_style())
+        self.btn_back.setObjectName("linkButton")
         self.btn_back.clicked.connect(self.back_requested.emit)
         top_bar.addWidget(self.btn_back)
 
@@ -216,7 +189,7 @@ class HistoryDetailPage(QWidget):
         top_bar.addStretch()
 
         self.btn_export = QPushButton(i18n.t("history_export_this"))
-        self.btn_export.setStyleSheet(self._export_button_style())
+        self.btn_export.setObjectName("secondaryButton")
         self.btn_export.clicked.connect(self._on_export)
         top_bar.addWidget(self.btn_export)
 
@@ -224,6 +197,8 @@ class HistoryDetailPage(QWidget):
 
         # entries 表格
         self.entries_table = QTableWidget()
+        self.entries_table.setObjectName("contentTable")
+        self.entries_table.setAccessibleName(i18n.t("history_title"))
         self.entries_table.setColumnCount(3)
         self.entries_table.setHorizontalHeaderLabels([
             i18n.t("history_time_column"),
@@ -240,26 +215,6 @@ class HistoryDetailPage(QWidget):
         header.resizeSection(0, 180)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-        self.entries_table.setStyleSheet("""
-            QTableWidget {
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                gridline-color: #eee;
-                font-size: 13px;
-            }
-            QHeaderView::section {
-                background-color: #f5f5f5;
-                padding: 8px;
-                border: none;
-                border-bottom: 1px solid #ccc;
-                font-weight: bold;
-            }
-            QTableWidget::item { padding: 8px; }
-            QTableWidget::item:selected {
-                background-color: #e3f2fd;
-                color: #000;
-            }
-        """)
         layout.addWidget(self.entries_table)
 
         # 分页栏
@@ -267,8 +222,8 @@ class HistoryDetailPage(QWidget):
         pagination_bar.addStretch()
 
         self.btn_prev = QPushButton("← " + i18n.t("history_prev_page"))
+        self.btn_prev.setObjectName("paginationButton")
         self.btn_prev.setEnabled(False)
-        self.btn_prev.setStyleSheet(self._pagination_button_style())
         self.btn_prev.clicked.connect(self._on_prev_page)
         pagination_bar.addWidget(self.btn_prev)
 
@@ -277,8 +232,8 @@ class HistoryDetailPage(QWidget):
         pagination_bar.addWidget(self.page_label)
 
         self.btn_next = QPushButton(i18n.t("history_next_page") + " →")
+        self.btn_next.setObjectName("paginationButton")
         self.btn_next.setEnabled(False)
-        self.btn_next.setStyleSheet(self._pagination_button_style())
         self.btn_next.clicked.connect(self._on_next_page)
         pagination_bar.addWidget(self.btn_next)
 
@@ -287,51 +242,12 @@ class HistoryDetailPage(QWidget):
 
         self.setLayout(layout)
 
-    @staticmethod
-    def _link_button_style() -> str:
-        return """
-            QPushButton {
-                background-color: transparent;
-                border: none;
-                padding: 6px 12px;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #e0e0e0;
-                border-radius: 4px;
-            }
-        """
-
-    @staticmethod
-    def _export_button_style() -> str:
-        return """
-            QPushButton {
-                background-color: #2196F3;
-                color: white;
-                border: none;
-                padding: 6px 16px;
-                border-radius: 4px;
-                font-size: 13px;
-            }
-            QPushButton:hover { background-color: #1976D2; }
-        """
-
-    @staticmethod
-    def _pagination_button_style() -> str:
-        return """
-            QPushButton {
-                background-color: #f5f5f5;
-                border: 1px solid #ccc;
-                padding: 6px 16px;
-                border-radius: 4px;
-                font-size: 13px;
-            }
-            QPushButton:hover:!disabled { background-color: #e0e0e0; }
-            QPushButton:disabled {
-                background-color: #fafafa;
-                color: #aaa;
-            }
-        """
+        # 快捷键
+        QShortcut(QKeySequence("Escape"), self, activated=self.back_requested.emit)
+        QShortcut(QKeySequence("Right"), self, activated=self._on_next_page)
+        QShortcut(QKeySequence("Left"), self, activated=self._on_prev_page)
+        QShortcut(QKeySequence("Ctrl+E"), self, activated=self._on_export)
+        QShortcut(QKeySequence("Return"), self, activated=self._on_enter_pressed)
 
     def set_session(self, session_id: str):
         """切换到新 session，重置 offset 并加载"""
@@ -419,6 +335,20 @@ class HistoryDetailPage(QWidget):
             if dialog._detail:
                 dialog.exec()
 
+    def _on_enter_pressed(self):
+        """Enter 键弹出当前选中 entry 详情（双击的键盘等价）"""
+        row = self.entries_table.currentRow()
+        if row < 0:
+            return
+        item = self.entries_table.item(row, 0)
+        if item is None:
+            return
+        entry_id = item.data(Qt.ItemDataRole.UserRole)
+        if entry_id and self._session_id:
+            dialog = EntryDetailDialog(self._session_id, entry_id, self)
+            if dialog._detail:
+                dialog.exec()
+
     def _on_export(self):
         if not self._session_id:
             return
@@ -437,10 +367,10 @@ class HistoryDetailPage(QWidget):
 
         try:
             export_session(self._session_id, fmt, Path(file_path))
-            QMessageBox.information(
+            show_toast(
                 self,
-                i18n.t("success"),
                 i18n.t("history_export_done").replace("{path}", file_path),
+                level="success",
             )
         except Exception as e:
             logger.exception(f"导出失败: {e}")

@@ -20,6 +20,7 @@ from main_window import MainWindow
 from utils import load_wasapi_devices
 from i18n import i18n
 from gui_logger import setup_gui_logger, get_gui_logger
+from styles import load_global_stylesheet
 
 
 def main():
@@ -31,6 +32,9 @@ def main():
         app = QApplication(sys.argv)
         app.setApplicationName("Smoco Desktop")
         app.setOrganizationName("iambitebyte")
+
+        # 加载全局 QSS 样式
+        load_global_stylesheet(app)
 
         # 设置应用图标
         icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "smoco_logo_circle.png")

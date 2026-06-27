@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QShortcut, QKeySequence
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QListWidget, QListWidgetItem,
@@ -66,18 +67,7 @@ class HistoryListPage(QWidget):
         # 顶部栏：返回 + 标题
         top_bar = QHBoxLayout()
         self.btn_back = QPushButton("← " + i18n.t("history_back"))
-        self.btn_back.setStyleSheet("""
-            QPushButton {
-                background-color: transparent;
-                border: none;
-                padding: 6px 12px;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #e0e0e0;
-                border-radius: 4px;
-            }
-        """)
+        self.btn_back.setObjectName("linkButton")
         self.btn_back.clicked.connect(self.back_requested.emit)
         top_bar.addWidget(self.btn_back)
         top_bar.addStretch()
@@ -89,22 +79,8 @@ class HistoryListPage(QWidget):
 
         # session 列表
         self.session_list = QListWidget()
-        self.session_list.setStyleSheet("""
-            QListWidget {
-                border: 1px solid #ccc;
-                border-radius: 4px;
-                padding: 4px;
-                font-size: 13px;
-            }
-            QListWidget::item {
-                padding: 12px;
-                border-bottom: 1px solid #eee;
-            }
-            QListWidget::item:selected {
-                background-color: #e3f2fd;
-                color: #000;
-            }
-        """)
+        self.session_list.setObjectName("contentList")
+        self.session_list.setAccessibleName(i18n.t("history_title"))
         self.session_list.itemDoubleClicked.connect(self._on_session_double_clicked)
         layout.addWidget(self.session_list)
 
@@ -113,8 +89,8 @@ class HistoryListPage(QWidget):
         pagination_bar.addStretch()
 
         self.btn_prev = QPushButton("← " + i18n.t("history_prev_page"))
+        self.btn_prev.setObjectName("paginationButton")
         self.btn_prev.setEnabled(False)
-        self.btn_prev.setStyleSheet(self._pagination_button_style())
         self.btn_prev.clicked.connect(self._on_prev_page)
         pagination_bar.addWidget(self.btn_prev)
 
@@ -123,8 +99,8 @@ class HistoryListPage(QWidget):
         pagination_bar.addWidget(self.page_label)
 
         self.btn_next = QPushButton(i18n.t("history_next_page") + " →")
+        self.btn_next.setObjectName("paginationButton")
         self.btn_next.setEnabled(False)
-        self.btn_next.setStyleSheet(self._pagination_button_style())
         self.btn_next.clicked.connect(self._on_next_page)
         pagination_bar.addWidget(self.btn_next)
 
@@ -133,24 +109,11 @@ class HistoryListPage(QWidget):
 
         self.setLayout(layout)
 
-    @staticmethod
-    def _pagination_button_style() -> str:
-        return """
-            QPushButton {
-                background-color: #f5f5f5;
-                border: 1px solid #ccc;
-                padding: 6px 16px;
-                border-radius: 4px;
-                font-size: 13px;
-            }
-            QPushButton:hover:!disabled {
-                background-color: #e0e0e0;
-            }
-            QPushButton:disabled {
-                background-color: #fafafa;
-                color: #aaa;
-            }
-        """
+        # 快捷键
+        QShortcut(QKeySequence("Escape"), self, activated=self.back_requested.emit)
+        QShortcut(QKeySequence("Right"), self, activated=self._on_next_page)
+        QShortcut(QKeySequence("Left"), self, activated=self._on_prev_page)
+        QShortcut(QKeySequence("Return"), self, activated=self._on_enter_pressed)
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -228,6 +191,14 @@ class HistoryListPage(QWidget):
         session_id = item.data(Qt.ItemDataRole.UserRole)
         if session_id:
             self.session_selected.emit(session_id)
+
+    def _on_enter_pressed(self):
+        """Enter 键进入当前选中 session（双击的键盘等价）"""
+        item = self.session_list.currentItem()
+        if item:
+            session_id = item.data(Qt.ItemDataRole.UserRole)
+            if session_id:
+                self.session_selected.emit(session_id)
 
     def update_ui(self):
         """语言切换时刷新文本"""
