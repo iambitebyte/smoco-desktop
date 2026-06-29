@@ -1,0 +1,328 @@
+{
+  "app": {
+    "tagline": "Turn any system audio into text, instantly",
+    "sprint1hint": "Website under construction"
+  },
+  "lang": {
+    "switch": "Switch language",
+    "zh": "简体中文",
+    "ja": "日本語",
+    "en": "English"
+  },
+  "theme": {
+    "toggle": "Toggle dark / light theme"
+  },
+  "seo": {
+    "home": {
+      "title": "Smoco Desktop · Windows real-time transcription + translation",
+      "description": "Windows system audio real-time transcription tool. Supports Whisper transcription + LLM translation, with embedded OpenVINO-genai Local Whisper. Zero network, zero install."
+    },
+    "download": {
+      "title": "Download Smoco Desktop · Windows v1.0.0",
+      "description": "Download Smoco Desktop v1.0.0 Windows zip, ~770MB self-contained, zero install, zero network."
+    },
+    "docs": {
+      "title": "Docs · Smoco Desktop",
+      "description": "Smoco Desktop documentation: features, shortcuts, data storage, packaging."
+    },
+    "changelog": {
+      "title": "Changelog · Smoco Desktop",
+      "description": "Smoco Desktop version history, starting from v1.0.0."
+    }
+  },
+  "nav": {
+    "features": "Features",
+    "useCases": "Use Cases",
+    "download": "Download",
+    "roadmap": "Roadmap",
+    "docs": "Docs",
+    "changelog": "Changelog"
+  },
+  "hero": {
+    "badge": "v1.0 · Available now",
+    "title": "Turn any system audio into text, instantly",
+    "subtitle": "A Windows desktop app that transcribes any sound from browsers and meeting software in real time — and translates it to your language immediately. Fully local Whisper engine. No network, no Python install.",
+    "ctaPrimary": "Download for Windows · 770MB",
+    "ctaSecondary": "View on GitHub",
+    "tag1": "Fully self-contained",
+    "tag2": "CN/JP/EN trilingual",
+    "screenshotAlt": "Smoco Desktop main interface"
+  },
+  "problemSolution": {
+    "eyebrow": "Why",
+    "title": "Solve your transcription pain points",
+    "description": "Three common scenarios — Smoco Desktop handles them all.",
+    "items": {
+      "browser": {
+        "title": "No subtitles in browser or meeting apps",
+        "desc": "Can't follow a Japanese livestream? Coworkers speaking English on Teams? Smoco captures system audio and transcribes any app's sound."
+      },
+      "typing": {
+        "title": "Online translation requires typing",
+        "desc": "No copy-pasting. Whisper real-time recognition + LLM context-aware translation — see your native language a second after speech."
+      },
+      "privacy": {
+        "title": "Cloud transcription has privacy concerns",
+        "desc": "Local Whisper runs on your own machine via OpenVINO-genai. Audio never leaves your computer — perfect for confidential meetings."
+      }
+    }
+  },
+  "features": {
+    "eyebrow": "Features",
+    "title": "Core capabilities",
+    "description": "From audio capture to translation output, fully self-contained.",
+    "items": {
+      "transcription": {
+        "title": "Real-time transcription",
+        "desc": "16kHz mono S16LE audio stream, transcribed to text via Whisper API"
+      },
+      "translation": {
+        "title": "Real-time translation",
+        "desc": "LLM async translation with previous N entries as context for better accuracy"
+      },
+      "local": {
+        "title": "Local Whisper NPU",
+        "desc": "Embedded OpenVINO-genai, auto-detects GPU/NPU/CPU"
+      },
+      "vad": {
+        "title": "Smart VAD chunking",
+        "desc": "WebRTC VAD detects silence and auto-chunks, 4 tunable parameters"
+      },
+      "history": {
+        "title": "History browser",
+        "desc": "View past sessions in-app, paginated, with detail view and txt/md export"
+      },
+      "shortcuts": {
+        "title": "Full keyboard control",
+        "desc": "15+ shortcuts cover common operations — no mouse needed"
+      }
+    }
+  },
+  "useCases": {
+    "eyebrow": "Use Cases",
+    "title": "Three typical scenarios",
+    "description": "See how others use Smoco Desktop.",
+    "cases": {
+      "live": {
+        "title": "Japanese meeting → Chinese subtitles",
+        "steps": [
+          "Launch Smoco Desktop",
+          "Settings → Local Whisper → Start service",
+          "Pick the browser audio device on home page",
+          "Start transcription → choose 'Translate to Chinese'",
+          "See Japanese source + Chinese translation in real time"
+        ]
+      },
+      "meeting": {
+        "title": "Meeting notes archive (Todo)",
+        "steps": [
+          "Configure remote Whisper server (or use Local)",
+          "Pick Teams output device",
+          "Real-time transcription, auto-saved locally",
+          "Export as .md from history page after meeting"
+        ]
+      },
+      "podcast": {
+        "title": "Offline meeting recording transcription",
+        "steps": [
+          "Play meeting recording, Smoco captures the audio",
+          "Translate during transcription (optional)",
+          "Export the entire session as .txt or .md",
+          "Use as meeting minutes"
+        ]
+      }
+    }
+  },
+  "quickStart": {
+    "eyebrow": "Quick Start",
+    "title": "Get started in 5 steps",
+    "description": "From download to first use in under 2 minutes.",
+    "steps": {
+      "download": { "title": "Download zip", "desc": "From the official website" },
+      "extract": { "title": "Extract anywhere", "desc": "To D:\\ or any drive" },
+      "run": { "title": "Double-click exe", "desc": "SmocoDesktop.exe" },
+      "whisper": { "title": "Configure Whisper", "desc": "Settings → Local Whisper → Start" },
+      "transcribe": { "title": "Start transcribing", "desc": "Pick device → F5" }
+    },
+    "footnote": "Requirements: Windows 10/11 64-bit · Intel Arc GPU recommended · ~800MB disk space"
+  },
+  "gallery": {
+    "eyebrow": "Gallery",
+    "title": "App screenshots",
+    "description": "What the actual interface looks like.",
+    "captions": {
+      "home": "Home · Device selection",
+      "startup": "Startup confirmation dialog",
+      "history": "Transcription history · Detail",
+      "settings": "Settings · Local Whisper"
+    }
+  },
+  "download": {
+    "eyebrow": "Download",
+    "title": "Ready to try it?",
+    "description": "Fully self-contained. Zero install, zero network. Download, extract, run.",
+    "ctaPrimary": "Download Smoco Desktop v1.0.0",
+    "meta": "Windows 10/11 · 770MB · zip"
+  },
+  "roadmap": {
+    "eyebrow": "Roadmap",
+    "title": "Development roadmap",
+    "description": "We're moving fast. Here's what's next.",
+    "versions": {
+      "current": {
+        "title": "v1.0 · Current",
+        "status": "Released",
+        "items": [
+          "Core transcription + translation",
+          "Local Whisper NPU (OpenVINO-genai)",
+          "History / Logs / Shortcuts / Accessibility"
+        ]
+      },
+      "next": {
+        "title": "v1.1 · Planned",
+        "status": "2026 Q3",
+        "items": [
+          "Microphone sync ASR — merge your voice and the other side by time to generate complete meeting minutes"
+        ]
+      },
+      "future": {
+        "title": "v2.0 · Planned",
+        "status": "2026 Q4+",
+        "items": [
+          "Call Smoco meeting transcription API for improved accuracy"
+        ]
+      }
+    }
+  },
+  "downloadPage": {
+    "eyebrow": "Download",
+    "title": "Download Smoco Desktop",
+    "subtitle": "Fully self-contained. Zero install, zero network.",
+    "main": {
+      "versionLabel": "Version",
+      "version": "v1.0.0",
+      "date": "2026-06-29",
+      "platform": "Windows 10/11 64-bit",
+      "size": "~770 MB",
+      "sha256Label": "SHA256",
+      "sha256": "(filled after deploy)",
+      "button": "Download zip"
+    },
+    "requirements": {
+      "title": "System requirements",
+      "os": "OS",
+      "osValue": "Windows 10/11 64-bit",
+      "cpu": "Processor",
+      "cpuValue": "Intel Core i5 or better (Intel Arc GPU acceleration recommended)",
+      "disk": "Disk space",
+      "diskValue": "~800 MB (including model)",
+      "ram": "Memory",
+      "ramValue": "8 GB recommended"
+    },
+    "install": {
+      "title": "Installation steps",
+      "steps": [
+        "Download the zip locally",
+        "Extract anywhere (e.g. D:\\SmocoDesktop\\)",
+        "Double-click SmocoDesktop.exe to launch",
+        "First-time setup: Settings → Local Whisper → Start service",
+        "Return home, pick an audio device, press F5 to start"
+      ]
+    },
+    "verify": {
+      "title": "Verify file integrity",
+      "desc": "After download, run this in PowerShell to verify SHA256:",
+      "command": "Get-FileHash SmocoDesktop-1.0.0.zip -Algorithm SHA256"
+    }
+  },
+  "docsPage": {
+    "eyebrow": "Docs",
+    "title": "Documentation",
+    "subtitle": "Learn about Smoco Desktop's features, usage, and packaging.",
+    "sections": {
+      "overview": {
+        "title": "Overview",
+        "content": "Smoco Desktop is a Windows desktop app that transcribes system audio (browsers, meeting apps) in real time and supports LLM translation. The core is built with PyQt6 GUI + Whisper API/Local Whisper + LLM translation."
+      },
+      "features": {
+        "title": "Core features",
+        "items": [
+          "Real-time transcription: 16kHz mono S16LE, via Whisper API or Local Whisper NPU (OpenVINO-genai)",
+          "Real-time translation: LLM async translation with previous N entries as context",
+          "Smart VAD chunking: 4 tunable parameters",
+          "History browser: session/entry two-level, paginated, with detail and txt/md export",
+          "Application logs: in-app viewer, file dropdown switching",
+          "Full keyboard control: 15+ shortcuts"
+        ]
+      },
+      "shortcuts": {
+        "title": "Shortcuts",
+        "table": [
+          { "page": "Home", "key": "F5", "action": "Start transcription" },
+          { "page": "Home", "key": "Ctrl + R", "action": "Refresh devices" },
+          { "page": "Home", "key": "Ctrl + ,", "action": "Open settings" },
+          { "page": "Home", "key": "Ctrl + H", "action": "Open history" },
+          { "page": "Home", "key": "Ctrl + L", "action": "Open logs" },
+          { "page": "Transcript", "key": "Esc", "action": "Stop recording" },
+          { "page": "History", "key": "Esc", "action": "Back" },
+          { "page": "History", "key": "← / →", "action": "Page nav" },
+          { "page": "History", "key": "Enter", "action": "Open session/entry" },
+          { "page": "Detail dialog", "key": "Ctrl + 1 / Ctrl + 2", "action": "Copy original / translation" }
+        ]
+      },
+      "data": {
+        "title": "Data storage",
+        "content": "All transcription and translation data lives under ~/.smoco/:",
+        "items": [
+          "settings.json — user settings (servers, LLM, VAD params, etc.)",
+          "logs/gui_YYYYMMDD.log — application logs (10MB rotation)",
+          "data/YYYYMMDD_HHMMSS/ — one directory per session, containing entry_*.json + translate_*.json + metadata.json"
+        ]
+      },
+      "build": {
+        "title": "Packaging",
+        "content": "Smoco Desktop is packaged with PyInstaller; build.bat automates main app + whisper-npu-api secondary packaging."
+      }
+    }
+  },
+  "changelogPage": {
+    "eyebrow": "Changelog",
+    "title": "Changelog",
+    "subtitle": "Version history of Smoco Desktop.",
+    "versions": {
+      "v1.0.0": {
+        "version": "v1.0.0",
+        "date": "2026-06-29",
+        "tag": "Initial release",
+        "items": [
+          "Core transcription + translation (remote Whisper + LLM translation)",
+          "Local Whisper NPU (PyInstaller secondary packaging of whisper-npu-api.exe, cross-machine zero-dependency)",
+          "Transcription history (session/entry two-level + pagination + txt/md export)",
+          "Application log viewer (in-app)",
+          "Full shortcut coverage (15+ operations)",
+          "Accessibility (accessibleName)",
+          "Toast notifications, global QSS styling",
+          "CN/JP/EN trilingual with instant switch",
+          "Windows self-contained distribution (~770MB zip)"
+        ]
+      }
+    }
+  },
+  "footer": {
+    "tagline": "Windows real-time transcription + translation",
+    "columns": {
+      "product": "Product",
+      "resources": "Resources"
+    },
+    "links": {
+      "download": "Download",
+      "features": "Features",
+      "roadmap": "Roadmap",
+      "docs": "Docs",
+      "guide": "Usage Guide",
+      "faq": "FAQ"
+    },
+    "copyright": "© 2026 Smoco Desktop",
+    "builtWith": "Built with React + Tailwind CSS"
+  }
+}

@@ -1,0 +1,33 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build output
+dist
+dist-ssr
+*.local
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# Downloads (大文件，部署前手动上传到对象存储)
+public/downloads/*.zip
+public/downloads/*.7z
+
+# OS
+Thumbs.db

@@ -1,0 +1,328 @@
+{
+  "app": {
+    "tagline": "あらゆるシステムオーディオを、瞬時に文字へ",
+    "sprint1hint": "ウェブサイト準備中"
+  },
+  "lang": {
+    "switch": "言語を切り替え",
+    "zh": "简体中文",
+    "ja": "日本語",
+    "en": "English"
+  },
+  "theme": {
+    "toggle": "ダーク/ライト テーマ切替"
+  },
+  "seo": {
+    "home": {
+      "title": "Smoco Desktop · Windows リアルタイム文字起こし + 翻訳",
+      "description": "Windows システムオーディオをリアルタイム文字起こし。Whisper + LLM 翻訳、OpenVINO-genai Local Whisper 内蔵、ネットワーク不要、インストール不要。"
+    },
+    "download": {
+      "title": "Smoco Desktop をダウンロード · Windows v1.0.0",
+      "description": "Smoco Desktop v1.0.0 Windows zip をダウンロード、~770MB 自己完結、インストール不要、ネットワーク不要。"
+    },
+    "docs": {
+      "title": "ドキュメント · Smoco Desktop",
+      "description": "Smoco Desktop ドキュメント：機能、ショートカット、データ保存、パッケージング。"
+    },
+    "changelog": {
+      "title": "変更履歴 · Smoco Desktop",
+      "description": "Smoco Desktop のバージョン移り変わり、v1.0.0 から。"
+    }
+  },
+  "nav": {
+    "features": "機能",
+    "useCases": "ユースケース",
+    "download": "ダウンロード",
+    "roadmap": "ロードマップ",
+    "docs": "ドキュメント",
+    "changelog": "更新"
+  },
+  "hero": {
+    "badge": "v1.0 · ダウンロード可能",
+    "title": "あらゆるシステムオーディオを、瞬時に文字へ",
+    "subtitle": "Windows デスクトップアプリ。ブラウザ、会議ソフトの音声をリアルタイムで文字起こしし、即座にあなたの言語へ翻訳します。完全ローカルの Whisper エンジンで、ネットワーク不要、Python インストール不要。",
+    "ctaPrimary": "Windows 版をダウンロード · 770MB",
+    "ctaSecondary": "GitHub を見る",
+    "tag1": "完全自己完結",
+    "tag2": "中/日/英 三言語",
+    "screenshotAlt": "Smoco Desktop メイン画面"
+  },
+  "problemSolution": {
+    "eyebrow": "Why",
+    "title": "文字起こしの課題を解決",
+    "description": "よくある 3 つのシーン、Smoco Desktop なら全部対応できます。",
+    "items": {
+      "browser": {
+        "title": "ブラウザ・会議ソフトに字幕がない",
+        "desc": "日本語のライブが分からない？Teams の同僚が英語？Smoco がシステムオーディオをキャプチャし、あらゆるアプリの音声を文字起こしします。"
+      },
+      "typing": {
+        "title": "オンライン翻訳はタイピングが要る",
+        "desc": "コピペ不要。Whisper リアルタイム認識 + LLM コンテキスト翻訳で、話した次の瞬間には母語で読めます。"
+      },
+      "privacy": {
+        "title": "クラウド文字起こしはプライバシーが心配",
+        "desc": "Local Whisper は OpenVINO-genai であなたの PC 上で動作。音声はローカルから出ません、機密会議にも適しています。"
+      }
+    }
+  },
+  "features": {
+    "eyebrow": "Features",
+    "title": "コア機能",
+    "description": "音声キャプチャから翻訳出力まで、すべて自己完結。",
+    "items": {
+      "transcription": {
+        "title": "リアルタイム文字起こし",
+        "desc": "16kHz mono S16LE オーディオストリーム、Whisper API で即座にテキスト化"
+      },
+      "translation": {
+        "title": "リアルタイム翻訳",
+        "desc": "LLM 非同期翻訳、前 N 件をコンテキストにより正確に"
+      },
+      "local": {
+        "title": "Local Whisper NPU",
+        "desc": "OpenVINO-genai 内蔵、GPU/NPU/CPU を自動検出"
+      },
+      "vad": {
+        "title": "VAD スマート分割",
+        "desc": "WebRTC VAD が無音を検出して自動チャンク化、4 パラメータ調整可能"
+      },
+      "history": {
+        "title": "履歴ブラウズ",
+        "desc": "アプリ内で過去のセッションを表示、ページネーション + 詳細 + txt/md エクスポート"
+      },
+      "shortcuts": {
+        "title": "完全キーボード操作",
+        "desc": "15 以上のショートカットが主要操作をカバー、マウス不要"
+      }
+    }
+  },
+  "useCases": {
+    "eyebrow": "Use Cases",
+    "title": "3 つの典型的シーン",
+    "description": "他のユーザーが Smoco Desktop をどう使っているか。",
+    "cases": {
+      "live": {
+        "title": "日本語会議 → 中国語字幕",
+        "steps": [
+          "Smoco Desktop を起動",
+          "設定 → ローカル Whisper モデル → サービス開始",
+          "ホームでブラウザ音声デバイスを選択",
+          "文字起こし開始 → 「中国語に翻訳」を選択",
+          "日本語原文 + 中国語翻訳をリアルタイム表示"
+        ]
+      },
+      "meeting": {
+        "title": "会議記録アーカイブ（Todo）",
+        "steps": [
+          "リモート Whisper サーバーを設定（または Local 使用）",
+          "Teams の出力デバイスを選択",
+          "リアルタイム文字起こし、ローカルに自動保存",
+          "終了後、履歴ページから .md をエクスポート"
+        ]
+      },
+      "podcast": {
+        "title": "オフライン会議録音文字起こし",
+        "steps": [
+          "会議録音を再生、Smoco が音声をキャプチャ",
+          "文字起こし中に翻訳（任意）",
+          "セッション全体を .txt または .md にエクスポート",
+          "会議メモとして使用"
+        ]
+      }
+    }
+  },
+  "quickStart": {
+    "eyebrow": "Quick Start",
+    "title": "5 ステップで開始",
+    "description": "ダウンロードから使用開始まで、2 分以内。",
+    "steps": {
+      "download": { "title": "zip をダウンロード", "desc": "公式サイトから" },
+      "extract": { "title": "任意の場所に解凍", "desc": "D:\\ など" },
+      "run": { "title": "exe をダブルクリック", "desc": "SmocoDesktop.exe" },
+      "whisper": { "title": "Whisper を設定", "desc": "設定 → ローカル Whisper 開始" },
+      "transcribe": { "title": "文字起こし開始", "desc": "デバイス選択 → F5" }
+    },
+    "footnote": "システム要件: Windows 10/11 64-bit · Intel Arc GPU 推奨 · ~800MB ディスク容量"
+  },
+  "gallery": {
+    "eyebrow": "Gallery",
+    "title": "アプリスクリーンショット",
+    "description": "実際の画面です。",
+    "captions": {
+      "home": "ホーム · デバイス選択",
+      "startup": "起動確認ダイアログ",
+      "history": "文字起こし履歴 · 詳細",
+      "settings": "設定 · ローカル Whisper モデル"
+    }
+  },
+  "download": {
+    "eyebrow": "Download",
+    "title": "試してみませんか？",
+    "description": "完全自己完結、インストール不要、ネットワーク不要。ダウンロードして解凍するだけ。",
+    "ctaPrimary": "Smoco Desktop v1.0.0 をダウンロード",
+    "meta": "Windows 10/11 · 770MB · zip"
+  },
+  "roadmap": {
+    "eyebrow": "Roadmap",
+    "title": "開発計画",
+    "description": "急速に進化しています。次に予定しているものはこちら。",
+    "versions": {
+      "current": {
+        "title": "v1.0 · 現在",
+        "status": "リリース済み",
+        "items": [
+          "コアの文字起こし + 翻訳",
+          "Local Whisper NPU（OpenVINO-genai）",
+          "履歴 / ログ / ショートカット / アクセシビリティ"
+        ]
+      },
+      "next": {
+        "title": "v1.1 · 計画中",
+        "status": "2026 Q3",
+        "items": [
+          "マイク同期 ASR — 自分と相手の音声を時間でマージし、完全な会議録を生成"
+        ]
+      },
+      "future": {
+        "title": "v2.0 · 計画中",
+        "status": "2026 Q4+",
+        "items": [
+          "Smoco 会議文字起こし API を呼び出して精度向上"
+        ]
+      }
+    }
+  },
+  "downloadPage": {
+    "eyebrow": "Download",
+    "title": "Smoco Desktop をダウンロード",
+    "subtitle": "完全自己完結、インストール不要、ネットワーク不要。",
+    "main": {
+      "versionLabel": "バージョン",
+      "version": "v1.0.0",
+      "date": "2026-06-29",
+      "platform": "Windows 10/11 64-bit",
+      "size": "約 770 MB",
+      "sha256Label": "SHA256",
+      "sha256": "（デプロイ後設定）",
+      "button": "zip をダウンロード"
+    },
+    "requirements": {
+      "title": "システム要件",
+      "os": "OS",
+      "osValue": "Windows 10/11 64-bit",
+      "cpu": "プロセッサ",
+      "cpuValue": "Intel Core i5 以上（Intel Arc GPU アクセラレーション推奨）",
+      "disk": "ディスク容量",
+      "diskValue": "約 800 MB（モデル含む）",
+      "ram": "メモリ",
+      "ramValue": "8 GB 推奨"
+    },
+    "install": {
+      "title": "インストール手順",
+      "steps": [
+        "zip をローカルにダウンロード",
+        "任意の場所に解凍（例: D:\\SmocoDesktop\\）",
+        "SmocoDesktop.exe をダブルクリックして起動",
+        "初回使用: 設定 → ローカル Whisper モデル → サービス開始",
+        "ホームに戻り、オーディオデバイスを選んで F5 で文字起こし開始"
+      ]
+    },
+    "verify": {
+      "title": "ファイル整合性の検証",
+      "desc": "ダウンロード後、PowerShell で SHA256 を検証できます：",
+      "command": "Get-FileHash SmocoDesktop-1.0.0.zip -Algorithm SHA256"
+    }
+  },
+  "docsPage": {
+    "eyebrow": "Docs",
+    "title": "ドキュメント",
+    "subtitle": "Smoco Desktop の機能、使い方、パッケージング方法を学ぶ。",
+    "sections": {
+      "overview": {
+        "title": "概要",
+        "content": "Smoco Desktop は Windows デスクトップアプリで、システムオーディオ（ブラウザ、会議ソフトなど）をリアルタイムに文字起こしし、LLM 翻訳をサポートします。コアは PyQt6 GUI + Whisper API/Local Whisper + LLM 翻訳で構成されています。"
+      },
+      "features": {
+        "title": "コア機能",
+        "items": [
+          "リアルタイム文字起こし: 16kHz mono S16LE、Whisper API または Local Whisper NPU（OpenVINO-genai）",
+          "リアルタイム翻訳: LLM 非同期翻訳、前 N 件をコンテキストに",
+          "VAD スマート分割: 4 パラメータ調整可能",
+          "履歴ブラウズ: セッション/項目の 2 階層、ページネーション + 詳細 + txt/md エクスポート",
+          "アプリログ: 内蔵ビューア、ファイルドロップダウン切替",
+          "完全キーボード操作: 15 以上のショートカット"
+        ]
+      },
+      "shortcuts": {
+        "title": "ショートカット",
+        "table": [
+          { "page": "ホーム", "key": "F5", "action": "文字起こし開始" },
+          { "page": "ホーム", "key": "Ctrl + R", "action": "デバイス更新" },
+          { "page": "ホーム", "key": "Ctrl + ,", "action": "設定を開く" },
+          { "page": "ホーム", "key": "Ctrl + H", "action": "履歴を開く" },
+          { "page": "ホーム", "key": "Ctrl + L", "action": "ログを開く" },
+          { "page": "文字起こしページ", "key": "Esc", "action": "録音停止" },
+          { "page": "履歴", "key": "Esc", "action": "戻る" },
+          { "page": "履歴", "key": "← / →", "action": "ページめくり" },
+          { "page": "履歴", "key": "Enter", "action": "セッション/詳細を開く" },
+          { "page": "詳細ダイアログ", "key": "Ctrl + 1 / Ctrl + 2", "action": "原文 / 訳文をコピー" }
+        ]
+      },
+      "data": {
+        "title": "データ保存",
+        "content": "すべての文字起こし・翻訳データは ~/.smoco/ 以下に保存されます：",
+        "items": [
+          "settings.json — ユーザー設定（サーバー、LLM、VAD パラメータ等）",
+          "logs/gui_YYYYMMDD.log — アプリログ（10MB ローテーション）",
+          "data/YYYYMMDD_HHMMSS/ — セッションごとのディレクトリ、entry_*.json + translate_*.json + metadata.json を含む"
+        ]
+      },
+      "build": {
+        "title": "パッケージング",
+        "content": "Smoco Desktop は PyInstaller でパッケージ化され、build.bat がメインプログラム + whisper-npu-api の二次パッケージングを自動化します。"
+      }
+    }
+  },
+  "changelogPage": {
+    "eyebrow": "Changelog",
+    "title": "変更履歴",
+    "subtitle": "Smoco Desktop のバージョン移り変わり。",
+    "versions": {
+      "v1.0.0": {
+        "version": "v1.0.0",
+        "date": "2026-06-29",
+        "tag": "初期リリース",
+        "items": [
+          "コア文字起こし + 翻訳（リモート Whisper + LLM 翻訳）",
+          "Local Whisper NPU（PyInstaller で whisper-npu-api.exe を二次パッケージ、クロスマシン依存なし）",
+          "文字起こし履歴（セッション/項目 2 階層 + ページネーション + txt/md エクスポート）",
+          "アプリログビューア（アプリ内蔵）",
+          "ショートカット完全カバー（15 以上の操作）",
+          "アクセシビリティ（accessibleName）",
+          "Toast 通知、グローバル QSS スタイル",
+          "中/日/英 三言語、切り替えで即時更新",
+          "Windows 自己完結パッケージ（~770MB zip）"
+        ]
+      }
+    }
+  },
+  "footer": {
+    "tagline": "Windows リアルタイム文字起こし + 翻訳",
+    "columns": {
+      "product": "製品",
+      "resources": "リソース"
+    },
+    "links": {
+      "download": "ダウンロード",
+      "features": "機能",
+      "roadmap": "ロードマップ",
+      "docs": "ドキュメント",
+      "guide": "使い方ガイド",
+      "faq": "FAQ"
+    },
+    "copyright": "© 2026 Smoco Desktop",
+    "builtWith": "Built with React + Tailwind CSS"
+  }
+}

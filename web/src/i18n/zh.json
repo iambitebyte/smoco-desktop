@@ -1,0 +1,328 @@
+{
+  "app": {
+    "tagline": "把任何系统音频，瞬间变成文字",
+    "sprint1hint": "网站建设中"
+  },
+  "lang": {
+    "switch": "切换语言",
+    "zh": "简体中文",
+    "ja": "日本語",
+    "en": "English"
+  },
+  "theme": {
+    "toggle": "切换深/浅色主题"
+  },
+  "seo": {
+    "home": {
+      "title": "Smoco Desktop · Windows 实时转录 + 翻译",
+      "description": "Windows 系统音频实时转录工具，支持 Whisper 转录 + LLM 翻译，内嵌 OpenVINO-genai Local Whisper，零联网零安装。"
+    },
+    "download": {
+      "title": "下载 Smoco Desktop · Windows v1.0.0",
+      "description": "下载 Smoco Desktop v1.0.0 Windows zip，~770MB 自包含，零安装零联网。"
+    },
+    "docs": {
+      "title": "文档 · Smoco Desktop",
+      "description": "Smoco Desktop 文档：功能、快捷键、数据存储、打包方式。"
+    },
+    "changelog": {
+      "title": "更新日志 · Smoco Desktop",
+      "description": "Smoco Desktop 版本演进，从 v1.0.0 开始。"
+    }
+  },
+  "nav": {
+    "features": "功能",
+    "useCases": "场景",
+    "download": "下载",
+    "roadmap": "路线图",
+    "docs": "文档",
+    "changelog": "更新"
+  },
+  "hero": {
+    "badge": "v1.0 · 现在可下载",
+    "title": "把任何系统音频，瞬间变成文字",
+    "subtitle": "Windows 桌面应用，实时转录浏览器、会议软件里的任何声音，并立即翻译成你的语言。完全本地化的 Whisper 引擎，无需联网、无需安装 Python。",
+    "ctaPrimary": "下载 Windows · 770MB",
+    "ctaSecondary": "查看 GitHub",
+    "tag1": "完全自包含",
+    "tag2": "中/日/英三语",
+    "screenshotAlt": "Smoco Desktop 主界面截图"
+  },
+  "problemSolution": {
+    "eyebrow": "Why",
+    "title": "解决你的转录痛点",
+    "description": "三个常见场景，Smoco Desktop 都能搞定。",
+    "items": {
+      "browser": {
+        "title": "浏览器/会议软件没字幕",
+        "desc": "看日文直播听不懂？Teams 同事说英文？Smoco 接管系统音频，任何应用的声音都能转录。"
+      },
+      "typing": {
+        "title": "在线翻译要打字",
+        "desc": "不用复制粘贴。Whisper 实时识别 + LLM 上下文翻译，说话的下一秒就能看到母语。"
+      },
+      "privacy": {
+        "title": "云端转录有隐私顾虑",
+        "desc": "Local Whisper 基于 OpenVINO-genai 跑在你自己的电脑上，音频不出本机，适合保密会议。"
+      }
+    }
+  },
+  "features": {
+    "eyebrow": "Features",
+    "title": "核心功能",
+    "description": "从音频采集到翻译输出，全链路自包含。",
+    "items": {
+      "transcription": {
+        "title": "实时转录",
+        "desc": "16kHz mono S16LE 音频流，Whisper API 实时转写为文字"
+      },
+      "translation": {
+        "title": "实时翻译",
+        "desc": "LLM 异步翻译，前 N 条作为上下文，理解更准"
+      },
+      "local": {
+        "title": "Local Whisper NPU",
+        "desc": "内嵌 OpenVINO-genai，自动检测 GPU/NPU/CPU 设备"
+      },
+      "vad": {
+        "title": "VAD 智能断句",
+        "desc": "WebRTC VAD 检测静音自动分块，4 个参数可调"
+      },
+      "history": {
+        "title": "历史浏览",
+        "desc": "应用内查看过去会话，分页 + 详情 + 导出 txt/md"
+      },
+      "shortcuts": {
+        "title": "全键盘操作",
+        "desc": "15+ 快捷键覆盖常用操作，无需鼠标"
+      }
+    }
+  },
+  "useCases": {
+    "eyebrow": "Use Cases",
+    "title": "三种典型场景",
+    "description": "看看别人怎么用 Smoco Desktop。",
+    "cases": {
+      "live": {
+        "title": "日文会议 → 中文字幕",
+        "steps": [
+          "启动 Smoco Desktop",
+          "设置 → 本地 Whisper 模型 → 启动服务",
+          "主页选择浏览器音频设备",
+          "开始转录 → 选「翻译为中文」",
+          "实时看到日文原文 + 中文翻译"
+        ]
+      },
+      "meeting": {
+        "title": "会议记录归档（Todo）",
+        "steps": [
+          "配置远程 Whisper 服务器（或用 Local）",
+          "选择 Teams 输出设备",
+          "实时转录，自动保存到本地",
+          "结束后从历史页导出 .md"
+        ]
+      },
+      "podcast": {
+        "title": "离线会议录音转录",
+        "steps": [
+          "播放会议录音，Smoco 接管音频",
+          "转录过程中翻译（可选）",
+          "导出整个会话为 .txt 或 .md",
+          "作为会议记录使用"
+        ]
+      }
+    }
+  },
+  "quickStart": {
+    "eyebrow": "Quick Start",
+    "title": "5 步上手",
+    "description": "下载到使用，不超过 2 分钟。",
+    "steps": {
+      "download": { "title": "下载 zip", "desc": "从官网下载" },
+      "extract": { "title": "解压任意位置", "desc": "解压到 D:\\ 或任意盘" },
+      "run": { "title": "双击 exe", "desc": "SmocoDesktop.exe" },
+      "whisper": { "title": "配置 Whisper", "desc": "设置 → 本地 Whisper 启动" },
+      "transcribe": { "title": "开始转录", "desc": "选设备 → F5" }
+    },
+    "footnote": "系统要求：Windows 10/11 64-bit · 推荐 Intel Arc GPU · ~800MB 磁盘空间"
+  },
+  "gallery": {
+    "eyebrow": "Gallery",
+    "title": "应用截图",
+    "description": "实际界面的样子。",
+    "captions": {
+      "home": "主页 · 设备选择",
+      "startup": "启动确认对话框",
+      "history": "转录历史 · 详情页",
+      "settings": "设置 · 本地 Whisper 模型"
+    }
+  },
+  "download": {
+    "eyebrow": "Download",
+    "title": "准备好试试了吗？",
+    "description": "完全自包含，零安装零联网。下载解压即可用。",
+    "ctaPrimary": "下载 Smoco Desktop v1.0.0",
+    "meta": "Windows 10/11 · 770MB · zip"
+  },
+  "roadmap": {
+    "eyebrow": "Roadmap",
+    "title": "开发计划",
+    "description": "我们正在快速演进，这里是接下来会做的。",
+    "versions": {
+      "current": {
+        "title": "v1.0 · 当前",
+        "status": "已发布",
+        "items": [
+          "核心转录 + 翻译",
+          "Local Whisper NPU（OpenVINO-genai）",
+          "历史 / 日志 / 快捷键 / 辅助功能"
+        ]
+      },
+      "next": {
+        "title": "v1.1 · 计划中",
+        "status": "2026 Q3",
+        "items": [
+          "支持麦克风同步 ASR，对方和自己的语音按时间合并，生成完整的会议记录"
+        ]
+      },
+      "future": {
+        "title": "v2.0 · 计划中",
+        "status": "2026 Q4+",
+        "items": [
+          "支持调用 smoco 的会议转录接口，提升精度"
+        ]
+      }
+    }
+  },
+  "downloadPage": {
+    "eyebrow": "Download",
+    "title": "下载 Smoco Desktop",
+    "subtitle": "完全自包含，零安装零联网。",
+    "main": {
+      "versionLabel": "版本",
+      "version": "v1.0.0",
+      "date": "2026-06-29",
+      "platform": "Windows 10/11 64-bit",
+      "size": "约 770 MB",
+      "sha256Label": "SHA256",
+      "sha256": "（部署后填入）",
+      "button": "下载 zip"
+    },
+    "requirements": {
+      "title": "系统要求",
+      "os": "操作系统",
+      "osValue": "Windows 10/11 64-bit",
+      "cpu": "处理器",
+      "cpuValue": "Intel Core i5 及以上（Intel Arc GPU 加速推荐）",
+      "disk": "磁盘空间",
+      "diskValue": "约 800 MB（含模型）",
+      "ram": "内存",
+      "ramValue": "8 GB 推荐"
+    },
+    "install": {
+      "title": "安装步骤",
+      "steps": [
+        "下载 zip 包到本地",
+        "解压到任意位置（如 D:\\SmocoDesktop\\）",
+        "双击 SmocoDesktop.exe 启动应用",
+        "首次使用：设置 → 本地 Whisper 模型 → 启动服务",
+        "返回主页，选择音频设备，按 F5 开始转录"
+      ]
+    },
+    "verify": {
+      "title": "校验文件完整性",
+      "desc": "下载完成后，可在 PowerShell 跑这条命令验证 SHA256：",
+      "command": "Get-FileHash SmocoDesktop-1.0.0.zip -Algorithm SHA256"
+    }
+  },
+  "docsPage": {
+    "eyebrow": "Docs",
+    "title": "文档",
+    "subtitle": "了解 Smoco Desktop 的功能、用法和打包方式。",
+    "sections": {
+      "overview": {
+        "title": "概览",
+        "content": "Smoco Desktop 是 Windows 桌面应用，实时转录系统音频（浏览器、会议软件等），支持 LLM 翻译。核心由 PyQt6 GUI + Whisper API/Local Whisper + LLM 翻译组成。"
+      },
+      "features": {
+        "title": "核心功能",
+        "items": [
+          "实时转录：16kHz mono S16LE，Whisper API 或 Local Whisper NPU（OpenVINO-genai）",
+          "实时翻译：LLM 异步翻译，前 N 条作为上下文",
+          "VAD 智能断句：4 个参数可调",
+          "历史浏览：会话/条目两级，分页 + 详情 + 导出 txt/md",
+          "应用日志：内置查看器，文件下拉切换",
+          "全键盘操作：15+ 快捷键"
+        ]
+      },
+      "shortcuts": {
+        "title": "快捷键",
+        "table": [
+          { "page": "主页", "key": "F5", "action": "开始转录" },
+          { "page": "主页", "key": "Ctrl + R", "action": "刷新设备" },
+          { "page": "主页", "key": "Ctrl + ,", "action": "打开设置" },
+          { "page": "主页", "key": "Ctrl + H", "action": "打开历史" },
+          { "page": "主页", "key": "Ctrl + L", "action": "打开日志" },
+          { "page": "转录页", "key": "Esc", "action": "停止录制" },
+          { "page": "历史", "key": "Esc", "action": "返回" },
+          { "page": "历史", "key": "← / →", "action": "翻页" },
+          { "page": "历史", "key": "Enter", "action": "进入会话/详情" },
+          { "page": "详情弹窗", "key": "Ctrl + 1 / Ctrl + 2", "action": "复制原文 / 译文" }
+        ]
+      },
+      "data": {
+        "title": "数据存储",
+        "content": "所有转录和翻译数据存在 ~/.smoco/ 下：",
+        "items": [
+          "settings.json — 用户设置（服务器、LLM、VAD 参数等）",
+          "logs/gui_YYYYMMDD.log — 应用日志（10MB 轮转）",
+          "data/YYYYMMDD_HHMMSS/ — 每次会话一个目录，含 entry_*.json + translate_*.json + metadata.json"
+        ]
+      },
+      "build": {
+        "title": "打包",
+        "content": "Smoco Desktop 用 PyInstaller 打包，build.bat 自动完成主程序 + whisper-npu-api 二次打包。"
+      }
+    }
+  },
+  "changelogPage": {
+    "eyebrow": "Changelog",
+    "title": "更新日志",
+    "subtitle": "Smoco Desktop 的版本演进。",
+    "versions": {
+      "v1.0.0": {
+        "version": "v1.0.0",
+        "date": "2026-06-29",
+        "tag": "Initial release",
+        "items": [
+          "核心转录 + 翻译（远程 Whisper + LLM 翻译）",
+          "Local Whisper NPU（PyInstaller 二次打包 whisper-npu-api.exe，跨机器零依赖）",
+          "转录历史查看（session/entry 两级 + 分页 + 导出 txt/md）",
+          "应用日志查看（应用内 viewer）",
+          "快捷键全覆盖（15+ 操作）",
+          "辅助功能（accessibleName）",
+          "Toast 通知、全局 QSS 样式",
+          "中/日/英三语，切换即时刷新",
+          "Windows 自包含分发（~770MB zip）"
+        ]
+      }
+    }
+  },
+  "footer": {
+    "tagline": "Windows 实时转录 + 翻译",
+    "columns": {
+      "product": "产品",
+      "resources": "资源"
+    },
+    "links": {
+      "download": "下载",
+      "features": "功能",
+      "roadmap": "路线图",
+      "docs": "文档",
+      "guide": "使用指南",
+      "faq": "FAQ"
+    },
+    "copyright": "© 2026 Smoco Desktop",
+    "builtWith": "Built with React + Tailwind CSS"
+  }
+}
