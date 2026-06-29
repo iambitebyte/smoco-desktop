@@ -5,7 +5,7 @@ Smoco Desktop 的图形界面版本 - Windows 系统音频实时转录工具。
 ## 功能特性
 
 - ✅ **品牌展示** - Logo 图标显示（界面 + 任务栏）
-- ✅ **多语言界面** - 支持简体中文、日本語、English
+- ✅ **多语言界面** - 支持简体中文、日本語、English，切换后所有 UI 即时刷新
 - ✅ **服务器管理** - 可配置多个 Whisper 服务器，支持健康检查
 - ✅ **设备选择** - 可视化 WASAPI 音频设备列表
 - ✅ **实时音量条** - 转录页面紧凑型音频电平显示
@@ -16,6 +16,13 @@ Smoco Desktop 的图形界面版本 - Windows 系统音频实时转录工具。
 - ✅ **异步处理** - 多线程音频采集和 HTTP 请求，UI 不卡顿
 - ✅ **转录交互** - 右键复制文本（含/不含时间戳）
 - ✅ **数据日志** - 自动保存转录数据和翻译结果到用户目录（JSON 格式）
+- ✅ **转录历史** - 应用内查看历史会话与单条详情，支持分页/导出/复制
+- ✅ **应用日志查看** - 应用内查看 `~/.smoco/logs/`，无需翻文件系统
+- ✅ **快捷键** - 开始/停止/翻页/复制/打开历史/日志/设置 全键盘操作
+- ✅ **辅助功能** - 主要控件含 `accessibleName`，兼容读屏软件
+- ✅ **Toast 通知** - 操作即时反馈（复制成功、导出完成）
+- ✅ **全局 QSS 样式** - 抽出 `styles.qss`，控件按 objectName 统一样式
+- ✅ **Local Whisper NPU** - 自带 whisper-npu-api.exe，零安装零联网
 
 ## 安装
 
@@ -39,9 +46,11 @@ uv run python main.py
 
 ### 1. 设备选择页面
 - 从列表中选择要采集的扬声器设备
-- 右上角⚙按钮打开设置对话框
-- 语言选择器切换界面语言
+- 右上角按钮（从左到右）：📋 历史 / 📜 日志 / ⚙ 设置
+- 语言选择器切换界面语言（切换后所有 UI 即时刷新）
 - 点击「开始转录」进入启动确认页面
+
+> 如果既没有外部 Whisper 服务器也没启动 Local Whisper，会提示后自动打开设置对话框并定位到「本地 Whisper 模型」选项卡。
 
 ### 2. 启动确认对话框
 点击「开始转录」后显示：
@@ -61,7 +70,7 @@ uv run python main.py
 - 健康检查通过后「开始转录」按钮才可点击
 
 ### 3. 设置对话框
-点击⚙按钮可配置：
+点击⚙按钮可配置（4 个选项卡）：
 - **Whisper 服务器列表**
   - 添加/删除服务器
   - 设置默认服务器（✓ 标记）
@@ -71,15 +80,22 @@ uv run python main.py
   - Max Chunk Duration: 最大块时长（默认 15000ms）
   - Min Chunk Duration: 最小块时长（默认 500ms）
   - Padding Duration: 断句后保留的尾部静音（默认 100ms）
+- **本地 Whisper 模型**（GPU/CPU）：
+  - 启动/停止内嵌 whisper-npu-api.exe 子进程
+  - 端口配置（默认 8000）
+  - 运行设备：自动检测（优先 GPU）/ GPU / CPU
+  - 状态指示：已停止 / 启动中 / 运行中
 - **LLM 配置**（用于翻译功能）：
   - Base URL: LLM API 地址（OpenAI 兼容）
   - API Key: API 密钥
   - Model ID: 模型标识（如 gpt-4o）
+  - 翻译上下文条数：前 N 条转录作为上下文（默认 5）
   - 验证按钮：测试配置是否正确
 
+设置对话框支持指定初始选项卡（如 `_show_settings(initial_tab=SettingsDialog.TAB_LOCAL_WHISPER)`）。
 设置自动保存到 `~/.smoco/settings.json`。
 
-### 2. 转录页面
+### 4. 转录页面
 - 顶部显示紧凑型音量条，实时显示音频电平
 - 转录文本以表格形式显示，包含三列：
   - **时间戳**：00:00:00 格式
@@ -88,6 +104,43 @@ uv run python main.py
 - 表格单元格支持自动换行，行高根据内容自适应
 - 时间戳表示该段音频从录制开始的时间偏移
 - 点击「← 返回」或「停止」结束录制
+
+### 5. 转录历史页面
+点击主页顶部 📋 按钮进入：
+- **会话列表**：按时间倒序，分页（每页 20 条），双击或 Enter 进入详情
+- **会话详情**：单会话的所有转录条目表格（时间/原文/译文预览），分页（每页 50 条）
+- **单条详情**：双击条目弹窗，显示完整原文 + 译文，支持「复制原文/复制译文」按钮
+- **导出**：将会话导出为 `.txt` 或 `.md`（含原文 + 译文）
+- 数据来自 `~/.smoco/data/YYYYMMDD_HHMMSS/`，译文按最新版本显示
+
+### 6. 日志查看页面
+点击主页顶部 📜 按钮进入：
+- 文件下拉：列出 `~/.smoco/logs/` 下的 `gui_*.log` / `error_*.log`（按日期倒序）
+- 「仅错误日志」切换
+- 显示文件**尾部 5000 行**（最新内容），自动滚到底
+- 异步加载，不卡 UI
+- 「打开日志目录」调系统文件管理器
+- 状态栏：`显示最近 N / M 行 · 文件大小 X KB`
+
+## 快捷键
+
+| 页面 | 快捷键 | 动作 |
+|---|---|---|
+| 主页 | `F5` | 开始转录 |
+| 主页 | `Ctrl+R` | 刷新设备列表 |
+| 主页 | `Ctrl+,` | 打开设置 |
+| 主页 | `Ctrl+H` | 打开转录历史 |
+| 主页 | `Ctrl+L` | 打开日志 |
+| 转录页 | `Esc` | 停止录制 |
+| 历史列表 | `Esc` | 返回主页 |
+| 历史列表 | `←` / `→` | 翻页 |
+| 历史列表 | `Enter` | 进入选中会话 |
+| 历史详情 | `Esc` | 返回列表 |
+| 历史详情 | `←` / `→` | 翻页 |
+| 历史详情 | `Ctrl+E` | 导出当前会话 |
+| 历史详情 | `Enter` | 弹出选中条目详情 |
+| 详情弹窗 | `Ctrl+1` | 复制原文 |
+| 详情弹窗 | `Ctrl+2` | 复制译文 |
 
 ## 界面预览
 
@@ -169,10 +222,12 @@ uv run python main.py
 - **GUI 框架**: PyQt6
 - **音频采集**: WASAPI Loopback (pyaudiowpatch)
 - **VAD 分块**: WebRTC Voice Activity Detection
-- **ASR 引擎**: Whisper API（通过设置配置远程服务地址）
+- **ASR 引擎**: Whisper API（远程）或内嵌 whisper-npu-api.exe（OpenVINO-genai）
 - **翻译引擎**: LLM API（OpenAI 兼容，支持上下文理解）
 - **HTTP 客户端**: requests + 线程池异步处理
 - **音频格式**: 16kHz mono S16LE
+- **全局样式**: `styles.qss` 通过 objectName 分类，`QApplication.setStyleSheet` 加载
+- **测试**: pytest + monkeypatch + tmp_path（`tests/test_history_reader.py`）
 
 ## 配置
 
@@ -352,27 +407,23 @@ Smoco Desktop 可以打包为 Windows 可执行文件，无需 Python 环境即�
 
 ```bash
 cd smoco-gui
-
-# 标准版（推荐，支持远程 Whisper）
 build.bat
-
-# 完整版（包含 Local Whisper）
-build_with_local_whisper.bat
 ```
 
+`build.bat` 会：
+1. 用 PyInstaller 打包主程序（`bundle.py` → `SmocoDesktop.exe`）
+2. 用 PyInstaller 二次打包 whisper-npu-api.exe（含 openvino/openvino-genai 等依赖）
+3. 拷贝模型文件 `whisper-small-ov/` 到 `dist/SmocoDesktop/whisper-local-npu/`
+
+### 分发版本（~770MB）
+
+完全自包含：
+- 主程序 `SmocoDesktop.exe`（PyQt6 等）
+- `whisper-local-npu/whisper-npu-api.exe`（独立 OpenVINO-genai 转写服务）
+- `whisper-small-ov/` 模型（244MB，可替换）
+- 用户**无需安装 Python、无需联网**
+
 详细打包说明请参阅 [BUILD.md](BUILD.md)。
-
-### 分发版本
-
-**标准版** (~100MB)：
-- 支持远程 Whisper 服务器
-- 体积小，下载快
-- 启动快速
-
-**完整版** (~400MB+)：
-- 包含 Local Whisper 功能
-- 开箱即用
-- 支持离线使用
 
 ### 用户要求
 
@@ -398,15 +449,21 @@ build_with_local_whisper.bat
 
 - ✅ 核心 ASR 转录功能
 - ✅ 品牌 Logo（界面 + 任务栏）
-- ✅ 多语言界面（中文/日文/英文）
+- ✅ 多语言界面（中文/日文/英文），切换后 UI 即时刷新
 - ✅ 时间戳显示（HH:MM:SS 格式）
-- ✅ 设置界面（多服务器管理 + VAD 参数）
+- ✅ 设置界面（4 个 tab：服务器 / VAD / 本地 Whisper / LLM）
 - ✅ LLM 翻译功能（异步处理 + 上下文理解）
 - ✅ 表格显示（时间戳 + 转录 + 翻译）
 - ✅ ASR 数据日志（自动保存到用户目录）
 - ✅ 跨平台路径支持（Windows/Linux）
 - ✅ 启动对话框（服务器选择 + 健康检查 + 语言选择 + 翻译选项）
 - ✅ 转录文本交互（右键复制功能）
-- ✅ LLM 自动验证（启动时自动检查配置）
-- ✅ 本地 Whisper 支持（可选功能）
-- ✅ Windows 可执行文件打包（标准版 + 完整版）
+- ✅ 本地 Whisper NPU（whisper-npu-api.exe 子进程，含 OpenVINO-genai）
+- ✅ 转录历史查看（session/entry 两级浏览 + 分页 + 导出 + 复制）
+- ✅ 应用日志查看（应用内查看 `~/.smoco/logs/`）
+- ✅ 快捷键覆盖（开始/停止/翻页/复制/打开历史/日志/设置）
+- ✅ 辅助功能（accessibleName 标注图标按钮/表格/列表）
+- ✅ Toast 通知（操作即时反馈）
+- ✅ 全局 QSS 样式系统（styles.qss）
+- ✅ pytest 单元测试（history_reader 20 个用例）
+- ✅ Windows 可执行文件打包（自包含分发版）

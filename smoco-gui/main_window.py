@@ -88,6 +88,7 @@ class SpeakerSelectionPage(QWidget):
     devices_refresh_requested = pyqtSignal()  # 信号：刷新设备列表
     history_requested = pyqtSignal()  # 信号：打开转录历史
     logs_requested = pyqtSignal()  # 信号：打开日志查看
+    language_changed = pyqtSignal(str)  # 信号：语言切换（lang_code）
 
     def __init__(self):
         super().__init__()
@@ -229,6 +230,7 @@ class SpeakerSelectionPage(QWidget):
         """语言切换"""
         lang_code, _ = LANGUAGES[index]
         i18n.set_language(lang_code)
+        self.language_changed.emit(lang_code)
 
     def _on_refresh_clicked(self):
         """刷新设备列表按钮点击"""
@@ -442,6 +444,9 @@ class MainWindow(QMainWindow):
         # 日志按钮 → 跳转日志页
         self._page_selection.logs_requested.connect(lambda: self._stack.setCurrentWidget(self._page_logs))
 
+        # 语言切换 → 刷新所有 page 的 UI 文本
+        self._page_selection.language_changed.connect(self._apply_language_change)
+
         # 控制器
         self._meter_controller = AudioMeterController()
         self._asr_controller = ASRController()
@@ -474,6 +479,19 @@ class MainWindow(QMainWindow):
         """切换到 session 详情页"""
         self._page_history_detail.set_session(session_id)
         self._stack.setCurrentWidget(self._page_history_detail)
+
+    def _apply_language_change(self, _lang_code: str):
+        """语言切换后刷新整个 UI 的可见文本"""
+        self.setWindowTitle(i18n.t("window_title"))
+        for page in (
+            self._page_selection,
+            self._page_transcript,
+            self._page_history,
+            self._page_history_detail,
+            self._page_logs,
+        ):
+            if hasattr(page, "update_ui"):
+                page.update_ui()
 
     def _refresh_devices(self):
         """刷新设备列表（异步）"""
@@ -508,6 +526,8 @@ class MainWindow(QMainWindow):
                     i18n.t("start_failed"),
                     i18n.t("need_server_config")
                 )
+                # 自动打开设置，定位到本地 Whisper 模型 tab
+                self._show_settings(initial_tab=SettingsDialog.TAB_LOCAL_WHISPER)
                 return
 
             last_server = self._settings.get("last_server", "")
@@ -656,9 +676,9 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 logger.error(f"加载设置失败: {e}")
 
-    def _show_settings(self):
-        """显示设置对话框"""
-        dialog = SettingsDialog(self)
+    def _show_settings(self, initial_tab: int = 0):
+        """显示设置对话框，可选指定初始 tab（见 SettingsDialog.TAB_*）"""
+        dialog = SettingsDialog(self, initial_tab=initial_tab)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             self._settings = dialog.get_settings()
             logger.info("设置已保存")
@@ -708,35 +728,30 @@ class MainWindow(QMainWindow):
             return False
 
     def _show_local_whisper_running_warning(self, port: int):
-        """显示 Local Whisper 仍在运行的警告"""
+        """显示 Local Whisper 仍在运行的警告，提供打开设置按钮"""
         from PyQt6.QtWidgets import QMessageBox
 
         logger.warning(f"阻止关闭应用：Local Whisper 服务正在运行 (端口 {port})")
 
         message = (
             f"Local Whisper 服务正在运行 (端口 {port})\n\n"
-            f"请先手动停止服务后再关闭应用：\n"
-            f"1. 点击「设定」按钮\n"
-            f"2. 切换到「本地 Whisper 模型」选项卡\n"
-            f"3. 点击「停止服务」按钮\n\n"
-            f"是否强制关闭应用？\n"
-            f"(可能会导致服务残留，需要手动终止进程)"
+            f"请先停止服务后再关闭应用。\n\n"
+            f"点击「打开设置」将跳转到「本地 Whisper 模型」选项卡停止服务。"
         )
 
         reply = QMessageBox.question(
             self,
             "Local Whisper 服务正在运行",
             message,
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.Open | QMessageBox.StandardButton.Cancel,
+            QMessageBox.StandardButton.Open,
         )
 
-        if reply == QMessageBox.StandardButton.Yes:
-            logger.warning("用户选择强制关闭应用（可能有服务残留）")
-            # 允许关闭
+        if reply == QMessageBox.StandardButton.Open:
+            logger.info("用户选择打开设置以停止 Local Whisper 服务")
+            self._show_settings(initial_tab=SettingsDialog.TAB_LOCAL_WHISPER)
         else:
-            logger.info("用户取消关闭，需要先停止 Local Whisper 服务")
-            # 阻止关闭 - 已经在 closeEvent 中调用 event.ignore()
+            logger.info("用户取消关闭（未打开设置）")
 
 
 class DeviceRefreshThread(QThread):

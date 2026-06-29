@@ -28,7 +28,13 @@ from llm_client import get_llm_client
 class SettingsDialog(QDialog):
     """设置对话框 - 服务器列表管理"""
 
-    def __init__(self, parent=None):
+    # Tab 索引常量（给调用方用）
+    TAB_SERVERS = 0
+    TAB_VAD = 1
+    TAB_LOCAL_WHISPER = 2
+    TAB_LLM = 3
+
+    def __init__(self, parent=None, initial_tab: int = 0):
         super().__init__(parent)
 
         self.setWindowTitle(i18n.t("settings"))
@@ -350,6 +356,10 @@ class SettingsDialog(QDialog):
 
         # 加载设置
         self._load_settings()
+
+        # 切到调用方指定的 tab
+        if 0 <= initial_tab < self.tab_widget.count():
+            self.tab_widget.setCurrentIndex(initial_tab)
 
     def showEvent(self, event):
         """对话框显示时刷新本地服务状态"""

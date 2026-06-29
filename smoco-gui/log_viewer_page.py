@@ -250,3 +250,14 @@ class LogViewerPage(QWidget):
                 subprocess.Popen(["xdg-open", str(log_dir)])
         except Exception as e:
             logger.exception(f"打开日志目录失败: {e}")
+
+    def update_ui(self):
+        """语言切换后刷新 UI 文本"""
+        self.btn_back.setText("← " + i18n.t("history_back"))
+        self.btn_refresh.setText("🔄 " + i18n.t("refresh_logs"))
+        self.btn_refresh.setAccessibleName(i18n.t("refresh_logs"))
+        self.btn_open_dir.setText(i18n.t("open_log_dir"))
+        self.error_only_check.setText(i18n.t("error_logs_only"))
+        # 当前显示的日志内容保持不变；状态栏文本会在下次刷新时用新语言
+        # 文件下拉里的项目（含 size 后缀）也重新生成
+        self._refresh_file_list()

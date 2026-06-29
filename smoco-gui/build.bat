@@ -33,6 +33,8 @@ uv run pyinstaller --clean --onedir --noconsole --icon=smoco_logo_circle.ico --n
     --hidden-import=asr_logger --hidden-import=settings_dialog --hidden-import=startup_dialog ^
     --hidden-import=transcript_edit --hidden-import=local_whisper_manager --hidden-import=translation_worker ^
     --hidden-import=llm_client --hidden-import=smoco.audio --hidden-import=smoco.source.wasapi ^
+    --hidden-import=history_page --hidden-import=history_detail_page --hidden-import=log_viewer_page ^
+    --hidden-import=history_reader --hidden-import=styles --hidden-import=toast ^
     --add-data="smoco_logo_circle.png;." ^
     --add-data="styles.qss;." ^
     --add-data="main_window.py;." --add-data="gui_logger.py;." --add-data="i18n.py;." --add-data="paths.py;." ^
@@ -40,6 +42,9 @@ uv run pyinstaller --clean --onedir --noconsole --icon=smoco_logo_circle.ico --n
     --add-data="asr_chunker.py;." --add-data="asr_logger.py;." --add-data="settings_dialog.py;." ^
     --add-data="startup_dialog.py;." --add-data="transcript_edit.py;." --add-data="local_whisper_manager.py;." ^
     --add-data="translation_worker.py;." --add-data="llm_client.py;." ^
+    --add-data="history_page.py;." --add-data="history_detail_page.py;." ^
+    --add-data="history_reader.py;." ^
+    --add-data="log_viewer_page.py;." --add-data="styles.py;." --add-data="toast.py;." ^
     --add-data="main.py;." --add-data="bundle.py;." ^
     bundle.py
 

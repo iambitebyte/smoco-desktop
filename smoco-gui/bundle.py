@@ -23,6 +23,12 @@ import transcript_edit
 import local_whisper_manager
 import translation_worker
 import llm_client
+import history_page
+import history_detail_page
+import history_reader
+import log_viewer_page
+import styles
+import toast
 
 # 导入并运行主程序
 from main import main
