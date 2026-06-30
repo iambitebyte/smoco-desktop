@@ -120,23 +120,31 @@ class SettingsDialog(QDialog):
 
         self.silence_ms_spin = QSpinBox()
         self.silence_ms_spin.setRange(100, 2000)
+        self.silence_ms_spin.setSingleStep(50)
         self.silence_ms_spin.setSuffix(" ms")
         self.silence_ms_spin.setValue(300)
+        self.silence_ms_spin.lineEdit().setReadOnly(True)
 
         self.max_chunk_ms_spin = QSpinBox()
         self.max_chunk_ms_spin.setRange(5000, 30000)
+        self.max_chunk_ms_spin.setSingleStep(1000)
         self.max_chunk_ms_spin.setSuffix(" ms")
         self.max_chunk_ms_spin.setValue(10000)
+        self.max_chunk_ms_spin.lineEdit().setReadOnly(True)
 
         self.min_chunk_ms_spin = QSpinBox()
         self.min_chunk_ms_spin.setRange(100, 2000)
+        self.min_chunk_ms_spin.setSingleStep(1000)
         self.min_chunk_ms_spin.setSuffix(" ms")
         self.min_chunk_ms_spin.setValue(1000)
+        self.min_chunk_ms_spin.lineEdit().setReadOnly(True)
 
         self.pad_ms_spin = QSpinBox()
         self.pad_ms_spin.setRange(0, 500)
+        self.pad_ms_spin.setSingleStep(50)
         self.pad_ms_spin.setSuffix(" ms")
         self.pad_ms_spin.setValue(100)
+        self.pad_ms_spin.lineEdit().setReadOnly(True)
 
         # 创建 VAD 参数表单
         vad_form = QFormLayout()
@@ -146,6 +154,12 @@ class SettingsDialog(QDialog):
         vad_form.addRow(i18n.t("padding_duration") + ":", self.pad_ms_spin)
 
         vad_layout.addLayout(vad_form)
+
+        # 恢复默认按钮
+        self.btn_vad_defaults = QPushButton(i18n.t("restore_defaults"))
+        self.btn_vad_defaults.clicked.connect(self._reset_vad_defaults)
+        vad_layout.addWidget(self.btn_vad_defaults)
+
         vad_layout.addStretch()
 
         vad_tab.setLayout(vad_layout)
@@ -704,6 +718,13 @@ class SettingsDialog(QDialog):
                 background-color: #e0e0e0;
                 border-radius: 4px;
             """)
+
+    def _reset_vad_defaults(self):
+        """恢复 VAD 参数为默认值"""
+        self.silence_ms_spin.setValue(300)
+        self.max_chunk_ms_spin.setValue(10000)
+        self.min_chunk_ms_spin.setValue(1000)
+        self.pad_ms_spin.setValue(100)
 
     def _on_tab_changed(self, index: int):
         """选项卡切换时触发"""

@@ -42,6 +42,7 @@ TRANSLATIONS = {
         "max_chunk_duration": "最大块时长",
         "min_chunk_duration": "最小块时长",
         "padding_duration": "填充时长",
+        "restore_defaults": "恢复默认",
         # 本地 Whisper
         "local_whisper_model": "本地 Whisper 模型 (GPU)",
         "local_model_size": "模型类型",
@@ -201,6 +202,7 @@ TRANSLATIONS = {
         "max_chunk_duration": "最大チャンク時間",
         "min_chunk_duration": "最小チャンク時間",
         "padding_duration": "パディング時間",
+        "restore_defaults": "デフォルトに戻す",
         # 本地 Whisper
         "local_whisper_model": "ローカル Whisper モデル (GPU)",
         "local_model_size": "モデルタイプ",
@@ -360,6 +362,7 @@ TRANSLATIONS = {
         "max_chunk_duration": "Max Chunk Duration",
         "min_chunk_duration": "Min Chunk Duration",
         "padding_duration": "Padding Duration",
+        "restore_defaults": "Restore Defaults",
         # Local Whisper
         "local_whisper_model": "Local Whisper Model (GPU)",
         "local_model_size": "Model Type",

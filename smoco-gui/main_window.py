@@ -106,7 +106,12 @@ class SpeakerSelectionPage(QWidget):
 
         top_bar.addStretch()
 
-        # 历史按钮
+        # 历史按钮 + 文字
+        history_container = QWidget()
+        history_layout = QVBoxLayout()
+        history_layout.setContentsMargins(0, 0, 0, 0)
+        history_layout.setSpacing(2)
+        history_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.btn_history = QPushButton("📋")
         self.btn_history.setObjectName("iconButton")
         self.btn_history.setToolTip(i18n.t("history"))
@@ -114,9 +119,20 @@ class SpeakerSelectionPage(QWidget):
         self.btn_history.setFixedSize(32, 32)
         self.btn_history.clicked.connect(self.history_requested.emit)
         self.btn_history.setShortcut(QKeySequence("Ctrl+H"))
-        top_bar.addWidget(self.btn_history)
+        history_layout.addWidget(self.btn_history, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.lbl_history = QLabel(i18n.t("history"))
+        self.lbl_history.setObjectName("iconLabel")
+        self.lbl_history.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        history_layout.addWidget(self.lbl_history)
+        history_container.setLayout(history_layout)
+        top_bar.addWidget(history_container)
 
-        # 日志按钮
+        # 日志按钮 + 文字
+        logs_container = QWidget()
+        logs_layout = QVBoxLayout()
+        logs_layout.setContentsMargins(0, 0, 0, 0)
+        logs_layout.setSpacing(2)
+        logs_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.btn_logs = QPushButton("📜")
         self.btn_logs.setObjectName("iconButton")
         self.btn_logs.setToolTip(i18n.t("logs"))
@@ -124,9 +140,20 @@ class SpeakerSelectionPage(QWidget):
         self.btn_logs.setFixedSize(32, 32)
         self.btn_logs.clicked.connect(self.logs_requested.emit)
         self.btn_logs.setShortcut(QKeySequence("Ctrl+L"))
-        top_bar.addWidget(self.btn_logs)
+        logs_layout.addWidget(self.btn_logs, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.lbl_logs = QLabel(i18n.t("logs"))
+        self.lbl_logs.setObjectName("iconLabel")
+        self.lbl_logs.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        logs_layout.addWidget(self.lbl_logs)
+        logs_container.setLayout(logs_layout)
+        top_bar.addWidget(logs_container)
 
-        # 设置按钮
+        # 设置按钮 + 文字
+        settings_container = QWidget()
+        settings_layout = QVBoxLayout()
+        settings_layout.setContentsMargins(0, 0, 0, 0)
+        settings_layout.setSpacing(2)
+        settings_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.btn_settings = QPushButton("⚙")
         self.btn_settings.setObjectName("iconButton")
         self.btn_settings.setToolTip(i18n.t("settings"))
@@ -134,7 +161,13 @@ class SpeakerSelectionPage(QWidget):
         self.btn_settings.setFixedSize(32, 32)
         self.btn_settings.clicked.connect(self.settings_requested.emit)
         self.btn_settings.setShortcut(QKeySequence("Ctrl+,"))
-        top_bar.addWidget(self.btn_settings)
+        settings_layout.addWidget(self.btn_settings, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.lbl_settings = QLabel(i18n.t("settings"))
+        self.lbl_settings.setObjectName("iconLabel")
+        self.lbl_settings.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        settings_layout.addWidget(self.lbl_settings)
+        settings_container.setLayout(settings_layout)
+        top_bar.addWidget(settings_container)
 
         # 语言选择
         self._lang_label = QLabel(i18n.t("language") + ":")
@@ -196,6 +229,11 @@ class SpeakerSelectionPage(QWidget):
         self._lang_label.setText(i18n.t("language") + ":")
         self.desc.setText(i18n.t("select_device_desc"))
         self.btn_start.setText(i18n.t("start_transcription"))
+        self.lbl_history.setText(i18n.t("history"))
+        self.lbl_logs.setText(i18n.t("logs"))
+        self.lbl_settings.setText(i18n.t("settings"))
+        self.btn_history.setToolTip(i18n.t("history"))
+        self.btn_logs.setToolTip(i18n.t("logs"))
         self.btn_settings.setToolTip(i18n.t("settings"))
 
     def load_devices(self, devices: list):
