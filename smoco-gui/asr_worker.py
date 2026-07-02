@@ -36,11 +36,14 @@ class ASRWorker(QObject):
 
     def __init__(self, api_url: str, language: str = "ja",
                  silence_ms: int = 600, max_chunk_ms: int = 15000,
-                 min_chunk_ms: int = 500, pad_ms: int = 100):
+                 min_chunk_ms: int = 500, pad_ms: int = 100,
+                 use_prompt: bool = False):
         super().__init__()
         self.api_url = api_url.rstrip("/")
         self.language = language
         self._running = False
+        self._use_prompt = use_prompt
+        self._last_text = ""  # 上一个 chunk 的转录文本，用作 prompt
         # HTTP 线程池 - 并发处理多个请求
         self._executor = ThreadPoolExecutor(max_workers=2)
         # VAD 分块器
@@ -93,6 +96,9 @@ class ASRWorker(QObject):
         try:
             url = f"{self.api_url}/transcribe"
             params = {"language": self.language}
+            # 如果启用了 prompt 且有上一段文本，作为上下文传入
+            if self._use_prompt and self._last_text:
+                params["prompt"] = self._last_text
             headers = {
                 "Content-Type": "audio/raw",
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
@@ -118,6 +124,8 @@ class ASRWorker(QObject):
                 result = response.json()
                 text = result.get("text", "").strip()
                 if text:
+                    # 更新 last_text 用作下一个 chunk 的 prompt
+                    self._last_text = text
                     # 记录日志并获取 entry_id
                     entry_id = get_asr_logger().log_request(
                         chunk_size=chunk_size,
@@ -146,6 +154,7 @@ class ASRController:
         self._worker: ASRWorker | None = None
         self._api_url = ""
         self._language = "ja"
+        self._use_prompt = False
         # VAD 参数
         self._vad_params = {
             "silence_ms": 600,
@@ -169,6 +178,10 @@ class ASRController:
             "pad_ms": pad_ms,
         }
 
+    def set_use_prompt(self, use_prompt: bool):
+        """设置是否启用 prompt"""
+        self._use_prompt = use_prompt
+
     def start(self, transcript_callback, error_callback):
         """启动转录"""
         self.stop()
@@ -177,7 +190,9 @@ class ASRController:
         get_asr_logger().start_session()
 
         self._thread = QThread()
-        self._worker = ASRWorker(self._api_url, self._language, **self._vad_params)
+        self._worker = ASRWorker(self._api_url, self._language,
+                                 use_prompt=self._use_prompt,
+                                 **self._vad_params)
         self._worker.moveToThread(self._thread)
 
         self._worker.transcript_ready.connect(transcript_callback)

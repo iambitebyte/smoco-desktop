@@ -7,7 +7,7 @@ import requests
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-    QPushButton, QRadioButton, QButtonGroup, QMessageBox, QComboBox
+    QPushButton, QRadioButton, QButtonGroup, QMessageBox, QComboBox, QCheckBox
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QThread
 
@@ -151,6 +151,14 @@ class ASRStartupDialog(QDialog):
             }
         """)
         layout.addWidget(self.status_label)
+
+        # Whisper 设定
+        whisper_opts_label = QLabel("Whisper " + i18n.t("settings") + ":")
+        layout.addWidget(whisper_opts_label)
+
+        self.chk_prompt = QCheckBox(i18n.t("enable_prompt"))
+        self.chk_prompt.setChecked(False)
+        layout.addWidget(self.chk_prompt)
 
         # 语言选择
         lang_label = QLabel(i18n.t("select_language") + ":")
@@ -333,6 +341,10 @@ class ASRStartupDialog(QDialog):
             return "zh"
         else:
             return None  # 不翻译
+
+    def get_use_prompt(self) -> bool:
+        """获取是否启用 Whisper prompt"""
+        return self.chk_prompt.isChecked()
 
     def closeEvent(self, event):
         """关闭对话框时停止健康检查线程"""

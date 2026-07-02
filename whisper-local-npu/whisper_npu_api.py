@@ -90,7 +90,7 @@ def create_app(pipe, model_dir: str, device: str):
         return {"status": "ok", "model": model_dir, "device": device, "mode": "local-npu"}
 
     @app.post("/transcribe")
-    async def transcribe(request: Request, language: str = "ja"):
+    async def transcribe(request: Request, language: str = "ja", prompt: str = ""):
         if pipe is None:
             raise HTTPException(status_code=503, detail="模型未加载")
         try:
@@ -106,12 +106,14 @@ def create_app(pipe, model_dir: str, device: str):
             log.info(f"音频长度: {len(samples)} samples ({len(samples)/16000:.2f}s)")
 
             # 使用 WhisperPipeline 的 generate 方法
-            # 参考 test_whisper.py 的成功调用方式
             log.info(f"调用 pipe.generate: samples.shape={samples.shape}, dtype={samples.dtype}")
 
             # 使用锁防止并发请求（OpenVINO pipeline 同时只能处理一个请求）
             async with generate_lock:
-                result = await asyncio.to_thread(pipe.generate, samples)
+                if prompt:
+                    result = await asyncio.to_thread(pipe.generate, samples, prompt=prompt)
+                else:
+                    result = await asyncio.to_thread(pipe.generate, samples)
 
             log.info("pipe.generate 调用完成")
 

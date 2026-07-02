@@ -60,12 +60,14 @@ async def health():
 async def transcribe(
     request: Request,
     language: str = "ja",
+    prompt: str = "",
 ):
     """转写音频
 
     Args:
         request: FastAPI Request（包含 raw body）
         language: 语言代码（ja=日语, zh=中文, en=英语）
+        prompt: 可选的提示文本，用于引导模型输出风格
     """
     if model is None:
         raise HTTPException(status_code=503, detail="模型未加载")
@@ -89,6 +91,7 @@ async def transcribe(
             temp_path,
             language=language if language else None,
             fp16=True,  # GPU 加速
+            prompt=prompt if prompt else None,
         )
 
         # 清理临时文件

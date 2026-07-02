@@ -91,13 +91,15 @@ class LLMClient(QObject):
         except Exception as e:
             return False, f"{i18n.t('llm_config_failed')}: {str(e)}"
 
-    def translate(self, entries: list[dict], target_lang: str = "zh") -> tuple[bool, list, str]:
+    def translate(self, entries: list[dict], target_lang: str = "zh",
+                  source_lang: str = "ja") -> tuple[bool, list, str]:
         """
         翻译文本
 
         Args:
             entries: 待翻译的条目列表，格式 [{"id": 1, "text": "..."}, ...]
-            target_lang: 目标语言
+            target_lang: 目标语言代码
+            source_lang: 来源语言代码
 
         Returns:
             (成功, 翻译结果列表, 错误信息)
@@ -120,10 +122,11 @@ class LLMClient(QObject):
 
             # 构建提示词
             entries_json = json.dumps(entries, ensure_ascii=False)
-            target_lang_name = "中文" if target_lang == "zh" else target_lang
+            src_name = _lang_name(source_lang)
+            tgt_name = _lang_name(target_lang)
 
-            system_prompt = f"""你是一个专业的日文到{target_lang_name}翻译助手。
-请将以下日文文本翻译为{target_lang_name}，严格按照 JSON 格式返回。
+            system_prompt = f"""你是一个专业的{src_name}到{tgt_name}翻译助手。
+请将以下{src_name}文本翻译为{tgt_name}，严格按照 JSON 格式返回。
 
 输入格式：
 {entries_json}
@@ -136,8 +139,8 @@ class LLMClient(QObject):
 
 输出格式：
 [
-  {{"id": 1, "translation": "{target_lang_name}翻译1"}},
-  {{"id": 2, "translation": "{target_lang_name}翻译2"}},
+  {{"id": 1, "translation": "{tgt_name}翻译1"}},
+  {{"id": 2, "translation": "{tgt_name}翻译2"}},
   ...
 ]"""
 
@@ -179,6 +182,17 @@ class LLMClient(QObject):
             return False, [], f"请求失败: {str(e)}"
         except Exception as e:
             return False, [], f"翻译异常: {str(e)}"
+
+
+def _lang_name(lang_code: str) -> str:
+    """将语言代码映射为人类可读的名称"""
+    mapping = {
+        "ja": "日文",
+        "zh": "中文",
+        "en": "英文",
+        "ko": "韩文",
+    }
+    return mapping.get(lang_code, lang_code)
 
 
 # 全局实例

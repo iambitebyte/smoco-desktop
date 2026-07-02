@@ -491,7 +491,8 @@ class MainWindow(QMainWindow):
         self._translation_controller = TranslationController()
         self._device_refresh_thread = None  # 设备刷新线程
         self._is_running = False
-        self._translate_lang = None  # 翻译语言
+        self._source_lang = "ja"  # 转录来源语言
+        self._translate_lang = None  # 翻译目标语言
 
         # 设置
         self._settings = {
@@ -587,9 +588,11 @@ class MainWindow(QMainWindow):
             selected_server = dialog.get_selected_server()
             selected_lang = dialog.get_selected_language()
             selected_translate_lang = dialog.get_selected_translate_language()
+            use_prompt = dialog.get_use_prompt()
 
             # 更新上次使用的服务器
             self._settings["last_server"] = selected_server
+            self._source_lang = selected_lang
             self._translate_lang = selected_translate_lang
             self._settings["last_server"] = selected_server
 
@@ -598,6 +601,7 @@ class MainWindow(QMainWindow):
                 api_url=selected_server,
                 language=selected_lang
             )
+            self._asr_controller.set_use_prompt(use_prompt)
 
             # 应用 VAD 参数
             vad_params = self._settings.get("vad", {})
@@ -618,7 +622,7 @@ class MainWindow(QMainWindow):
 
             # 启动翻译（如果选择了翻译语言）
             if self._translate_lang:
-                self._translation_controller.set_language(self._translate_lang)
+                self._translation_controller.set_language(self._source_lang, self._translate_lang)
                 self._translation_controller.start(
                     translation_callback=self._page_transcript.update_translation,
                     error_callback=self._on_translation_error
@@ -739,6 +743,9 @@ class MainWindow(QMainWindow):
 
         if self._is_running:
             self._stop_asr()
+
+        # 无论是否在录制，都要停止翻译控制器（防止后台线程继续运行）
+        self._translation_controller.stop()
 
         # 检查 Local Whisper 服务状态
         local_manager = get_local_whisper_manager()

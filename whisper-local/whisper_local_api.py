@@ -141,7 +141,7 @@ async def health():
 
 
 @app.post("/transcribe")
-async def transcribe(request: Request, language: str = "ja"):
+async def transcribe(request: Request, language: str = "ja", prompt: str = ""):
     """转写音频"""
     if model is None:
         raise HTTPException(status_code=503, detail="模型未加载")
@@ -166,6 +166,7 @@ async def transcribe(request: Request, language: str = "ja"):
             language=language if language else None,
             beam_size=5,
             vad_filter=True,
+            initial_prompt=prompt if prompt else None,
         )
 
         # 清理临时文件
