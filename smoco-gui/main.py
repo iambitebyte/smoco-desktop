@@ -16,6 +16,7 @@ if current_dir not in sys.path:
 
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import Qt
 from main_window import MainWindow
 from utils import load_wasapi_devices
 from i18n import i18n
@@ -32,6 +33,10 @@ def main():
         app = QApplication(sys.argv)
         app.setApplicationName("Smoco Desktop")
         app.setOrganizationName("iambitebyte")
+
+        # 固定浅色主题：styles.qss 只覆盖了部分控件，未覆盖的原生控件/窗口背景
+        # 在 Windows 暗色模式下会跟随系统变暗。这里强制亮色方案，不随系统设置改变。
+        app.styleHints().setColorScheme(Qt.ColorScheme.Light)
 
         # 加载全局 QSS 样式
         load_global_stylesheet(app)
