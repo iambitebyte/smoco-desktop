@@ -32,9 +32,7 @@ export default function Footer() {
           {/* Logo + tagline */}
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-3">
-              <span className="w-7 h-7 rounded-md bg-brand-gradient flex items-center justify-center text-white text-sm font-bold">
-                S
-              </span>
+              <img src="/images/smoco_logo.png" alt="Smoco Desktop" className="w-7 h-7 rounded-full" />
               <span className="font-semibold">Smoco Desktop</span>
             </div>
             <p className="text-sm text-content-muted">Windows 实时转录 + 翻译</p>

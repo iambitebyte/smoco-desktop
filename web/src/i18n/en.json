@@ -18,8 +18,8 @@
       "description": "Windows system audio real-time transcription tool. Supports Whisper transcription + LLM translation, with embedded OpenVINO-genai Local Whisper. Zero network, zero install."
     },
     "download": {
-      "title": "Download Smoco Desktop · Windows v1.0.0",
-      "description": "Download Smoco Desktop v1.0.0 Windows zip, ~770MB self-contained, zero install, zero network."
+      "title": "Download Smoco Desktop · Windows v1.0.1",
+      "description": "Download Smoco Desktop v1.0.1 Windows zip, ~770MB self-contained, zero install, zero network."
     },
     "docs": {
       "title": "Docs · Smoco Desktop",
@@ -27,7 +27,7 @@
     },
     "changelog": {
       "title": "Changelog · Smoco Desktop",
-      "description": "Smoco Desktop version history, starting from v1.0.0."
+      "description": "Smoco Desktop version history, latest v1.0.1."
     }
   },
   "nav": {
@@ -161,7 +161,7 @@
     "eyebrow": "Download",
     "title": "Ready to try it?",
     "description": "Fully self-contained. Zero install, zero network. Download, extract, run.",
-    "ctaPrimary": "Download Smoco Desktop v1.0.0",
+    "ctaPrimary": "Download Smoco Desktop v1.0.1",
     "meta": "Windows 10/11 · 770MB · zip"
   },
   "roadmap": {
@@ -200,12 +200,12 @@
     "subtitle": "Fully self-contained. Zero install, zero network.",
     "main": {
       "versionLabel": "Version",
-      "version": "v1.0.0",
-      "date": "2026-06-29",
+      "version": "v1.0.1",
+      "date": "2026-07-06",
       "platform": "Windows 10/11 64-bit",
       "size": "~770 MB",
-      "sha256Label": "SHA256",
-      "sha256": "(filled after deploy)",
+      "md5Label": "MD5",
+      "md5": "b46bdf4b068bbae4f6f2ea1725ea511a",
       "button": "Download zip"
     },
     "requirements": {
@@ -231,8 +231,8 @@
     },
     "verify": {
       "title": "Verify file integrity",
-      "desc": "After download, run this in PowerShell to verify SHA256:",
-      "command": "Get-FileHash SmocoDesktop-1.0.0.zip -Algorithm SHA256"
+      "desc": "After download, run this in PowerShell to verify MD5:",
+      "command": "Get-FileHash smoco-desktop-1.0.1.zip -Algorithm MD5"
     }
   },
   "docsPage": {
@@ -290,6 +290,15 @@
     "title": "Changelog",
     "subtitle": "Version history of Smoco Desktop.",
     "versions": {
+      "v1.0.1": {
+        "version": "v1.0.1",
+        "date": "2026-07-06",
+        "tag": "Model selection + theme fix",
+        "items": [
+          "Local Whisper: v3-turbo model now selectable (small / large-v3-turbo in settings)",
+          "UI locked to light theme, no longer follows Windows dark mode"
+        ]
+      },
       "v1.0.0": {
         "version": "v1.0.0",
         "date": "2026-06-29",

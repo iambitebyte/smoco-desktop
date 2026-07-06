@@ -57,7 +57,7 @@ export default function Download() {
               <h2 className="text-2xl font-bold mb-2">Smoco Desktop {t('downloadPage.main.version')}</h2>
               <p className="text-content-secondary mb-8">{t('downloadPage.main.platform')}</p>
 
-              <Button as="a" href="/download/smoco-desktop.zip" size="lg" className="w-full sm:w-auto">
+              <Button as="a" href="/download/smoco-desktop-1.0.1.zip" size="lg" className="w-full sm:w-auto">
                 <DownloadIcon className="w-4 h-4" />
                 {t('downloadPage.main.button')} · {t('downloadPage.main.size')}
               </Button>
@@ -65,10 +65,10 @@ export default function Download() {
               <div className="mt-8 pt-6 border-t border-edge-subtle text-sm">
                 <div>
                   <div className="text-content-muted text-xs uppercase tracking-wider mb-1">
-                    {t('downloadPage.main.sha256Label')}
+                    {t('downloadPage.main.md5Label')}
                   </div>
                   <code className="font-mono text-content-secondary text-xs break-all">
-                    {t('downloadPage.main.sha256')}
+                    {t('downloadPage.main.md5')}
                   </code>
                 </div>
               </div>

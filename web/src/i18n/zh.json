@@ -18,8 +18,8 @@
       "description": "Windows 系统音频实时转录工具，支持 Whisper 转录 + LLM 翻译，内嵌 OpenVINO-genai Local Whisper，零联网零安装。"
     },
     "download": {
-      "title": "下载 Smoco Desktop · Windows v1.0.0",
-      "description": "下载 Smoco Desktop v1.0.0 Windows zip，~770MB 自包含，零安装零联网。"
+      "title": "下载 Smoco Desktop · Windows v1.0.1",
+      "description": "下载 Smoco Desktop v1.0.1 Windows zip，~770MB 自包含，零安装零联网。"
     },
     "docs": {
       "title": "文档 · Smoco Desktop",
@@ -27,7 +27,7 @@
     },
     "changelog": {
       "title": "更新日志 · Smoco Desktop",
-      "description": "Smoco Desktop 版本演进，从 v1.0.0 开始。"
+      "description": "Smoco Desktop 版本演进，最新 v1.0.1。"
     }
   },
   "nav": {
@@ -161,7 +161,7 @@
     "eyebrow": "Download",
     "title": "准备好试试了吗？",
     "description": "完全自包含，零安装零联网。下载解压即可用。",
-    "ctaPrimary": "下载 Smoco Desktop v1.0.0",
+    "ctaPrimary": "下载 Smoco Desktop v1.0.1",
     "meta": "Windows 10/11 · 770MB · zip"
   },
   "roadmap": {
@@ -200,12 +200,12 @@
     "subtitle": "完全自包含，零安装零联网。",
     "main": {
       "versionLabel": "版本",
-      "version": "v1.0.0",
-      "date": "2026-06-29",
+      "version": "v1.0.1",
+      "date": "2026-07-06",
       "platform": "Windows 10/11 64-bit",
       "size": "约 770 MB",
-      "sha256Label": "SHA256",
-      "sha256": "（部署后填入）",
+      "md5Label": "MD5",
+      "md5": "b46bdf4b068bbae4f6f2ea1725ea511a",
       "button": "下载 zip"
     },
     "requirements": {
@@ -231,8 +231,8 @@
     },
     "verify": {
       "title": "校验文件完整性",
-      "desc": "下载完成后，可在 PowerShell 跑这条命令验证 SHA256：",
-      "command": "Get-FileHash SmocoDesktop-1.0.0.zip -Algorithm SHA256"
+      "desc": "下载完成后，可在 PowerShell 跑这条命令验证 MD5：",
+      "command": "Get-FileHash smoco-desktop-1.0.1.zip -Algorithm MD5"
     }
   },
   "docsPage": {
@@ -290,6 +290,15 @@
     "title": "更新日志",
     "subtitle": "Smoco Desktop 的版本演进。",
     "versions": {
+      "v1.0.1": {
+        "version": "v1.0.1",
+        "date": "2026-07-06",
+        "tag": "模型选择 + 主题修复",
+        "items": [
+          "本地 Whisper 新增 v3-turbo 模型可选（设置中切换 small / large-v3-turbo）",
+          "界面固定浅色主题，不再跟随 Windows 系统暗色模式"
+        ]
+      },
       "v1.0.0": {
         "version": "v1.0.0",
         "date": "2026-06-29",

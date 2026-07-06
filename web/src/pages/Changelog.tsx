@@ -6,8 +6,8 @@ import SEO from '../components/SEO'
 export default function Changelog() {
   const { t } = useTranslation()
 
-  // 只读 v1.0.0 这一项（i18n key 限制）
-  const versionKey = 'v1.0.0'
+  // 只读 v1.0.1 这一项（i18n key 限制）
+  const versionKey = 'v1.0.1'
   const items = t(`changelogPage.versions.${versionKey}.items`, { returnObjects: true }) as string[]
   const version = t(`changelogPage.versions.${versionKey}.version`)
   const date = t(`changelogPage.versions.${versionKey}.date`)

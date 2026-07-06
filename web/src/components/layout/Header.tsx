@@ -45,7 +45,7 @@ export default function Header() {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 font-semibold">
           <img
-            src="/images/smoco_logo_circle.png"
+            src="/images/smoco_logo.png"
             alt="Smoco Desktop"
             className="w-7 h-7 rounded-full"
           />

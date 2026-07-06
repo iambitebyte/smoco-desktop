@@ -18,8 +18,8 @@
       "description": "Windows システムオーディオをリアルタイム文字起こし。Whisper + LLM 翻訳、OpenVINO-genai Local Whisper 内蔵、ネットワーク不要、インストール不要。"
     },
     "download": {
-      "title": "Smoco Desktop をダウンロード · Windows v1.0.0",
-      "description": "Smoco Desktop v1.0.0 Windows zip をダウンロード、~770MB 自己完結、インストール不要、ネットワーク不要。"
+      "title": "Smoco Desktop をダウンロード · Windows v1.0.1",
+      "description": "Smoco Desktop v1.0.1 Windows zip をダウンロード、~770MB 自己完結、インストール不要、ネットワーク不要。"
     },
     "docs": {
       "title": "ドキュメント · Smoco Desktop",
@@ -27,7 +27,7 @@
     },
     "changelog": {
       "title": "変更履歴 · Smoco Desktop",
-      "description": "Smoco Desktop のバージョン移り変わり、v1.0.0 から。"
+      "description": "Smoco Desktop のバージョン移り変わり、最新 v1.0.1。"
     }
   },
   "nav": {
@@ -161,7 +161,7 @@
     "eyebrow": "Download",
     "title": "試してみませんか？",
     "description": "完全自己完結、インストール不要、ネットワーク不要。ダウンロードして解凍するだけ。",
-    "ctaPrimary": "Smoco Desktop v1.0.0 をダウンロード",
+    "ctaPrimary": "Smoco Desktop v1.0.1 をダウンロード",
     "meta": "Windows 10/11 · 770MB · zip"
   },
   "roadmap": {
@@ -200,12 +200,12 @@
     "subtitle": "完全自己完結、インストール不要、ネットワーク不要。",
     "main": {
       "versionLabel": "バージョン",
-      "version": "v1.0.0",
-      "date": "2026-06-29",
+      "version": "v1.0.1",
+      "date": "2026-07-06",
       "platform": "Windows 10/11 64-bit",
       "size": "約 770 MB",
-      "sha256Label": "SHA256",
-      "sha256": "（デプロイ後設定）",
+      "md5Label": "MD5",
+      "md5": "b46bdf4b068bbae4f6f2ea1725ea511a",
       "button": "zip をダウンロード"
     },
     "requirements": {
@@ -231,8 +231,8 @@
     },
     "verify": {
       "title": "ファイル整合性の検証",
-      "desc": "ダウンロード後、PowerShell で SHA256 を検証できます：",
-      "command": "Get-FileHash SmocoDesktop-1.0.0.zip -Algorithm SHA256"
+      "desc": "ダウンロード後、PowerShell で MD5 を検証できます：",
+      "command": "Get-FileHash smoco-desktop-1.0.1.zip -Algorithm MD5"
     }
   },
   "docsPage": {
@@ -290,6 +290,15 @@
     "title": "変更履歴",
     "subtitle": "Smoco Desktop のバージョン移り変わり。",
     "versions": {
+      "v1.0.1": {
+        "version": "v1.0.1",
+        "date": "2026-07-06",
+        "tag": "モデル選択 + テーマ修正",
+        "items": [
+          "ローカル Whisper に v3-turbo モデルを追加（設定で small / large-v3-turbo を切替可能）",
+          "UI をライトテーマに固定、Windows ダークモードに追従しない"
+        ]
+      },
       "v1.0.0": {
         "version": "v1.0.0",
         "date": "2026-06-29",
