@@ -21,7 +21,7 @@ if not getattr(sys, 'frozen', False):
 
 from i18n import i18n
 from paths import get_settings_path
-from local_whisper_manager import get_local_whisper_manager
+from local_whisper_manager import get_local_whisper_manager, MODELS, DEFAULT_MODEL
 from llm_client import get_llm_client
 
 
@@ -179,10 +179,21 @@ class SettingsDialog(QDialog):
         # 配置表单
         config_form = QFormLayout()
 
-        # 模型显示（固定为 small OpenVINO）
-        model_label = QLabel("Small OpenVINO (INT8 量化)")
-        model_label.setStyleSheet("font-weight: bold;")
-        config_form.addRow(i18n.t("local_model_size") + ":", model_label)
+        # 模型选择（下拉框 + 动态说明）
+        self.local_model_combo = QComboBox()
+        for _model_key, _model_info in MODELS.items():
+            _label = i18n.t(_model_info["label_key"])
+            if _model_info.get("recommended"):
+                _label += f"（{i18n.t('local_model_recommended')}）"
+            self.local_model_combo.addItem(_label, _model_key)
+        self.local_model_combo.setCurrentIndex(0)
+        config_form.addRow(i18n.t("local_model_size") + ":", self.local_model_combo)
+
+        self.local_model_desc = QLabel(i18n.t(MODELS[DEFAULT_MODEL]["desc_key"]))
+        self.local_model_desc.setWordWrap(True)
+        self.local_model_desc.setStyleSheet("color: #666; font-size: 12px;")
+        config_form.addRow("", self.local_model_desc)
+        self.local_model_combo.currentIndexChanged.connect(self._on_model_changed)
 
         # 端口
         self.local_port_spin = QSpinBox()
@@ -422,8 +433,18 @@ class SettingsDialog(QDialog):
                 local_whisper = settings.get("local_whisper", {})
                 port = local_whisper.get("port", 8000)
                 device = local_whisper.get("device", "auto")
+                model = local_whisper.get("model", DEFAULT_MODEL)
 
                 self.local_port_spin.setValue(port)
+
+                # 设置模型选择（按 data 匹配回填，未知值回落默认）
+                model_index = 0
+                for _i in range(self.local_model_combo.count()):
+                    if self.local_model_combo.itemData(_i) == model:
+                        model_index = _i
+                        break
+                self.local_model_combo.setCurrentIndex(model_index)
+                self._on_model_changed()
 
                 # 设置设备选择
                 device_index = 0  # 默认自动
@@ -435,7 +456,7 @@ class SettingsDialog(QDialog):
 
                 # 检查本地服务实际运行状态
                 local_manager = get_local_whisper_manager()
-                local_manager.set_config("small-ov", port, device, local_whisper.get("enabled", False))
+                local_manager.set_config(model, port, device, local_whisper.get("enabled", False))
 
                 # 检查实际是否在运行
                 if local_manager.check_running():
@@ -601,6 +622,7 @@ class SettingsDialog(QDialog):
                     "pad_ms": self.pad_ms_spin.value(),
                 },
                 "local_whisper": {
+                    "model": self.local_model_combo.currentData(),
                     "port": self.local_port_spin.value(),
                     "device": self.local_device_combo.currentData(),
                     "enabled": get_local_whisper_manager().is_running,
@@ -660,6 +682,7 @@ class SettingsDialog(QDialog):
                 "pad_ms": self.pad_ms_spin.value(),
             },
             "local_whisper": {
+                "model": self.local_model_combo.currentData(),
                 "port": self.local_port_spin.value(),
                 "device": self.local_device_combo.currentData(),
                 "enabled": get_local_whisper_manager().is_running,
@@ -672,13 +695,23 @@ class SettingsDialog(QDialog):
             }
         }
 
+    def _on_model_changed(self):
+        """模型下拉切换：刷新说明文案；运行中切换时提示需重启服务"""
+        model_key = self.local_model_combo.currentData()
+        info = MODELS.get(model_key, MODELS[DEFAULT_MODEL])
+        desc = i18n.t(info["desc_key"])
+        if get_local_whisper_manager().is_running:
+            desc += "\n" + i18n.t("local_model_switch_restart")
+        self.local_model_desc.setText(desc)
+
     def _on_local_start(self):
         """启动本地 Whisper 服务"""
         port = self.local_port_spin.value()
         device = self.local_device_combo.currentData()
+        model = self.local_model_combo.currentData()
 
         local_manager = get_local_whisper_manager()
-        local_manager.set_config("small-ov", port, device, enabled=True)
+        local_manager.set_config(model, port, device, enabled=True)
         local_manager.start()
 
     def _on_local_stop(self):

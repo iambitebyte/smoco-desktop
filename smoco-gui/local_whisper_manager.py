@@ -27,10 +27,30 @@ _smoco_root = get_smoco_root()
 # 获取日志记录器
 logger = get_gui_logger(__name__)
 
-# 支持的模型
+# 支持的模型：key=逻辑名（写入配置），value 含磁盘目录名 + i18n 文案 key + 是否推荐
 MODELS = {
-    "small-ov": "Small OpenVINO (GPU 加速，推荐)",
+    "small-ov": {
+        "dir": "whisper-small-ov",
+        "label_key": "local_model_small_label",
+        "desc_key": "local_model_small_desc",
+        "recommended": True,
+    },
+    "large-v3-turbo-ov": {
+        "dir": "whisper-large-v3-turbo-ov",
+        "label_key": "local_model_turbo_label",
+        "desc_key": "local_model_turbo_desc",
+        "recommended": False,
+    },
 }
+
+# 默认模型（低占用，适合大多数设备）
+DEFAULT_MODEL = "small-ov"
+
+
+def get_model_dir(model_key: str) -> str:
+    """根据模型逻辑名返回磁盘目录名（即 --model-dir 使用的相对路径）"""
+    info = MODELS.get(model_key, MODELS[DEFAULT_MODEL])
+    return info["dir"]
 
 
 class LocalWhisperStarter(QThread):
@@ -264,12 +284,21 @@ class LocalWhisperManager(QObject):
             "PYTHONUNBUFFERED": "1",
         }
 
+        # 解析所选模型的磁盘目录并校验存在（--model-dir 相对 cwd=api_dir）
+        model_dir = get_model_dir(self._config.get("model", DEFAULT_MODEL))
+        model_path = api_dir / model_dir
+        if not model_path.exists():
+            error_msg = f"{i18n.t('local_model_missing')} ({model_dir})"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+        logger.info(f"使用模型目录: {model_dir}")
+
         # 构造启动命令
         if getattr(sys, 'frozen', False):
             # 打包环境：直接 spawn whisper-npu-api.exe
             cmd = [
                 str(api_exe),
-                "--model-dir", "whisper-small-ov",
+                "--model-dir", model_dir,
                 "--language", "ja",
                 "--port", str(self._config["port"]),
                 "--device", device_to_use,
@@ -278,7 +307,7 @@ class LocalWhisperManager(QObject):
             # 开发环境：python.exe + whisper_npu_api.py
             cmd = [
                 str(api_exe), str(api_file_dev),
-                "--model-dir", "whisper-small-ov",
+                "--model-dir", model_dir,
                 "--language", "ja",
                 "--port", str(self._config["port"]),
                 "--device", device_to_use,

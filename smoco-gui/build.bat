@@ -125,6 +125,14 @@ if exist "..\whisper-local-npu\whisper-small-ov" (
     echo [WARNING] whisper-small-ov not found, users will need to download models
 )
 
+REM Copy large-v3-turbo model files if exists (higher accuracy, ~800MB)
+if exist "..\whisper-local-npu\whisper-large-v3-turbo-ov" (
+    echo Copying whisper-large-v3-turbo-ov model files...
+    xcopy "..\whisper-local-npu\whisper-large-v3-turbo-ov" "dist\SmocoDesktop\whisper-local-npu\whisper-large-v3-turbo-ov\" /E /I /Y >nul
+) else (
+    echo [WARNING] whisper-large-v3-turbo-ov not found, turbo model will be unavailable
+)
+
 REM Copy init script to root of dist (fallback for users to rebuild)
 echo Copying init-whisper-npu.bat...
 copy "..\init-whisper-npu.bat" "dist\SmocoDesktop\" >nul
