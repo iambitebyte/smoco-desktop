@@ -22,6 +22,7 @@ if not getattr(sys, 'frozen', False):
 
 from asr_chunker import AudioChunker
 from asr_logger import get_asr_logger
+from asr_quality import is_garbled_text, is_low_energy
 from gui_logger import get_gui_logger
 
 # 获取日志记录器
@@ -90,6 +91,12 @@ class ASRWorker(QObject):
         if not audio_data:
             return
 
+        # A. 能量门限：近静音 chunk 不送 Whisper（掐断静音/低能量幻觉源头）
+        low_energy, dbfs = is_low_energy(audio_data)
+        if low_energy:
+            logger.debug(f"ASR 丢弃低能量 chunk: {dbfs:.1f} dBFS, duration={len(audio_data)/2/16000:.2f}s")
+            return
+
         chunk_size = len(audio_data)
         request_start = time.time()
 
@@ -124,6 +131,10 @@ class ASRWorker(QObject):
                 result = response.json()
                 text = result.get("text", "").strip()
                 if text:
+                    # C. 文本启发式：重复 token / 乱码 → 丢弃（Whisper 幻觉）
+                    if is_garbled_text(text, self.language):
+                        logger.info(f"ASR 丢弃疑似幻觉文本 (lang={self.language}): {text!r}")
+                        return
                     # 更新 last_text 用作下一个 chunk 的 prompt
                     self._last_text = text
                     # 记录日志并获取 entry_id
