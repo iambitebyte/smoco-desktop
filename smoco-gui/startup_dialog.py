@@ -176,6 +176,10 @@ class ASRStartupDialog(QDialog):
         self.lang_group.addButton(self.radio_en, 2)
         lang_layout.addWidget(self.radio_en)
 
+        self.radio_zh = QRadioButton(i18n.t("chinese"))
+        self.lang_group.addButton(self.radio_zh, 3)
+        lang_layout.addWidget(self.radio_zh)
+
         layout.addLayout(lang_layout)
 
         # 翻译语言选择
@@ -267,8 +271,21 @@ class ASRStartupDialog(QDialog):
         """语言切换"""
         if self.radio_ja.isChecked():
             self.selected_language = "ja"
+        elif self.radio_zh.isChecked():
+            self.selected_language = "zh"
         else:
             self.selected_language = "en"
+
+        # 中文不支持翻译：选中文时禁用翻译并切到“无翻译”，切回其他语言时按 LLM 配置恢复
+        if self.selected_language == "zh":
+            self.radio_translate_zh.setEnabled(False)
+            self.radio_translate_none.setChecked(True)
+        elif self.llm_config_ok:
+            self.radio_translate_zh.setEnabled(True)
+            self.radio_translate_zh.setChecked(True)
+        else:
+            self.radio_translate_zh.setEnabled(False)
+            self.radio_translate_none.setChecked(True)
 
     def _start_health_check(self):
         """开始健康检查"""

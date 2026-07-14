@@ -94,7 +94,7 @@ TRANSLATIONS = {
         "select_language": "选择转录语言:",
         "select_translate_language": "选择翻译语言:",
         "enable_prompt": "启用提示（可能拖慢识别）",
-        "japanese": "日语 (Japanese)",
+        "japanese": "日语",
         "english": "英语",
         "chinese": "中文",
         # LLM 配置
