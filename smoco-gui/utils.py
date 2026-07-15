@@ -13,33 +13,38 @@ if not getattr(sys, 'frozen', False):
     sys.path.insert(0, str(_smoco_root))
 
 
-def load_wasapi_devices():
+def load_wasapi_devices(kind: str = "loopback"):
     """加载 WASAPI 设备列表
 
+    Args:
+        kind: "loopback"（扬声器/系统输出）或 "input"（麦克风）
+
     Returns:
-        list[dict]: 设备列表 [{"name": "...", "is_default": bool}, ...]
+        list[dict]: 设备列表 [{"name","is_default","kind",...}, ...]
     """
-    log.info("Loading WASAPI devices...")
+    log.info(f"Loading WASAPI devices (kind={kind})...")
 
     try:
-        log.debug("Importing WASAPILoopbackSource...")
-        from smoco.source.wasapi import WASAPILoopbackSource, _AVAILABLE
+        from smoco.source.wasapi import WASAPILoopbackSource, MicInputSource, _AVAILABLE
         log.debug(f"_AVAILABLE = {_AVAILABLE}")
 
         if not _AVAILABLE:
             log.warning("WASAPI not available on this platform")
             return []
 
-        log.debug("Calling list_devices()...")
-        devices = WASAPILoopbackSource.list_devices()
-        log.info(f"Found {len(devices)} devices")
+        cls = MicInputSource if kind == "input" else WASAPILoopbackSource
+        log.debug(f"Calling {cls.__name__}.list_devices()...")
+        devices = cls.list_devices()
+        for dev in devices:
+            dev["kind"] = kind
+        log.info(f"Found {len(devices)} devices (kind={kind})")
 
         for i, dev in enumerate(devices):
             log.debug(f"  Device {i}: {dev}")
 
         return devices
     except ImportError as e:
-        log.error(f"Failed to import WASAPILoopbackSource: {e}")
+        log.error(f"Failed to import WASAPI source: {e}")
         return []
     except Exception as e:
         log.exception("Error loading devices")

@@ -12,7 +12,7 @@ if not getattr(sys, 'frozen', False):
     _smoco_root = Path(__file__).parent.parent
     sys.path.insert(0, str(_smoco_root))
 
-from smoco.source.wasapi import WASAPILoopbackSource
+from smoco.source.wasapi import WASAPILoopbackSource, MicInputSource
 
 
 class AudioMeterWorker(QObject):
@@ -22,16 +22,18 @@ class AudioMeterWorker(QObject):
     audio_ready = pyqtSignal(bytes)   # 信号：原始音频帧 (S16LE)
     error_occurred = pyqtSignal(str)  # 信号：错误信息
 
-    def __init__(self, device_index: int):
+    def __init__(self, device_index: int, kind: str = "loopback"):
         super().__init__()
         self.device_index = device_index
+        self._kind = kind
         self._source: WASAPILoopbackSource | None = None
         self._running = False
 
     def start(self):
         """启动音频采集"""
         try:
-            self._source = WASAPILoopbackSource(device_index=self.device_index)
+            source_cls = MicInputSource if self._kind == "input" else WASAPILoopbackSource
+            self._source = source_cls(device_index=self.device_index)
             self._source.start()
             self._running = True
             self._process()
@@ -78,18 +80,19 @@ class AudioMeterController:
         self._thread: QThread | None = None
         self._worker: AudioMeterWorker | None = None
 
-    def start(self, device_index: int, level_callback, error_callback):
+    def start(self, device_index: int, level_callback, error_callback, kind: str = "loopback"):
         """启动音频采集
 
         Args:
             device_index: WASAPI 设备索引
             level_callback: 音量更新回调 (level: float) -> None
             error_callback: 错误回调 (msg: str) -> None
+            kind: "loopback"（扬声器）或 "input"（麦克风）
         """
         self.stop()  # 先停止旧的
 
         self._thread = QThread()
-        self._worker = AudioMeterWorker(device_index)
+        self._worker = AudioMeterWorker(device_index, kind=kind)
         self._worker.moveToThread(self._thread)
 
         # 连接信号

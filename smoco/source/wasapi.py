@@ -87,39 +87,7 @@ class WASAPILoopbackSource:
     def start(self) -> None:
         log.debug("WASAPILoopbackSource.start: 开始")
         self._pa = pyaudio.PyAudio()
-
-        # 确定要用的 loopback 设备 index 和参数
-        if self._device_index is not None:
-            # 用户指定的 index（来自 list_devices，已经是 loopback index）
-            dev = self._device_index
-            log.debug(f"使用用户指定的设备 index: {dev}")
-            dev_info = self._pa.get_device_info_by_index(dev)
-        else:
-            # 没指定时，找默认渲染设备的 loopback 版本
-            try:
-                wasapi_info = self._pa.get_host_api_info_by_type(pyaudio.paWASAPI)
-                default_out_info = self._pa.get_device_info_by_index(wasapi_info["defaultOutputDevice"])
-                default_out_name = str(default_out_info["name"])
-            except Exception as e:
-                raise SourceError(f"无法获取默认输出设备: {e}") from e
-
-            dev = None
-            dev_info = None
-            for loopback in self._pa.get_loopback_device_info_generator():
-                lb_name = str(loopback["name"])
-                # 提取原始设备名（去掉 [Loopback] 或 - Loopback 后缀）
-                if "[Loopback]" in lb_name:
-                    original_name = lb_name.replace("[Loopback]", "").strip()
-                elif " - Loopback" in lb_name or "- Loopback" in lb_name:
-                    original_name = lb_name.split("Loopback")[0].strip().rstrip(" -")
-                else:
-                    original_name = lb_name
-                if original_name == default_out_name:
-                    dev = int(loopback["index"])
-                    dev_info = loopback
-                    break
-            if dev is None or dev_info is None:
-                raise SourceError(f"找不到默认设备的 loopback: {default_out_name}")
+        dev, dev_info = self._resolve_device()
 
         # 保存实际流参数（_callback 用）
         self._channels = int(dev_info.get("maxInputChannels") or 2)
@@ -138,7 +106,37 @@ class WASAPILoopbackSource:
             self._stream.start_stream()
             log.info("WASAPI 流已启动")
         except Exception as e:  # noqa: BLE001
-            raise SourceError(f"无法打开 loopback 流: {e}") from e
+            raise SourceError(f"无法打开音频流: {e}") from e
+
+    def _resolve_device(self) -> tuple[int, dict]:
+        """解析要打开的设备，返回 (dev_index, dev_info)。
+        子类覆盖此方法以切换 loopback / 麦克风输入。"""
+        if self._device_index is not None:
+            # 用户指定的 index（来自 list_devices，已经是 loopback index）
+            dev = self._device_index
+            log.debug(f"使用用户指定的设备 index: {dev}")
+            return dev, self._pa.get_device_info_by_index(dev)
+
+        # 没指定时，找默认渲染设备的 loopback 版本
+        try:
+            wasapi_info = self._pa.get_host_api_info_by_type(pyaudio.paWASAPI)
+            default_out_info = self._pa.get_device_info_by_index(wasapi_info["defaultOutputDevice"])
+            default_out_name = str(default_out_info["name"])
+        except Exception as e:
+            raise SourceError(f"无法获取默认输出设备: {e}") from e
+
+        for loopback in self._pa.get_loopback_device_info_generator():
+            lb_name = str(loopback["name"])
+            # 提取原始设备名（去掉 [Loopback] 或 - Loopback 后缀）
+            if "[Loopback]" in lb_name:
+                original_name = lb_name.replace("[Loopback]", "").strip()
+            elif " - Loopback" in lb_name or "- Loopback" in lb_name:
+                original_name = lb_name.split("Loopback")[0].strip().rstrip(" -")
+            else:
+                original_name = lb_name
+            if original_name == default_out_name:
+                return int(loopback["index"]), loopback
+        raise SourceError(f"找不到默认设备的 loopback: {default_out_name}")
 
     def _callback(self, in_data, frame_count, time_info, status):  # noqa: ANN001
         if self._stop.is_set():
@@ -171,18 +169,7 @@ class WASAPILoopbackSource:
         return (b"", pyaudio.paContinue)
 
     def read_frame(self) -> bytes | None:
-        """读取一帧。只在显式停止时返回 None，超时时继续等待（持续监听模式）。"""
-        if self._stop.is_set() and self._frames.empty():
-            return None
-        try:
-            # 使用较长的超时，避免频繁返回 None
-            frame = self._frames.get(timeout=1.0)
-            return frame
-        except _q.Empty:
-            # 超时不是错误，继续等待（持续监听模式）
-            return None
-
-    def read_frame(self) -> bytes | None:
+        """读取一帧。只在显式停止且队列空时返回 None。"""
         if self._stop.is_set() and self._frames.empty():
             return None
         try:
@@ -206,3 +193,63 @@ class WASAPILoopbackSource:
                     pa.terminate()
                 except Exception:  # noqa: BLE001
                     log.exception("WASAPI terminate 失败")
+
+
+class MicInputSource(WASAPILoopbackSource):
+    """Windows WASAPI 输入端点（麦克风）采集。
+
+    继承 WASAPILoopbackSource 以复用流打开 / 规范化（resample→16k mono→30ms 帧）
+    / 读取 / 停止逻辑，仅覆盖 list_devices()（枚举输入设备）与 _resolve_device()
+    （默认设备走 defaultInputDevice）。打开方式同为 pa.open(input=True)。"""
+
+    @staticmethod
+    def list_devices() -> list[dict]:
+        """枚举 WASAPI 输入端点（麦克风，排除 loopback）。
+        返回 [{index, name, sample_rate, channels, is_default}, ...]。"""
+        if not _AVAILABLE:
+            return []
+        pa = pyaudio.PyAudio()
+        try:
+            try:
+                wasapi = pa.get_host_api_info_by_type(pyaudio.paWASAPI)
+            except Exception:  # noqa: BLE001
+                return []
+            if not wasapi:
+                return []
+            wasapi_index = int(wasapi["index"])
+            default_in_index = int(wasapi["defaultInputDevice"])
+
+            out = []
+            for i in range(int(pa.get_device_count())):
+                info = pa.get_device_info_by_index(i)
+                if int(info.get("hostApi", -1)) != wasapi_index:
+                    continue
+                if int(info.get("maxInputChannels", 0)) <= 0:
+                    continue
+                if info.get("isLoopbackDevice"):
+                    continue
+                out.append({
+                    "index": int(info["index"]),
+                    "name": str(info["name"]).strip(),
+                    "sample_rate": int(info["defaultSampleRate"]),
+                    "channels": int(info["maxInputChannels"]),
+                    "is_default": int(info["index"]) == default_in_index,
+                })
+            return out
+        finally:
+            pa.terminate()
+
+    def _resolve_device(self) -> tuple[int, dict]:
+        if self._device_index is not None:
+            dev = self._device_index
+            log.debug(f"使用用户指定的麦克风 index: {dev}")
+            return dev, self._pa.get_device_info_by_index(dev)
+
+        # 没指定时，用默认输入设备（麦克风）
+        try:
+            wasapi_info = self._pa.get_host_api_info_by_type(pyaudio.paWASAPI)
+            default_in_index = int(wasapi_info["defaultInputDevice"])
+            dev_info = self._pa.get_device_info_by_index(default_in_index)
+            return default_in_index, dev_info
+        except Exception as e:
+            raise SourceError(f"无法获取默认输入设备: {e}") from e

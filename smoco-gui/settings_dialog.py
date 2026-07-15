@@ -10,9 +10,11 @@ from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel,
     QLineEdit, QSpinBox, QPushButton, QDialogButtonBox,
     QGroupBox, QFormLayout, QListWidget, QMessageBox,
-    QAbstractItemView, QTabWidget, QWidget, QComboBox, QTextEdit
+    QAbstractItemView, QTabWidget, QWidget, QComboBox, QTextEdit,
+    QGraphicsColorizeEffect
 )
-from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal, QPropertyAnimation, QEasingCurve
+from PyQt6.QtGui import QColor
 
 # 只在开发环境中修改 sys.path
 if not getattr(sys, 'frozen', False):
@@ -172,9 +174,28 @@ class SettingsDialog(QDialog):
         local_layout.setContentsMargins(20, 20, 20, 20)
 
         # CPU 警告
-        warning_label = QLabel(i18n.t("local_cpu_warning"))
-        warning_label.setStyleSheet("color: #f57c00; padding: 8px; background-color: #fff3e0; border-radius: 4px;")
+        warning_label = QLabel("⚠️ " + i18n.t("local_cpu_warning"))
+        warning_label.setWordWrap(True)
+        warning_label.setStyleSheet(
+            "color: #8a4b00; padding: 10px 12px; background-color: #fff3e0; "
+            "border-left: 4px solid #ff9800; border-radius: 4px; font-weight: bold;"
+        )
         local_layout.addWidget(warning_label)
+
+        # 呼吸动画：colorize 强度在 0↔0.3 平滑循环，让提示更醒目（QPropertyAnimation 改 strength，不重建样式表，轻量）
+        _warning_effect = QGraphicsColorizeEffect(warning_label)
+        _warning_effect.setColor(QColor(255, 152, 0))
+        _warning_effect.setStrength(0.0)
+        warning_label.setGraphicsEffect(_warning_effect)
+
+        self._warning_anim = QPropertyAnimation(_warning_effect, b"strength", self)
+        self._warning_anim.setStartValue(0.0)
+        self._warning_anim.setKeyValueAt(0.5, 0.3)
+        self._warning_anim.setEndValue(0.0)
+        self._warning_anim.setDuration(1400)
+        self._warning_anim.setLoopCount(-1)
+        self._warning_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
+        self._warning_anim.start()
 
         # 配置表单
         config_form = QFormLayout()

@@ -8,12 +8,12 @@ import logging
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QListWidget, QPushButton, QLabel, QProgressBar, QMessageBox,
+    QListWidget, QListWidgetItem, QPushButton, QLabel, QProgressBar, QMessageBox,
     QTextEdit, QStackedWidget, QComboBox, QDialog, QTableWidget,
     QTableWidgetItem, QHeaderView
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread
-from PyQt6.QtGui import QPixmap, QIcon, QShortcut, QKeySequence
+from PyQt6.QtGui import QPixmap, QIcon, QShortcut, QKeySequence, QColor
 from audio_meter_worker import AudioMeterController
 from asr_worker import ASRController
 from i18n import i18n, LANGUAGES
@@ -222,6 +222,7 @@ class SpeakerSelectionPage(QWidget):
 
         # 存储设备列表
         self._devices: list[dict] = []
+        self._row_to_device: list[dict | None] = []  # row -> device（分组标题行用 None 占位）
 
     def update_ui(self):
         """更新 UI 文本"""
@@ -237,25 +238,56 @@ class SpeakerSelectionPage(QWidget):
         self.btn_settings.setToolTip(i18n.t("settings"))
 
     def load_devices(self, devices: list):
-        """加载设备列表"""
+        """加载设备列表（按 扬声器/麦克风 分组）"""
         self._devices = devices
         self.device_list.clear()
-        for i, device in enumerate(devices):
-            name = device.get("name", "Unknown")
-            is_default = " ✓" if device.get("is_default") else ""
-            self.device_list.addItem(f"{name}{is_default}")
+        # row -> device dict（分组标题行用 None 占位，不可选）
+        self._row_to_device: list[dict | None] = []
 
-        # 默认选中默认设备
-        if self._devices:
-            default_idx = next((i for i, d in enumerate(devices) if d.get("is_default")), 0)
-            self.device_list.setCurrentRow(default_idx)
+        loopback_devs = [d for d in devices if d.get("kind") != "input"]
+        input_devs = [d for d in devices if d.get("kind") == "input"]
+
+        def _add_section(title: str):
+            item = QListWidgetItem(title)
+            item.setFlags(Qt.ItemFlag.NoItemFlags)  # 不可选、不响应
+            f = item.font()
+            f.setBold(True)
+            item.setFont(f)
+            item.setForeground(QColor(120, 120, 120))
+            self.device_list.addItem(item)
+            self._row_to_device.append(None)
+
+        def _add_device(dev: dict):
+            name = dev.get("name", "Unknown")
+            is_default = " ✓" if dev.get("is_default") else ""
+            self.device_list.addItem(f"{name}{is_default}")
+            self._row_to_device.append(dev)
+
+        if loopback_devs:
+            _add_section(i18n.t("speaker"))
+            for d in loopback_devs:
+                _add_device(d)
+        if input_devs:
+            _add_section(i18n.t("microphone"))
+            for d in input_devs:
+                _add_device(d)
+
+        # 默认选中第一个"默认"设备，否则第一个可选设备
+        rows = list(enumerate(self._row_to_device))
+        default_row = next((i for i, d in rows if d and d.get("is_default")), None)
+        if default_row is None:
+            default_row = next((i for i, d in rows if d), None)
+        if default_row is not None:
+            self.device_list.setCurrentRow(default_row)
             self.btn_start.setEnabled(True)
+        else:
+            self.btn_start.setEnabled(False)
 
     def selected_device(self) -> dict | None:
         """获取当前选中的设备"""
         row = self.device_list.currentRow()
-        if 0 <= row < len(self._devices):
-            return self._devices[row]
+        if 0 <= row < len(self._row_to_device):
+            return self._row_to_device[row]
         return None
 
     def _on_start_clicked(self):
@@ -610,6 +642,7 @@ class MainWindow(QMainWindow):
             # 启动音频采集
             self._meter_controller.start(
                 device_index=device["index"],
+                kind=device.get("kind", "loopback"),
                 level_callback=self._page_transcript.audio_meter.update_level,
                 error_callback=self._on_meter_error
             )
@@ -805,10 +838,10 @@ class DeviceRefreshThread(QThread):
     finished = pyqtSignal(list)  # 信号：刷新完成，传递设备列表
 
     def run(self):
-        """执行设备刷新"""
+        """执行设备刷新（同时加载 扬声器 loopback 与 麦克风 input）"""
         try:
             from utils import load_wasapi_devices
-            devices = load_wasapi_devices()
+            devices = load_wasapi_devices("loopback") + load_wasapi_devices("input")
             self.finished.emit(devices)
         except Exception as e:
             from gui_logger import get_gui_logger

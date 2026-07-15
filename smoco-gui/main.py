@@ -51,9 +51,9 @@ def main():
         window.show()
         logger.info("主窗口已显示")
 
-        # 加载设备列表
+        # 加载设备列表（扬声器 loopback + 麦克风 input）
         logger.info("正在加载 WASAPI 设备...")
-        devices = load_wasapi_devices()
+        devices = load_wasapi_devices("loopback") + load_wasapi_devices("input")
         logger.info(f"找到 {len(devices)} 个音频设备")
 
         if devices:

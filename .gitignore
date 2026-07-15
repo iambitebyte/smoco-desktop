@@ -13,6 +13,10 @@ smoco-gui/__pycache__/
 smoco-gui/smoco_gui.egg-info/
 smoco-gui/uv.lock
 smoco-gui/settings.json
+smoco-gui/MIGRATE_PYSIDE6.md
+
+# 本地设计文档（不提交）
+docs/superpowers/specs/2026-07-14-microphone-capture-design.md
 
 # 其他
 *.bak
