@@ -15,6 +15,7 @@ import paths
 import utils
 import audio_meter_worker
 import asr_worker
+import asr_quality
 import asr_chunker
 import asr_logger
 import settings_dialog
