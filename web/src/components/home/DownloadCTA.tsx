@@ -44,7 +44,7 @@ export default function DownloadCTA() {
             <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
               <Button
                 as="a"
-                href="/download/smoco-desktop-1.0.1.zip"
+                href="/download/smoco-desktop-1.1.0.zip"
                 size="lg"
                 className="bg-white text-brand-700 hover:bg-white/90 hover:scale-[1.02] shadow-2xl"
               >

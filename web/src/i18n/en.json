@@ -18,8 +18,8 @@
       "description": "Windows system audio real-time transcription tool. Supports Whisper transcription + LLM translation, with embedded OpenVINO-genai Local Whisper. Zero network, zero install."
     },
     "download": {
-      "title": "Download Smoco Desktop · Windows v1.0.1",
-      "description": "Download Smoco Desktop v1.0.1 Windows zip, ~770MB self-contained, zero install, zero network."
+      "title": "Download Smoco Desktop · Windows v1.1.0",
+      "description": "Download Smoco Desktop v1.1.0 Windows zip, ~1.4GB self-contained, zero install, zero network."
     },
     "docs": {
       "title": "Docs · Smoco Desktop",
@@ -27,7 +27,7 @@
     },
     "changelog": {
       "title": "Changelog · Smoco Desktop",
-      "description": "Smoco Desktop version history, latest v1.0.1."
+      "description": "Smoco Desktop version history, latest v1.1.0."
     }
   },
   "nav": {
@@ -39,10 +39,10 @@
     "changelog": "Changelog"
   },
   "hero": {
-    "badge": "v1.0 · Available now",
+    "badge": "v1.1 · Available now",
     "title": "Turn any system audio into text, instantly",
     "subtitle": "A Windows desktop app that transcribes any sound from browsers and meeting software in real time — and translates it to your language immediately. Fully local Whisper engine. No network, no Python install.",
-    "ctaPrimary": "Download for Windows · 770MB",
+    "ctaPrimary": "Download for Windows · 1.4GB",
     "ctaSecondary": "View on GitHub",
     "tag1": "Fully self-contained",
     "tag2": "CN/JP/EN trilingual",
@@ -144,7 +144,7 @@
       "whisper": { "title": "Configure Whisper", "desc": "Settings → Local Whisper → Start" },
       "transcribe": { "title": "Start transcribing", "desc": "Pick device → F5" }
     },
-    "footnote": "Requirements: Windows 10/11 64-bit · Intel Arc GPU recommended · ~800MB disk space"
+    "footnote": "Requirements: Windows 10/11 64-bit · Intel Arc GPU recommended · ~1.4GB disk space"
   },
   "gallery": {
     "eyebrow": "Gallery",
@@ -161,8 +161,8 @@
     "eyebrow": "Download",
     "title": "Ready to try it?",
     "description": "Fully self-contained. Zero install, zero network. Download, extract, run.",
-    "ctaPrimary": "Download Smoco Desktop v1.0.1",
-    "meta": "Windows 10/11 · 770MB · zip"
+    "ctaPrimary": "Download Smoco Desktop v1.1.0",
+    "meta": "Windows 10/11 · 1.4GB · zip"
   },
   "roadmap": {
     "eyebrow": "Roadmap",
@@ -170,19 +170,20 @@
     "description": "We're moving fast. Here's what's next.",
     "versions": {
       "current": {
-        "title": "v1.0 · Current",
+        "title": "v1.1 · Current",
         "status": "Released",
         "items": [
           "Core transcription + translation",
           "Local Whisper NPU (OpenVINO-genai)",
+          "Microphone capture (microphone or speaker, switch between the two)",
           "History / Logs / Shortcuts / Accessibility"
         ]
       },
       "next": {
-        "title": "v1.1 · Planned",
+        "title": "v1.2 · Planned",
         "status": "2026 Q3",
         "items": [
-          "Microphone sync ASR — merge your voice and the other side by time to generate complete meeting minutes"
+          "Dual-stream: capture microphone + speaker simultaneously, merge by time into complete meeting minutes"
         ]
       },
       "future": {
@@ -200,12 +201,12 @@
     "subtitle": "Fully self-contained. Zero install, zero network.",
     "main": {
       "versionLabel": "Version",
-      "version": "v1.0.1",
-      "date": "2026-07-06",
+      "version": "v1.1.0",
+      "date": "2026-07-15",
       "platform": "Windows 10/11 64-bit",
-      "size": "~770 MB",
+      "size": "~1.4 GB",
       "md5Label": "MD5",
-      "md5": "b46bdf4b068bbae4f6f2ea1725ea511a",
+      "md5": "4458a94bd26e33e640e8c5924d41bb1c",
       "button": "Download zip"
     },
     "requirements": {
@@ -215,7 +216,7 @@
       "cpu": "Processor",
       "cpuValue": "Intel Core i5 or better (Intel Arc GPU acceleration recommended)",
       "disk": "Disk space",
-      "diskValue": "~800 MB (including model)",
+      "diskValue": "~1.4 GB (including model)",
       "ram": "Memory",
       "ramValue": "8 GB recommended"
     },
@@ -232,7 +233,12 @@
     "verify": {
       "title": "Verify file integrity",
       "desc": "After download, run this in PowerShell to verify MD5:",
-      "command": "Get-FileHash smoco-desktop-1.0.1.zip -Algorithm MD5"
+      "command": "Get-FileHash smoco-desktop-1.1.0.zip -Algorithm MD5"
+    },
+    "archives": {
+      "title": "Previous versions",
+      "download": "Download",
+      "note": "Older versions are no longer maintained; the latest version is recommended."
     }
   },
   "docsPage": {
@@ -290,6 +296,15 @@
     "title": "Changelog",
     "subtitle": "Version history of Smoco Desktop.",
     "versions": {
+      "v1.1.0": {
+        "version": "v1.1.0",
+        "date": "2026-07-15",
+        "tag": "Microphone capture",
+        "items": [
+          "Microphone capture: device selection now supports choosing a microphone as the audio source (for transcribing your own voice)",
+          "Currently microphone and speaker are mutually exclusive (one at a time); simultaneous dual-stream will come in a later version"
+        ]
+      },
       "v1.0.1": {
         "version": "v1.0.1",
         "date": "2026-07-06",

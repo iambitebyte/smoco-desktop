@@ -18,8 +18,8 @@
       "description": "Windows 系统音频实时转录工具，支持 Whisper 转录 + LLM 翻译，内嵌 OpenVINO-genai Local Whisper，零联网零安装。"
     },
     "download": {
-      "title": "下载 Smoco Desktop · Windows v1.0.1",
-      "description": "下载 Smoco Desktop v1.0.1 Windows zip，~770MB 自包含，零安装零联网。"
+      "title": "下载 Smoco Desktop · Windows v1.1.0",
+      "description": "下载 Smoco Desktop v1.1.0 Windows zip，~1.4GB 自包含，零安装零联网。"
     },
     "docs": {
       "title": "文档 · Smoco Desktop",
@@ -27,7 +27,7 @@
     },
     "changelog": {
       "title": "更新日志 · Smoco Desktop",
-      "description": "Smoco Desktop 版本演进，最新 v1.0.1。"
+      "description": "Smoco Desktop 版本演进，最新 v1.1.0。"
     }
   },
   "nav": {
@@ -39,10 +39,10 @@
     "changelog": "更新"
   },
   "hero": {
-    "badge": "v1.0 · 现在可下载",
+    "badge": "v1.1 · 现在可下载",
     "title": "把任何系统音频，瞬间变成文字",
     "subtitle": "Windows 桌面应用，实时转录浏览器、会议软件里的任何声音，并立即翻译成你的语言。完全本地化的 Whisper 引擎，无需联网、无需安装 Python。",
-    "ctaPrimary": "下载 Windows · 770MB",
+    "ctaPrimary": "下载 Windows · 1.4GB",
     "ctaSecondary": "查看 GitHub",
     "tag1": "完全自包含",
     "tag2": "中/日/英三语",
@@ -144,7 +144,7 @@
       "whisper": { "title": "配置 Whisper", "desc": "设置 → 本地 Whisper 启动" },
       "transcribe": { "title": "开始转录", "desc": "选设备 → F5" }
     },
-    "footnote": "系统要求：Windows 10/11 64-bit · 推荐 Intel Arc GPU · ~800MB 磁盘空间"
+    "footnote": "系统要求：Windows 10/11 64-bit · 推荐 Intel Arc GPU · ~1.4GB 磁盘空间"
   },
   "gallery": {
     "eyebrow": "Gallery",
@@ -161,8 +161,8 @@
     "eyebrow": "Download",
     "title": "准备好试试了吗？",
     "description": "完全自包含，零安装零联网。下载解压即可用。",
-    "ctaPrimary": "下载 Smoco Desktop v1.0.1",
-    "meta": "Windows 10/11 · 770MB · zip"
+    "ctaPrimary": "下载 Smoco Desktop v1.1.0",
+    "meta": "Windows 10/11 · 1.4GB · zip"
   },
   "roadmap": {
     "eyebrow": "Roadmap",
@@ -170,19 +170,20 @@
     "description": "我们正在快速演进，这里是接下来会做的。",
     "versions": {
       "current": {
-        "title": "v1.0 · 当前",
+        "title": "v1.1 · 当前",
         "status": "已发布",
         "items": [
           "核心转录 + 翻译",
           "Local Whisper NPU（OpenVINO-genai）",
+          "麦克风采集（麦克风与扬声器二选一）",
           "历史 / 日志 / 快捷键 / 辅助功能"
         ]
       },
       "next": {
-        "title": "v1.1 · 计划中",
+        "title": "v1.2 · 计划中",
         "status": "2026 Q3",
         "items": [
-          "支持麦克风同步 ASR，对方和自己的语音按时间合并，生成完整的会议记录"
+          "双流并行：同时采集麦克风 + 扬声器，按时间合并生成完整的会议记录"
         ]
       },
       "future": {
@@ -200,12 +201,12 @@
     "subtitle": "完全自包含，零安装零联网。",
     "main": {
       "versionLabel": "版本",
-      "version": "v1.0.1",
-      "date": "2026-07-06",
+      "version": "v1.1.0",
+      "date": "2026-07-15",
       "platform": "Windows 10/11 64-bit",
-      "size": "约 770 MB",
+      "size": "约 1.4 GB",
       "md5Label": "MD5",
-      "md5": "b46bdf4b068bbae4f6f2ea1725ea511a",
+      "md5": "4458a94bd26e33e640e8c5924d41bb1c",
       "button": "下载 zip"
     },
     "requirements": {
@@ -215,7 +216,7 @@
       "cpu": "处理器",
       "cpuValue": "Intel Core i5 及以上（Intel Arc GPU 加速推荐）",
       "disk": "磁盘空间",
-      "diskValue": "约 800 MB（含模型）",
+      "diskValue": "约 1.4 GB（含模型）",
       "ram": "内存",
       "ramValue": "8 GB 推荐"
     },
@@ -232,7 +233,12 @@
     "verify": {
       "title": "校验文件完整性",
       "desc": "下载完成后，可在 PowerShell 跑这条命令验证 MD5：",
-      "command": "Get-FileHash smoco-desktop-1.0.1.zip -Algorithm MD5"
+      "command": "Get-FileHash smoco-desktop-1.1.0.zip -Algorithm MD5"
+    },
+    "archives": {
+      "title": "历史版本",
+      "download": "下载",
+      "note": "旧版本不再维护，建议使用最新版。"
     }
   },
   "docsPage": {
@@ -290,6 +296,15 @@
     "title": "更新日志",
     "subtitle": "Smoco Desktop 的版本演进。",
     "versions": {
+      "v1.1.0": {
+        "version": "v1.1.0",
+        "date": "2026-07-15",
+        "tag": "麦克风采集",
+        "items": [
+          "新增麦克风采集：设备选择页支持选择麦克风作为音源（用于转录自己的声音）",
+          "目前麦克风与扬声器二选一，同时双流并行将在后续版本支持"
+        ]
+      },
       "v1.0.1": {
         "version": "v1.0.1",
         "date": "2026-07-06",

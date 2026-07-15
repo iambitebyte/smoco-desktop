@@ -4,6 +4,11 @@ import { Download as DownloadIcon } from 'lucide-react'
 import { Container, Card, Button, Tag, CodeBlock } from '../components/ui'
 import SEO from '../components/SEO'
 
+const ARCHIVES = [
+  { version: 'v1.0.1', date: '2026-07-06', size: '~1.45 GB', href: '/download/smoco-desktop-1.0.1.zip' },
+  { version: 'v1.0.0', date: '2026-06-29', size: '~438 MB', href: '/download/smoco-desktop-1.0.0.zip' },
+]
+
 export default function Download() {
   const { t } = useTranslation()
 
@@ -57,7 +62,7 @@ export default function Download() {
               <h2 className="text-2xl font-bold mb-2">Smoco Desktop {t('downloadPage.main.version')}</h2>
               <p className="text-content-secondary mb-8">{t('downloadPage.main.platform')}</p>
 
-              <Button as="a" href="/download/smoco-desktop-1.0.1.zip" size="lg" className="w-full sm:w-auto">
+              <Button as="a" href="/download/smoco-desktop-1.1.0.zip" size="lg" className="w-full sm:w-auto">
                 <DownloadIcon className="w-4 h-4" />
                 {t('downloadPage.main.button')} · {t('downloadPage.main.size')}
               </Button>
@@ -78,6 +83,28 @@ export default function Download() {
       </Container>
 
 
+
+      {/* 历史版本 */}
+      <Container size="md" className="mb-16">
+        <h3 className="text-xl font-semibold mb-6">{t('downloadPage.archives.title')}</h3>
+        <Card>
+          <ul className="divide-y divide-edge-subtle">
+            {ARCHIVES.map((a) => (
+              <li key={a.version} className="flex items-center justify-between py-4 first:pt-0 last:pb-0 gap-4">
+                <div className="min-w-0">
+                  <div className="font-medium">Smoco Desktop {a.version}</div>
+                  <div className="text-xs text-content-muted">{a.date} · {a.size}</div>
+                </div>
+                <a href={a.href} className="flex-shrink-0 flex items-center gap-1.5 text-sm text-brand-300 hover:underline">
+                  <DownloadIcon className="w-3.5 h-3.5" />
+                  {t('downloadPage.archives.download')}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </Card>
+        <p className="text-xs text-content-muted mt-3">{t('downloadPage.archives.note')}</p>
+      </Container>
 
       {/* 系统要求 */}
       <Container size="md" className="mb-16">

@@ -18,8 +18,8 @@
       "description": "Windows システムオーディオをリアルタイム文字起こし。Whisper + LLM 翻訳、OpenVINO-genai Local Whisper 内蔵、ネットワーク不要、インストール不要。"
     },
     "download": {
-      "title": "Smoco Desktop をダウンロード · Windows v1.0.1",
-      "description": "Smoco Desktop v1.0.1 Windows zip をダウンロード、~770MB 自己完結、インストール不要、ネットワーク不要。"
+      "title": "Smoco Desktop をダウンロード · Windows v1.1.0",
+      "description": "Smoco Desktop v1.1.0 Windows zip をダウンロード、~1.4GB 自己完結、インストール不要、ネットワーク不要。"
     },
     "docs": {
       "title": "ドキュメント · Smoco Desktop",
@@ -27,7 +27,7 @@
     },
     "changelog": {
       "title": "変更履歴 · Smoco Desktop",
-      "description": "Smoco Desktop のバージョン移り変わり、最新 v1.0.1。"
+      "description": "Smoco Desktop のバージョン移り変わり、最新 v1.1.0。"
     }
   },
   "nav": {
@@ -39,10 +39,10 @@
     "changelog": "更新"
   },
   "hero": {
-    "badge": "v1.0 · ダウンロード可能",
+    "badge": "v1.1 · ダウンロード可能",
     "title": "あらゆるシステムオーディオを、瞬時に文字へ",
     "subtitle": "Windows デスクトップアプリ。ブラウザ、会議ソフトの音声をリアルタイムで文字起こしし、即座にあなたの言語へ翻訳します。完全ローカルの Whisper エンジンで、ネットワーク不要、Python インストール不要。",
-    "ctaPrimary": "Windows 版をダウンロード · 770MB",
+    "ctaPrimary": "Windows 版をダウンロード · 1.4GB",
     "ctaSecondary": "GitHub を見る",
     "tag1": "完全自己完結",
     "tag2": "中/日/英 三言語",
@@ -144,7 +144,7 @@
       "whisper": { "title": "Whisper を設定", "desc": "設定 → ローカル Whisper 開始" },
       "transcribe": { "title": "文字起こし開始", "desc": "デバイス選択 → F5" }
     },
-    "footnote": "システム要件: Windows 10/11 64-bit · Intel Arc GPU 推奨 · ~800MB ディスク容量"
+    "footnote": "システム要件: Windows 10/11 64-bit · Intel Arc GPU 推奨 · ~1.4GB ディスク容量"
   },
   "gallery": {
     "eyebrow": "Gallery",
@@ -161,8 +161,8 @@
     "eyebrow": "Download",
     "title": "試してみませんか？",
     "description": "完全自己完結、インストール不要、ネットワーク不要。ダウンロードして解凍するだけ。",
-    "ctaPrimary": "Smoco Desktop v1.0.1 をダウンロード",
-    "meta": "Windows 10/11 · 770MB · zip"
+    "ctaPrimary": "Smoco Desktop v1.1.0 をダウンロード",
+    "meta": "Windows 10/11 · 1.4GB · zip"
   },
   "roadmap": {
     "eyebrow": "Roadmap",
@@ -170,19 +170,20 @@
     "description": "急速に進化しています。次に予定しているものはこちら。",
     "versions": {
       "current": {
-        "title": "v1.0 · 現在",
+        "title": "v1.1 · 現在",
         "status": "リリース済み",
         "items": [
           "コアの文字起こし + 翻訳",
           "Local Whisper NPU（OpenVINO-genai）",
+          "マイクキャプチャ（マイクとスピーカーのいずれかを選択）",
           "履歴 / ログ / ショートカット / アクセシビリティ"
         ]
       },
       "next": {
-        "title": "v1.1 · 計画中",
+        "title": "v1.2 · 計画中",
         "status": "2026 Q3",
         "items": [
-          "マイク同期 ASR — 自分と相手の音声を時間でマージし、完全な会議録を生成"
+          "デュアルストリーム: マイク + スピーカーを同時キャプチャし、時間でマージして完全な会議録を生成"
         ]
       },
       "future": {
@@ -200,12 +201,12 @@
     "subtitle": "完全自己完結、インストール不要、ネットワーク不要。",
     "main": {
       "versionLabel": "バージョン",
-      "version": "v1.0.1",
-      "date": "2026-07-06",
+      "version": "v1.1.0",
+      "date": "2026-07-15",
       "platform": "Windows 10/11 64-bit",
-      "size": "約 770 MB",
+      "size": "約 1.4 GB",
       "md5Label": "MD5",
-      "md5": "b46bdf4b068bbae4f6f2ea1725ea511a",
+      "md5": "4458a94bd26e33e640e8c5924d41bb1c",
       "button": "zip をダウンロード"
     },
     "requirements": {
@@ -215,7 +216,7 @@
       "cpu": "プロセッサ",
       "cpuValue": "Intel Core i5 以上（Intel Arc GPU アクセラレーション推奨）",
       "disk": "ディスク容量",
-      "diskValue": "約 800 MB（モデル含む）",
+      "diskValue": "約 1.4 GB（モデル含む）",
       "ram": "メモリ",
       "ramValue": "8 GB 推奨"
     },
@@ -232,7 +233,12 @@
     "verify": {
       "title": "ファイル整合性の検証",
       "desc": "ダウンロード後、PowerShell で MD5 を検証できます：",
-      "command": "Get-FileHash smoco-desktop-1.0.1.zip -Algorithm MD5"
+      "command": "Get-FileHash smoco-desktop-1.1.0.zip -Algorithm MD5"
+    },
+    "archives": {
+      "title": "過去のバージョン",
+      "download": "ダウンロード",
+      "note": "旧バージョンは保守されていません。最新版の使用を推奨します。"
     }
   },
   "docsPage": {
@@ -290,6 +296,15 @@
     "title": "変更履歴",
     "subtitle": "Smoco Desktop のバージョン移り変わり。",
     "versions": {
+      "v1.1.0": {
+        "version": "v1.1.0",
+        "date": "2026-07-15",
+        "tag": "マイクキャプチャ",
+        "items": [
+          "マイクキャプチャ: デバイス選択でマイクを音声ソースとして選択可能に（自分の声の文字起こし用）",
+          "現時点ではマイクとスピーカーは排他選択（どちらか一方）。同時デュアルストリームは今後のバージョンで対応予定"
+        ]
+      },
       "v1.0.1": {
         "version": "v1.0.1",
         "date": "2026-07-06",
