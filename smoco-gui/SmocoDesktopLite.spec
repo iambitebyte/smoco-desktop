@@ -1,0 +1,45 @@
+# -*- mode: python ; coding: utf-8 -*-
+
+
+a = Analysis(
+    ['bundle_lite.py'],
+    pathex=[],
+    binaries=[],
+    datas=[('smoco_logo_circle.png', '.'), ('styles.qss', '.'), ('main_window.py', '.'), ('gui_logger.py', '.'), ('i18n.py', '.'), ('paths.py', '.'), ('utils.py', '.'), ('audio_meter_worker.py', '.'), ('asr_worker.py', '.'), ('asr_quality.py', '.'), ('asr_chunker.py', '.'), ('asr_logger.py', '.'), ('smoco_stt_worker.py', '.'), ('settings_dialog.py', '.'), ('startup_dialog.py', '.'), ('transcript_edit.py', '.'), ('local_whisper_manager.py', '.'), ('translation_worker.py', '.'), ('llm_client.py', '.'), ('history_page.py', '.'), ('history_detail_page.py', '.'), ('history_reader.py', '.'), ('log_viewer_page.py', '.'), ('styles.py', '.'), ('toast.py', '.'), ('main.py', '.'), ('bundle_lite.py', '.'), ('features.py', '.')],
+    hiddenimports=['PyQt6.QtCore', 'PyQt6.QtGui', 'PyQt6.QtWidgets', 'pyaudiowpatch', 'numpy', 'scipy', 'soundfile', 'requests', 'aiohttp', 'logging.handlers', 'webrtcvad', 'socketio', 'engineio', 'main_window', 'gui_logger', 'i18n', 'paths', 'utils', 'audio_meter_worker', 'asr_worker', 'asr_quality', 'asr_chunker', 'smoco_stt_worker', 'asr_logger', 'settings_dialog', 'startup_dialog', 'transcript_edit', 'local_whisper_manager', 'translation_worker', 'llm_client', 'smoco.audio', 'smoco.source.wasapi', 'history_page', 'history_detail_page', 'log_viewer_page', 'history_reader', 'styles', 'toast', 'features'],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+    noarchive=False,
+    optimize=0,
+)
+pyz = PYZ(a.pure)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name='SmocoDesktopLite',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon=['smoco_logo_circle.ico'],
+)
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='SmocoDesktopLite',
+)

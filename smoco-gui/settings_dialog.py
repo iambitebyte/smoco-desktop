@@ -25,6 +25,7 @@ from i18n import i18n
 from paths import get_settings_path
 from local_whisper_manager import get_local_whisper_manager, MODELS, DEFAULT_MODEL
 from llm_client import get_llm_client
+from features import WHISPER_ENABLED
 
 
 class SettingsDialog(QDialog):
@@ -453,13 +454,28 @@ class SettingsDialog(QDialog):
         # 加载设置
         self._load_settings()
 
-        # 切到调用方指定的 tab
-        if 0 <= initial_tab < self.tab_widget.count():
+        # Lite 模式：隐藏 Whisper 专属 tab（索引不变，TAB_LLM/TAB_SMOCO_STT 常量仍有效）
+        if not WHISPER_ENABLED:
+            _bar = self.tab_widget.tabBar()
+            for _idx in (self.TAB_SERVERS, self.TAB_VAD, self.TAB_LOCAL_WHISPER):
+                _bar.setTabVisible(_idx, False)
+
+        # 切到调用方指定的 tab；若该 tab 在 lite 下被隐藏，则落到第一个可见 tab
+        _bar = self.tab_widget.tabBar()
+        if 0 <= initial_tab < self.tab_widget.count() and _bar.isTabVisible(initial_tab):
             self.tab_widget.setCurrentIndex(initial_tab)
+        else:
+            for _idx in range(self.tab_widget.count()):
+                if _bar.isTabVisible(_idx):
+                    self.tab_widget.setCurrentIndex(_idx)
+                    break
 
     def showEvent(self, event):
         """对话框显示时刷新本地服务状态"""
         super().showEvent(event)
+        # Lite 版无 Local Whisper，跳过健康探测
+        if not WHISPER_ENABLED:
+            return
         # 延迟一点刷新，确保对话框已完全显示
         QTimer.singleShot(100, self._refresh_local_status)
 
@@ -857,8 +873,8 @@ class SettingsDialog(QDialog):
 
     def _on_tab_changed(self, index: int):
         """选项卡切换时触发"""
-        # Local Whisper 是第3个选项卡（索引2）
-        if index == 2:
+        # Local Whisper 是第3个选项卡（索引2）；lite 版该 tab 隐藏，跳过
+        if WHISPER_ENABLED and index == 2:
             # 延迟一点触发，让界面先显示出来
             QTimer.singleShot(100, self._check_local_health)
 

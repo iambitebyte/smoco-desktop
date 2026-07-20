@@ -23,6 +23,7 @@ from paths import get_settings_path
 from startup_dialog import ASRStartupDialog
 from transcript_edit import InteractiveTranscriptEdit
 from local_whisper_manager import get_local_whisper_manager
+from features import WHISPER_ENABLED
 from translation_worker import TranslationController
 from history_page import HistoryListPage
 from history_detail_page import HistoryDetailPage
@@ -650,20 +651,34 @@ class MainWindow(QMainWindow):
     def _start_asr(self, device: dict):
         """开始 ASR"""
         try:
-            # 检查服务器配置：Local Whisper 已启动时不强制要求外部服务器
-            servers = self._settings.get("servers", [])
-            local_manager = get_local_whisper_manager()
+            # 检查服务器/账号配置
             smoco_cfg = self._settings.get("smoco_stt", {})
             smoco_configured = bool(smoco_cfg.get("email") and smoco_cfg.get("password"))
-            if not servers and not local_manager.is_running and not smoco_configured:
-                QMessageBox.warning(
-                    self,
-                    i18n.t("start_failed"),
-                    i18n.t("need_server_config")
-                )
-                # 自动打开设置，定位到本地 Whisper 模型 tab
-                self._show_settings(initial_tab=SettingsDialog.TAB_LOCAL_WHISPER)
-                return
+
+            if WHISPER_ENABLED:
+                # Full 版：Local Whisper 已启动时不强制要求外部服务器
+                servers = self._settings.get("servers", [])
+                local_manager = get_local_whisper_manager()
+                if not servers and not local_manager.is_running and not smoco_configured:
+                    QMessageBox.warning(
+                        self,
+                        i18n.t("start_failed"),
+                        i18n.t("need_server_config")
+                    )
+                    # 自动打开设置，定位到本地 Whisper 模型 tab
+                    self._show_settings(initial_tab=SettingsDialog.TAB_LOCAL_WHISPER)
+                    return
+            else:
+                # Lite 版：无 Whisper，只检查 Smoco 账号
+                servers = []
+                if not smoco_configured:
+                    QMessageBox.warning(
+                        self,
+                        i18n.t("start_failed"),
+                        i18n.t("smoco_not_configured")
+                    )
+                    self._show_settings(initial_tab=SettingsDialog.TAB_SMOCO_STT)
+                    return
 
             last_server = self._settings.get("last_server", "")
 
@@ -896,18 +911,19 @@ class MainWindow(QMainWindow):
         # 无论是否在录制，都要停止翻译控制器（防止后台线程继续运行）
         self._translation_controller.stop()
 
-        # 检查 Local Whisper 服务状态
-        local_manager = get_local_whisper_manager()
-        port = local_manager._config.get('port', 8000)
+        # 检查 Local Whisper 服务状态（lite 版无 Local Whisper，跳过）
+        if WHISPER_ENABLED:
+            local_manager = get_local_whisper_manager()
+            port = local_manager._config.get('port', 8000)
 
-        # 检查服务是否还在运行
-        has_service = self._check_local_whisper_service(port)
+            # 检查服务是否还在运行
+            has_service = self._check_local_whisper_service(port)
 
-        if has_service:
-            logger.warning(f"Local Whisper 服务仍在运行 (端口 {port})")
-            self._show_local_whisper_running_warning(port)
-            event.ignore()  # 阻止窗口关闭
-            return
+            if has_service:
+                logger.warning(f"Local Whisper 服务仍在运行 (端口 {port})")
+                self._show_local_whisper_running_warning(port)
+                event.ignore()  # 阻止窗口关闭
+                return
 
         logger.info("应用关闭完成")
         super().closeEvent(event)

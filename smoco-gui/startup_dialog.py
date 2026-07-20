@@ -18,6 +18,7 @@ if not getattr(sys, 'frozen', False):
 
 from i18n import i18n
 from local_whisper_manager import get_local_whisper_manager
+from features import WHISPER_ENABLED
 
 
 class HealthCheckWorker(QThread):
@@ -89,7 +90,8 @@ class ASRStartupDialog(QDialog):
         self.health_ok = False
         self.llm_config_ok = llm_config_ok
         self.smoco_configured = smoco_configured
-        self._source_type = "whisper"
+        # Lite 版默认且仅有 Smoco 源
+        self._source_type = "smoco" if not WHISPER_ENABLED else "whisper"
 
         layout = QVBoxLayout()
         layout.setSpacing(15)
@@ -100,30 +102,32 @@ class ASRStartupDialog(QDialog):
 
         self.server_combo = QComboBox()
 
-        # 添加远程服务器
-        for server in servers:
-            url = server.get("url", "")
-            name = server.get("name", "")
-            if name:
-                display = f"{name} - {url}"
-            else:
-                display = url
-            self.server_combo.addItem(display, url)
+        # 添加 Whisper 源（远程服务器 + 本地 Whisper）；lite 版无 Whisper 源，跳过
+        if WHISPER_ENABLED:
+            # 添加远程服务器
+            for server in servers:
+                url = server.get("url", "")
+                name = server.get("name", "")
+                if name:
+                    display = f"{name} - {url}"
+                else:
+                    display = url
+                self.server_combo.addItem(display, url)
 
-        # 添加本地 Whisper 服务（如果在运行）
-        local_manager = get_local_whisper_manager()
-        if local_manager.is_running:
-            local_url = local_manager.api_url
-            local_name = i18n.t("local_server_name")
-            display = f"{local_name} - {local_url}"
-            # 插入到列表开头
-            self.server_combo.insertItem(0, display, local_url)
+            # 添加本地 Whisper 服务（如果在运行）
+            local_manager = get_local_whisper_manager()
+            if local_manager.is_running:
+                local_url = local_manager.api_url
+                local_name = i18n.t("local_server_name")
+                display = f"{local_name} - {local_url}"
+                # 插入到列表开头
+                self.server_combo.insertItem(0, display, local_url)
 
-        # 添加 Smoco 云端 ASR 选项（与 Whisper 源并存）
+        # 添加 Smoco 云端 ASR 选项（始终添加；lite 版为唯一源）
         self.server_combo.addItem(i18n.t("smoco_source_name"), "smoco://cloud")
 
-        # 选中上次使用的服务器
-        if last_server:
+        # 选中上次使用的服务器（lite 版恒选 Smoco，无需回填）
+        if WHISPER_ENABLED and last_server:
             for i in range(self.server_combo.count()):
                 if self.server_combo.itemData(i) == last_server:
                     self.server_combo.setCurrentIndex(i)
