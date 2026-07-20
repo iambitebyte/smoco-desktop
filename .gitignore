@@ -15,6 +15,9 @@ smoco-gui/uv.lock
 smoco-gui/settings.json
 smoco-gui/MIGRATE_PYSIDE6.md
 smoco-gui/test_smoco_stt.py
+# 过时参考文件（协议已改为 room_name，勿据此开发）
+smoco-gui/live_speech_translate.js
+smoco-gui/smoco\ api\ 使用教程.md
 
 # 本地设计文档（不提交）
 docs/superpowers/specs/2026-07-14-microphone-capture-design.md
