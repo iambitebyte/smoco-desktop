@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
     QLineEdit, QSpinBox, QPushButton, QDialogButtonBox,
     QGroupBox, QFormLayout, QListWidget, QMessageBox,
     QAbstractItemView, QTabWidget, QWidget, QComboBox, QTextEdit,
-    QGraphicsColorizeEffect
+    QGraphicsColorizeEffect, QCheckBox
 )
 from PyQt6.QtCore import Qt, QTimer, QThread, pyqtSignal, QPropertyAnimation, QEasingCurve
 from PyQt6.QtGui import QColor
@@ -35,6 +35,7 @@ class SettingsDialog(QDialog):
     TAB_VAD = 1
     TAB_LOCAL_WHISPER = 2
     TAB_LLM = 3
+    TAB_SMOCO_STT = 4
 
     def __init__(self, parent=None, initial_tab: int = 0):
         super().__init__(parent)
@@ -372,6 +373,52 @@ class SettingsDialog(QDialog):
         llm_tab.setLayout(llm_layout)
         self.tab_widget.addTab(llm_tab, i18n.t("llm_config"))
 
+        # === 选项卡 5: Smoco 云端 STT ===
+        smoco_tab = QWidget()
+        smoco_layout = QVBoxLayout()
+        smoco_layout.setSpacing(15)
+        smoco_layout.setContentsMargins(20, 20, 20, 20)
+
+        smoco_info = QLabel(i18n.t("smoco_instructions"))
+        smoco_info.setWordWrap(True)
+        smoco_info.setStyleSheet("color: #666; font-style: italic; padding: 8px;")
+        smoco_layout.addWidget(smoco_info)
+
+        smoco_form = QFormLayout()
+        self.smoco_host_input = QLineEdit()
+        self.smoco_host_input.setPlaceholderText(i18n.t("smoco_host_placeholder"))
+        smoco_form.addRow(i18n.t("smoco_host"), self.smoco_host_input)
+
+        self.smoco_email_input = QLineEdit()
+        smoco_form.addRow(i18n.t("smoco_email"), self.smoco_email_input)
+
+        self.smoco_password_input = QLineEdit()
+        self.smoco_password_input.setEchoMode(QLineEdit.EchoMode.Password)
+        smoco_form.addRow(i18n.t("smoco_password"), self.smoco_password_input)
+
+        self.smoco_punctuator_check = QCheckBox(i18n.t("smoco_use_punctuator"))
+        self.smoco_punctuator_check.setChecked(True)
+        smoco_form.addRow("", self.smoco_punctuator_check)
+
+        self.smoco_insecure_check = QCheckBox(i18n.t("smoco_insecure_ssl"))
+        self.smoco_insecure_check.setChecked(True)  # dev 主机为 Sony 内部 CA
+        smoco_form.addRow("", self.smoco_insecure_check)
+
+        smoco_layout.addLayout(smoco_form)
+
+        smoco_btn_layout = QHBoxLayout()
+        self.smoco_validate_btn = QPushButton(i18n.t("smoco_validate"))
+        self.smoco_validate_btn.clicked.connect(self._on_smoco_validate)
+        smoco_btn_layout.addWidget(self.smoco_validate_btn)
+        self.smoco_validate_status = QLabel("")
+        smoco_btn_layout.addWidget(self.smoco_validate_status)
+        smoco_btn_layout.addStretch()
+        smoco_layout.addLayout(smoco_btn_layout)
+        smoco_layout.addStretch()
+
+        smoco_tab.setLayout(smoco_layout)
+        self.tab_widget.addTab(smoco_tab, i18n.t("smoco_stt_config"))
+
         # 连接本地服务状态变化信号
         local_manager = get_local_whisper_manager()
         local_manager.status_changed.connect(self._on_local_status_changed)
@@ -380,6 +427,9 @@ class SettingsDialog(QDialog):
 
         # 验证线程
         self._validation_thread = None
+
+        # Smoco 登录验证线程
+        self._smoco_auth_thread = None
 
         # Local Whisper 健康检查线程
         self._health_check_thread = None
@@ -509,6 +559,17 @@ class SettingsDialog(QDialog):
                 self.llm_context_length_spin.setValue(llm_config.get("context_length", 5))
             except Exception as e:
                 print(f"加载 LLM 配置失败: {e}")
+
+            try:
+                # 加载 Smoco 云端 STT 配置
+                smoco = settings.get("smoco_stt", {})
+                self.smoco_host_input.setText(smoco.get("host", "https://dx-smoco-dev.sony.com.cn"))
+                self.smoco_email_input.setText(smoco.get("email", ""))
+                self.smoco_password_input.setText(smoco.get("password", ""))
+                self.smoco_punctuator_check.setChecked(smoco.get("use_punctuator", True))
+                self.smoco_insecure_check.setChecked(smoco.get("verify_ssl", False) is False)
+            except Exception as e:
+                print(f"加载 Smoco STT 配置失败: {e}")
 
     def _load_servers(self, servers: list):
         """加载服务器列表到 UI"""
@@ -653,6 +714,13 @@ class SettingsDialog(QDialog):
                     "api_key": self.llm_api_key_input.text().strip(),
                     "model": self.llm_model_input.text().strip(),
                     "context_length": self.llm_context_length_spin.value(),
+                },
+                "smoco_stt": {
+                    "host": self.smoco_host_input.text().strip() or "https://dx-smoco-dev.sony.com.cn",
+                    "email": self.smoco_email_input.text().strip(),
+                    "password": self.smoco_password_input.text(),
+                    "use_punctuator": self.smoco_punctuator_check.isChecked(),
+                    "verify_ssl": not self.smoco_insecure_check.isChecked(),
                 }
             }
             with open(config_file, "w", encoding="utf-8") as f:
@@ -713,6 +781,13 @@ class SettingsDialog(QDialog):
                 "api_key": self.llm_api_key_input.text().strip(),
                 "model": self.llm_model_input.text().strip(),
                 "context_length": self.llm_context_length_spin.value(),
+            },
+            "smoco_stt": {
+                "host": self.smoco_host_input.text().strip() or "https://dx-smoco-dev.sony.com.cn",
+                "email": self.smoco_email_input.text().strip(),
+                "password": self.smoco_password_input.text(),
+                "use_punctuator": self.smoco_punctuator_check.isChecked(),
+                "verify_ssl": not self.smoco_insecure_check.isChecked(),
             }
         }
 
@@ -886,6 +961,78 @@ class SettingsDialog(QDialog):
         else:
             self.llm_validate_status.setText(message)
             self.llm_validate_status.setStyleSheet("color: #dc3545;")
+
+
+    def _on_smoco_validate(self):
+        """验证 Smoco 登录（do_login + api_info）"""
+        host = self.smoco_host_input.text().strip() or "https://dx-smoco-dev.sony.com.cn"
+        email = self.smoco_email_input.text().strip()
+        password = self.smoco_password_input.text()
+        if not email or not password:
+            QMessageBox.warning(self, i18n.t("hint"), i18n.t("smoco_not_configured"))
+            return
+        verify_ssl = not self.smoco_insecure_check.isChecked()
+
+        self.smoco_validate_btn.setEnabled(False)
+        self.smoco_validate_status.setText(i18n.t("smoco_validating"))
+        self.smoco_validate_status.setStyleSheet("color: #f57c00;")
+
+        if self._smoco_auth_thread and self._smoco_auth_thread.isRunning():
+            self._smoco_auth_thread.quit()
+            self._smoco_auth_thread.wait()
+
+        self._smoco_auth_thread = SmocoAuthCheckThread(host, email, password, verify_ssl)
+        self._smoco_auth_thread.finished.connect(
+            self._on_smoco_validation_finished, Qt.ConnectionType.QueuedConnection
+        )
+        self._smoco_auth_thread.start()
+
+    def _on_smoco_validation_finished(self, result: tuple):
+        """Smoco 登录验证完成"""
+        if not self.isVisible():
+            return
+        self.smoco_validate_btn.setEnabled(True)
+        ok, msg = result
+        if ok:
+            self.smoco_validate_status.setText(i18n.t("smoco_validate_ok"))
+            self.smoco_validate_status.setStyleSheet("color: #28a745;")
+        else:
+            self.smoco_validate_status.setText(f"{i18n.t('smoco_validate_failed')}: {msg}")
+            self.smoco_validate_status.setStyleSheet("color: #dc3545;")
+
+
+class SmocoAuthCheckThread(QThread):
+    """Smoco 登录验证线程：do_login + api_info"""
+    finished = pyqtSignal(tuple)  # (ok: bool, msg: str)
+
+    def __init__(self, host: str, email: str, password: str, verify_ssl: bool = True):
+        super().__init__()
+        self._host = host.rstrip("/")
+        self._email = email
+        self._password = password
+        self._verify_ssl = verify_ssl
+
+    def run(self):
+        try:
+            if not self._verify_ssl:
+                import urllib3
+                urllib3.disable_warnings()
+            s = requests.Session()
+            s.verify = self._verify_ssl
+            r = s.post(f"{self._host}/web/do_login",
+                       data={"email": self._email, "password": self._password},
+                       headers={"X-Requested-With": "XMLHttpRequest"}, timeout=10)
+            if r.status_code != 200:
+                self.finished.emit((False, f"login HTTP {r.status_code}"))
+                return
+            r2 = s.get(f"{self._host}/web/api_info", timeout=10)
+            if r2.status_code != 200:
+                self.finished.emit((False, f"api_info HTTP {r2.status_code}"))
+                return
+            token = (r2.json().get("api_info") or {}).get("ACCESS_TOKEN", "")
+            self.finished.emit((bool(token), "ok" if token else "no token"))
+        except Exception as e:
+            self.finished.emit((False, str(e)))
 
 
 class LocalWhisperHealthCheckThread(QThread):

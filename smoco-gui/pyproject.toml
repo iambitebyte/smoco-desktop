@@ -12,6 +12,7 @@ dependencies = [
     "soundfile>=0.12",
     "webrtcvad-wheels>=2.0.11",
     "requests>=2.31",
+    "python-socketio[client]>=5.11",
 ]
 
 [project.scripts]

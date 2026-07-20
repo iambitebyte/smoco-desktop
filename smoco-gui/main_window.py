@@ -16,8 +16,9 @@ from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread
 from PyQt6.QtGui import QPixmap, QIcon, QShortcut, QKeySequence, QColor
 from audio_meter_worker import AudioMeterController
 from asr_worker import ASRController
+from smoco_stt_worker import SmocoSttController
 from i18n import i18n, LANGUAGES
-from settings_dialog import SettingsDialog
+from settings_dialog import SettingsDialog, SmocoAuthCheckThread
 from paths import get_settings_path
 from startup_dialog import ASRStartupDialog
 from transcript_edit import InteractiveTranscriptEdit
@@ -388,6 +389,8 @@ class TranscriptPage(QWidget):
         self._start_time = None
         # 存储转录数据 {row_id: {entry_id, timestamp, asr_text, translation}}
         self._transcript_data = {}
+        # Smoco 流式：当前临时行（中间结果），收到最终结果时转正
+        self._interim_row = None
 
     def update_ui(self):
         """更新 UI 文本"""
@@ -399,41 +402,97 @@ class TranscriptPage(QWidget):
         self._start_time = time.time()
         self.transcript_table.setRowCount(0)
         self._transcript_data.clear()
+        self._interim_row = None
 
-    def append_text(self, text: str, chunk_start_time: float, entry_id: int = 0):
-        """追加转录文本（带时间戳）"""
-        if self._start_time is None:
-            return
-
-        # 计算从 chunk 开始到现在的总时间
-        total_seconds = chunk_start_time
-
-        # 格式化为 HH:MM:SS
+    def _fmt_time(self, total_seconds: float) -> str:
         hours = int(total_seconds // 3600)
         minutes = int((total_seconds % 3600) // 60)
         seconds = int(total_seconds % 60)
-        timestamp = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
-        # 添加到表格
+    def set_interim(self, text: str, start_time: float):
+        """Smoco 中间增量结果：更新/创建临时行（灰色斜体），不提交翻译"""
+        if self._start_time is None or not text:
+            return
+        if self._interim_row is None:
+            row = self.transcript_table.rowCount()
+            self.transcript_table.insertRow(row)
+            timestamp = self._fmt_time(start_time)
+
+            time_item = QTableWidgetItem(timestamp)
+            time_item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+            self.transcript_table.setItem(row, 0, time_item)
+
+            asr_item = QTableWidgetItem(text)
+            asr_item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+            _f = asr_item.font()
+            _f.setItalic(True)
+            asr_item.setFont(_f)
+            asr_item.setForeground(QColor(120, 120, 120))
+            self.transcript_table.setItem(row, 1, asr_item)
+
+            trans_item = QTableWidgetItem("")
+            trans_item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+            self.transcript_table.setItem(row, 2, trans_item)
+
+            self._interim_row = row
+            self._transcript_data[row] = {
+                "entry_id": None, "timestamp": timestamp,
+                "asr_text": text, "translation": "", "row": row,
+            }
+            self.transcript_table.resizeRowToContents(row)
+            self.transcript_table.scrollToBottom()
+        else:
+            row = self._interim_row
+            item = self.transcript_table.item(row, 1)
+            if item:
+                item.setText(text)
+                self._transcript_data[row]["asr_text"] = text
+                self.transcript_table.resizeRowToContents(row)
+                self.transcript_table.scrollToBottom()
+
+    def append_text(self, text: str, chunk_start_time: float, entry_id: int = 0):
+        """追加转录文本（带时间戳）。若有 Smoco 临时行则转正为最终文本。"""
+        if self._start_time is None:
+            return
+
+        timestamp = self._fmt_time(chunk_start_time)
+
+        # Smoco 流式：把临时行转正为最终结果（恢复正常样式 + 记录 entry_id）
+        if self._interim_row is not None:
+            row = self._interim_row
+            self._interim_row = None
+            asr_item = self.transcript_table.item(row, 1)
+            if asr_item:
+                asr_item.setText(text)
+                _f = asr_item.font()
+                _f.setItalic(False)
+                asr_item.setFont(_f)
+                asr_item.setForeground(QColor(0, 0, 0))
+            self._transcript_data[row] = {
+                "entry_id": entry_id, "timestamp": timestamp,
+                "asr_text": text, "translation": "", "row": row,
+            }
+            self.transcript_table.resizeRowToContents(row)
+            self.transcript_table.scrollToBottom()
+            return
+
+        # Whisper 路径（无临时行）：新增一行
         row = self.transcript_table.rowCount()
         self.transcript_table.insertRow(row)
 
-        # 时间戳
         time_item = QTableWidgetItem(timestamp)
         time_item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         self.transcript_table.setItem(row, 0, time_item)
 
-        # ASR 文本
         asr_item = QTableWidgetItem(text)
         asr_item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         self.transcript_table.setItem(row, 1, asr_item)
 
-        # 翻译（初始为空）
         trans_item = QTableWidgetItem("")
         trans_item.setTextAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         self.transcript_table.setItem(row, 2, trans_item)
 
-        # 存储数据
         self._transcript_data[row] = {
             "entry_id": entry_id,
             "timestamp": timestamp,
@@ -442,10 +501,7 @@ class TranscriptPage(QWidget):
             "row": row
         }
 
-        # 调整行高以适应内容
         self.transcript_table.resizeRowToContents(row)
-
-        # 滚动到底部
         self.transcript_table.scrollToBottom()
 
     def update_translation(self, translations: list):
@@ -520,8 +576,11 @@ class MainWindow(QMainWindow):
         # 控制器
         self._meter_controller = AudioMeterController()
         self._asr_controller = ASRController()
+        self._smoco_controller = SmocoSttController()
+        self._active_asr = None  # 当前在用的 ASR 控制器（Whisper 或 Smoco）
         self._translation_controller = TranslationController()
         self._device_refresh_thread = None  # 设备刷新线程
+        self._startup_smoco_thread = None   # 启动时验证 smoco 账户的线程
         self._is_running = False
         self._source_lang = "ja"  # 转录来源语言
         self._translate_lang = None  # 翻译目标语言
@@ -541,6 +600,9 @@ class MainWindow(QMainWindow):
 
         # 默认显示设备选择页
         self._stack.setCurrentWidget(self._page_selection)
+
+        # 启动后异步验证已配置的 smoco 账户（失效则提示）
+        QTimer.singleShot(800, self._startup_validate_smoco)
 
     def load_devices(self, devices: list):
         """加载设备列表"""
@@ -591,7 +653,9 @@ class MainWindow(QMainWindow):
             # 检查服务器配置：Local Whisper 已启动时不强制要求外部服务器
             servers = self._settings.get("servers", [])
             local_manager = get_local_whisper_manager()
-            if not servers and not local_manager.is_running:
+            smoco_cfg = self._settings.get("smoco_stt", {})
+            smoco_configured = bool(smoco_cfg.get("email") and smoco_cfg.get("password"))
+            if not servers and not local_manager.is_running and not smoco_configured:
                 QMessageBox.warning(
                     self,
                     i18n.t("start_failed"),
@@ -613,7 +677,7 @@ class MainWindow(QMainWindow):
             )
 
             # 显示启动对话框（服务器选择 + 健康检查 + 语言选择）
-            dialog = ASRStartupDialog(servers, last_server, llm_ok, self)
+            dialog = ASRStartupDialog(servers, last_server, llm_ok, smoco_configured, self)
             if dialog.exec() != QDialog.DialogCode.Accepted:
                 return
 
@@ -621,25 +685,14 @@ class MainWindow(QMainWindow):
             selected_lang = dialog.get_selected_language()
             selected_translate_lang = dialog.get_selected_translate_language()
             use_prompt = dialog.get_use_prompt()
+            source_type = dialog.get_source_type()
 
-            # 更新上次使用的服务器
+            # 记录上次选择（Whisper 源记 url；Smoco 源记 sentinel）
             self._settings["last_server"] = selected_server
             self._source_lang = selected_lang
             self._translate_lang = selected_translate_lang
-            self._settings["last_server"] = selected_server
 
-            # 应用设置到 ASR 控制器
-            self._asr_controller.set_config(
-                api_url=selected_server,
-                language=selected_lang
-            )
-            self._asr_controller.set_use_prompt(use_prompt)
-
-            # 应用 VAD 参数
-            vad_params = self._settings.get("vad", {})
-            self._asr_controller.set_vad_params(**vad_params)
-
-            # 启动音频采集
+            # 启动音频采集（两种源共用同一套 16k/mono/S16LE 帧）
             self._meter_controller.start(
                 device_index=device["index"],
                 kind=device.get("kind", "loopback"),
@@ -647,11 +700,37 @@ class MainWindow(QMainWindow):
                 error_callback=self._on_meter_error
             )
 
-            # 启动 ASR
-            self._asr_controller.start(
-                transcript_callback=self._on_transcript_ready,
-                error_callback=self._on_asr_error
-            )
+            # 按源类型分流到对应 ASR 控制器
+            if source_type == "smoco":
+                self._smoco_controller.set_config(
+                    host=smoco_cfg.get("host", "https://dx-smoco-dev.sony.com.cn"),
+                    email=smoco_cfg.get("email", ""),
+                    password=smoco_cfg.get("password", ""),
+                    language=selected_lang,
+                    service_type="local",
+                    use_punctuator=smoco_cfg.get("use_punctuator", True),
+                    verify_ssl=smoco_cfg.get("verify_ssl", False),
+                )
+                self._active_asr = self._smoco_controller
+                self._smoco_controller.start(
+                    transcript_callback=self._on_transcript_ready,
+                    interim_callback=self._on_interim_ready,
+                    error_callback=self._on_asr_error,
+                )
+            else:
+                # 应用设置到 Whisper ASR 控制器
+                self._asr_controller.set_config(
+                    api_url=selected_server,
+                    language=selected_lang
+                )
+                self._asr_controller.set_use_prompt(use_prompt)
+                vad_params = self._settings.get("vad", {})
+                self._asr_controller.set_vad_params(**vad_params)
+                self._active_asr = self._asr_controller
+                self._asr_controller.start(
+                    transcript_callback=self._on_transcript_ready,
+                    error_callback=self._on_asr_error
+                )
 
             # 启动翻译（如果选择了翻译语言）
             if self._translate_lang:
@@ -661,9 +740,9 @@ class MainWindow(QMainWindow):
                     error_callback=self._on_translation_error
                 )
 
-            # 连接音频到 ASR
+            # 连接音频到当前 ASR 控制器
             if hasattr(self._meter_controller, '_worker') and self._meter_controller._worker:
-                self._meter_controller._worker.audio_ready.connect(self._asr_controller.submit_audio)
+                self._meter_controller._worker.audio_ready.connect(self._active_asr.submit_audio)
 
             self._is_running = True
             self._page_transcript.start_recording()
@@ -679,7 +758,9 @@ class MainWindow(QMainWindow):
 
     def _stop_asr(self):
         """停止 ASR"""
-        self._asr_controller.stop()
+        if self._active_asr:
+            self._active_asr.stop()
+        self._active_asr = None
         self._meter_controller.stop()
         self._translation_controller.stop()
         self._is_running = False
@@ -699,6 +780,10 @@ class MainWindow(QMainWindow):
         """ASR 错误"""
         # 不停止，只记录警告
         logger.warning(f"ASR 错误: {msg}")
+
+    def _on_interim_ready(self, text: str, start_time: float):
+        """Smoco 中间增量结果：刷新临时行（不提交翻译）"""
+        self._page_transcript.set_interim(text, start_time)
 
     def _on_transcript_ready(self, text: str, chunk_start_time: float, entry_id: int):
         """转录完成回调"""
@@ -770,12 +855,43 @@ class MainWindow(QMainWindow):
                 )
                 logger.info(f"LLM 配置已更新: {llm_config.get('model', 'unknown')}")
 
+    def _startup_validate_smoco(self):
+        """启动后若记录了 smoco 账户，异步验证登录；失败则提示账户不可用。"""
+        smoco = self._settings.get("smoco_stt", {})
+        email = smoco.get("email", "")
+        password = smoco.get("password", "")
+        if not email or not password:
+            return  # 未配置，跳过
+        host = smoco.get("host", "https://dx-smoco-dev.sony.com.cn")
+        verify_ssl = smoco.get("verify_ssl", False)
+        if self._startup_smoco_thread and self._startup_smoco_thread.isRunning():
+            return
+        self._startup_smoco_thread = SmocoAuthCheckThread(host, email, password, verify_ssl)
+        self._startup_smoco_thread.finished.connect(self._on_startup_smoco_validated)
+        self._startup_smoco_thread.start()
+
+    def _on_startup_smoco_validated(self, result: tuple):
+        """启动验证完成：失败则提示用户账户不可用。"""
+        if not self.isVisible():
+            return
+        ok, msg = result
+        if not ok:
+            logger.warning(f"smoco 启动验证失败: {msg}")
+            QMessageBox.warning(
+                self,
+                i18n.t("window_title"),
+                f"{i18n.t('smoco_account_unavailable')}（{msg}）"
+            )
+
     def closeEvent(self, event):
-        """窗口关闭时检查 Local Whisper 状态"""
+        """窗口关闭时检查状态：转录中禁止关闭；并检查 Local Whisper 服务"""
         logger.info("应用正在关闭...")
 
+        # 正在转录：不允许关闭，必须先停止转录
         if self._is_running:
-            self._stop_asr()
+            QMessageBox.warning(self, i18n.t("window_title"), i18n.t("cannot_close_while_transcribing"))
+            event.ignore()
+            return
 
         # 无论是否在录制，都要停止翻译控制器（防止后台线程继续运行）
         self._translation_controller.stop()

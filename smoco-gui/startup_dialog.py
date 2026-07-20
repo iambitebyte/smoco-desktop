@@ -76,7 +76,8 @@ class HealthCheckWorker(QThread):
 class ASRStartupDialog(QDialog):
     """ASR 启动对话框"""
 
-    def __init__(self, servers: list, last_server: str = "", llm_config_ok: bool = False, parent=None):
+    def __init__(self, servers: list, last_server: str = "", llm_config_ok: bool = False,
+                 smoco_configured: bool = False, parent=None):
         super().__init__(parent)
 
         self.setWindowTitle(i18n.t("startup_title"))
@@ -87,6 +88,8 @@ class ASRStartupDialog(QDialog):
         self.selected_language = "ja"
         self.health_ok = False
         self.llm_config_ok = llm_config_ok
+        self.smoco_configured = smoco_configured
+        self._source_type = "whisper"
 
         layout = QVBoxLayout()
         layout.setSpacing(15)
@@ -115,6 +118,9 @@ class ASRStartupDialog(QDialog):
             display = f"{local_name} - {local_url}"
             # 插入到列表开头
             self.server_combo.insertItem(0, display, local_url)
+
+        # 添加 Smoco 云端 ASR 选项（与 Whisper 源并存）
+        self.server_combo.addItem(i18n.t("smoco_source_name"), "smoco://cloud")
 
         # 选中上次使用的服务器
         if last_server:
@@ -152,9 +158,9 @@ class ASRStartupDialog(QDialog):
         """)
         layout.addWidget(self.status_label)
 
-        # Whisper 设定
-        whisper_opts_label = QLabel("Whisper " + i18n.t("settings") + ":")
-        layout.addWidget(whisper_opts_label)
+        # Whisper 设定（仅 Whisper 源显示，选 Smoco 源时隐藏）
+        self.whisper_opts_label = QLabel("Whisper " + i18n.t("settings") + ":")
+        layout.addWidget(self.whisper_opts_label)
 
         self.chk_prompt = QCheckBox(i18n.t("enable_prompt"))
         self.chk_prompt.setChecked(False)
@@ -262,10 +268,37 @@ class ASRStartupDialog(QDialog):
     def _on_server_changed(self):
         """服务器切换"""
         url = self.server_combo.currentData()
-        if url:
-            self.selected_server = url
-            self.url_display.setText(url)
-            self._start_health_check()
+        if not url:
+            return
+        self.selected_server = url
+
+        # Smoco 云端 ASR：不走 /health，按账号是否配置决定可用性
+        if url.startswith("smoco://"):
+            self._source_type = "smoco"
+            self.url_display.setText(i18n.t("smoco_source_name"))
+            self.health_ok = self.smoco_configured
+            if self.smoco_configured:
+                self.status_label.setText(f"{i18n.t('service_status')}: ✓ {i18n.t('smoco_source_name')}")
+                self.status_label.setStyleSheet("""
+                    QLabel { padding: 8px; border-radius: 4px; background-color: #D4EDDA; color: #155724; }
+                """)
+                self.btn_ok.setEnabled(True)
+            else:
+                self.status_label.setText(f"{i18n.t('service_status')}: {i18n.t('smoco_not_configured')}")
+                self.status_label.setStyleSheet("""
+                    QLabel { padding: 8px; border-radius: 4px; background-color: #F8D7DA; color: #721C24; }
+                """)
+                self.btn_ok.setEnabled(False)
+            # Smoco 源不显示 Whisper 专属选项
+            self.whisper_opts_label.hide()
+            self.chk_prompt.hide()
+            return
+
+        self._source_type = "whisper"
+        self.url_display.setText(url)
+        self.whisper_opts_label.show()
+        self.chk_prompt.show()
+        self._start_health_check()
 
     def _on_lang_changed(self):
         """语言切换"""
@@ -347,6 +380,10 @@ class ASRStartupDialog(QDialog):
     def get_selected_server(self) -> str:
         """获取选中的服务器 URL"""
         return self.selected_server
+
+    def get_source_type(self) -> str:
+        """获取转录源类型：'smoco' 或 'whisper'"""
+        return self._source_type
 
     def get_selected_language(self) -> str:
         """获取选中的语言"""

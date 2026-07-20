@@ -27,9 +27,9 @@ uv run pyinstaller --clean --onedir --noconsole --icon=smoco_logo_circle.ico --n
     --hidden-import=PyQt6.QtCore --hidden-import=PyQt6.QtGui --hidden-import=PyQt6.QtWidgets ^
     --hidden-import=pyaudiowpatch --hidden-import=numpy --hidden-import=scipy --hidden-import=soundfile ^
     --hidden-import=requests --hidden-import=aiohttp --hidden-import=logging.handlers ^
-    --hidden-import=webrtcvad ^
+    --hidden-import=webrtcvad --hidden-import=socketio --hidden-import=engineio ^
     --hidden-import=main_window --hidden-import=gui_logger --hidden-import=i18n --hidden-import=paths ^
-    --hidden-import=utils --hidden-import=audio_meter_worker --hidden-import=asr_worker --hidden-import=asr_quality --hidden-import=asr_chunker ^
+    --hidden-import=utils --hidden-import=audio_meter_worker --hidden-import=asr_worker --hidden-import=asr_quality --hidden-import=asr_chunker --hidden-import=smoco_stt_worker ^
     --hidden-import=asr_logger --hidden-import=settings_dialog --hidden-import=startup_dialog ^
     --hidden-import=transcript_edit --hidden-import=local_whisper_manager --hidden-import=translation_worker ^
     --hidden-import=llm_client --hidden-import=smoco.audio --hidden-import=smoco.source.wasapi ^
@@ -39,7 +39,7 @@ uv run pyinstaller --clean --onedir --noconsole --icon=smoco_logo_circle.ico --n
     --add-data="styles.qss;." ^
     --add-data="main_window.py;." --add-data="gui_logger.py;." --add-data="i18n.py;." --add-data="paths.py;." ^
     --add-data="utils.py;." --add-data="audio_meter_worker.py;." --add-data="asr_worker.py;." --add-data="asr_quality.py;." ^
-    --add-data="asr_chunker.py;." --add-data="asr_logger.py;." --add-data="settings_dialog.py;." ^
+    --add-data="asr_chunker.py;." --add-data="asr_logger.py;." --add-data="smoco_stt_worker.py;." --add-data="settings_dialog.py;." ^
     --add-data="startup_dialog.py;." --add-data="transcript_edit.py;." --add-data="local_whisper_manager.py;." ^
     --add-data="translation_worker.py;." --add-data="llm_client.py;." ^
     --add-data="history_page.py;." --add-data="history_detail_page.py;." ^

@@ -18,6 +18,7 @@ import asr_worker
 import asr_quality
 import asr_chunker
 import asr_logger
+import smoco_stt_worker
 import settings_dialog
 import startup_dialog
 import transcript_edit
