@@ -18,8 +18,8 @@
       "description": "Windows システムオーディオをリアルタイム文字起こし。Whisper + LLM 翻訳、OpenVINO-genai Local Whisper 内蔵、ネットワーク不要、インストール不要。"
     },
     "download": {
-      "title": "Smoco Desktop をダウンロード · Windows v1.1.0",
-      "description": "Smoco Desktop v1.1.0 Windows zip をダウンロード、~1.4GB 自己完結、インストール不要、ネットワーク不要。"
+      "title": "Smoco Desktop をダウンロード · Windows v1.2.0",
+      "description": "Smoco Desktop v1.2.0 をダウンロード：フル版（~1.4GB、ローカル Whisper 搭載）または Lite 版（~91MB、Smoco クラウド ASR のみ）。"
     },
     "docs": {
       "title": "ドキュメント · Smoco Desktop",
@@ -27,7 +27,7 @@
     },
     "changelog": {
       "title": "変更履歴 · Smoco Desktop",
-      "description": "Smoco Desktop のバージョン移り変わり、最新 v1.1.0。"
+      "description": "Smoco Desktop のバージョン移り変わり、最新 v1.2.0。"
     }
   },
   "nav": {
@@ -39,10 +39,10 @@
     "changelog": "更新"
   },
   "hero": {
-    "badge": "v1.1 · ダウンロード可能",
+    "badge": "v1.2 · ダウンロード可能",
     "title": "あらゆるシステムオーディオを、瞬時に文字へ",
-    "subtitle": "Windows デスクトップアプリ。ブラウザ、会議ソフトの音声をリアルタイムで文字起こしし、即座にあなたの言語へ翻訳します。完全ローカルの Whisper エンジンで、ネットワーク不要、Python インストール不要。",
-    "ctaPrimary": "Windows 版をダウンロード · 1.4GB",
+    "subtitle": "Windows デスクトップアプリ。ブラウザ、会議ソフトの音声をリアルタイムで文字起こしし、即座に翻訳します。ローカル Whisper エンジン（オフライン）または Smoco クラウド ASR（Lite 版はわずか 91MB）を利用可能。",
+    "ctaPrimary": "Windows 版をダウンロード",
     "ctaSecondary": "GitHub を見る",
     "tag1": "完全自己完結",
     "tag2": "中/日/英 三言語",
@@ -161,8 +161,8 @@
     "eyebrow": "Download",
     "title": "試してみませんか？",
     "description": "完全自己完結、インストール不要、ネットワーク不要。ダウンロードして解凍するだけ。",
-    "ctaPrimary": "Smoco Desktop v1.1.0 をダウンロード",
-    "meta": "Windows 10/11 · 1.4GB · zip"
+    "ctaPrimary": "Smoco Desktop v1.2.0 をダウンロード",
+    "meta": "Windows 10/11 · フル版 1.4GB / Lite 91MB"
   },
   "roadmap": {
     "eyebrow": "Roadmap",
@@ -170,17 +170,16 @@
     "description": "急速に進化しています。次に予定しているものはこちら。",
     "versions": {
       "current": {
-        "title": "v1.1 · 現在",
+        "title": "v1.2 · 現在",
         "status": "リリース済み",
         "items": [
-          "コアの文字起こし + 翻訳",
-          "Local Whisper NPU（OpenVINO-genai）",
-          "マイクキャプチャ（マイクとスピーカーのいずれかを選択）",
-          "履歴 / ログ / ショートカット / アクセシビリティ"
+          "Smoco クラウド ASR（socket.io ストリーミング）を統合、ローカル Whisper なしで文字起こし可能",
+          "フル版（ローカル Whisper 搭載）と Lite 版（Smoco クラウドのみ、~91MB 軽量）の 2 版をリリース",
+          "コアの文字起こし + 翻訳、Local Whisper NPU、マイクキャプチャ、履歴 / ログ / ショートカット"
         ]
       },
       "next": {
-        "title": "v1.2 · 計画中",
+        "title": "v1.3 · 計画中",
         "status": "2026 Q3",
         "items": [
           "デュアルストリーム: マイク + スピーカーを同時キャプチャし、時間でマージして完全な会議録を生成"
@@ -190,7 +189,7 @@
         "title": "v2.0 · 計画中",
         "status": "2026 Q4+",
         "items": [
-          "Smoco 会議文字起こし API を呼び出して精度向上"
+          "さらなる言語・翻訳エンジン、精度とパフォーマンスの継続改善"
         ]
       }
     }
@@ -198,42 +197,53 @@
   "downloadPage": {
     "eyebrow": "Download",
     "title": "Smoco Desktop をダウンロード",
-    "subtitle": "完全自己完結、インストール不要、ネットワーク不要。",
-    "main": {
-      "versionLabel": "バージョン",
-      "version": "v1.1.0",
-      "date": "2026-07-15",
-      "platform": "Windows 10/11 64-bit",
-      "size": "約 1.4 GB",
-      "md5Label": "MD5",
-      "md5": "4458a94bd26e33e640e8c5924d41bb1c",
-      "button": "zip をダウンロード"
+    "subtitle": "v1.2.0 からフル版と Lite 版の 2 つを提供します。用途に合わせて選択ください。過去のバージョンもダウンロード可能です。",
+    "variants": {
+      "full": {
+        "badge": "フル版",
+        "version": "v1.2.0",
+        "date": "2026-07-20",
+        "platform": "Windows 10/11 64-bit",
+        "size": "約 1.4 GB",
+        "desc": "ローカル Whisper モデル同梱、オフラインで利用可能。Smoco クラウド ASR もサポート。オフラインや最高精度が必要な方向け。",
+        "button": "フル版をダウンロード"
+      },
+      "lite": {
+        "badge": "Lite 版",
+        "version": "v1.2.0",
+        "date": "2026-07-20",
+        "platform": "Windows 10/11 64-bit",
+        "size": "約 91 MB",
+        "desc": "Smoco クラウド ASR のみを呼び出す、非常に軽量な版。ネットワークと Smoco アカウントが必要、ローカル Whisper は含みません。",
+        "button": "Lite 版をダウンロード"
+      }
     },
     "requirements": {
       "title": "システム要件",
       "os": "OS",
       "osValue": "Windows 10/11 64-bit",
       "cpu": "プロセッサ",
-      "cpuValue": "Intel Core i5 以上（Intel Arc GPU アクセラレーション推奨）",
+      "cpuValue": "フル版: Intel Core i5 以上（Intel Arc GPU アクセラレーション推奨）/ Lite 版: 特別な要件なし",
       "disk": "ディスク容量",
-      "diskValue": "約 1.4 GB（モデル含む）",
+      "diskValue": "フル版 約 1.4 GB（モデル含む）/ Lite 版 約 91 MB",
       "ram": "メモリ",
       "ramValue": "8 GB 推奨"
     },
     "install": {
       "title": "インストール手順",
       "steps": [
-        "zip をローカルにダウンロード",
+        "使用する版の zip をダウンロード（フル版または Lite 版）",
         "任意の場所に解凍（例: D:\\SmocoDesktop\\）",
         "SmocoDesktop.exe をダブルクリックして起動",
-        "初回使用: 設定 → ローカル Whisper モデル → サービス開始",
+        "フル版: 設定 → ローカル Whisper モデル → サービス開始（または Smoco クラウド ASR）",
+        "Lite 版: 設定 → Smoco クラウド STT → Smoco アカウントを入力",
         "ホームに戻り、オーディオデバイスを選んで F5 で文字起こし開始"
       ]
     },
     "verify": {
       "title": "ファイル整合性の検証",
-      "desc": "ダウンロード後、PowerShell で MD5 を検証できます：",
-      "command": "Get-FileHash smoco-desktop-1.1.0.zip -Algorithm MD5"
+      "desc": "ダウンロード後、PowerShell で MD5 を検証できます（例はフル版、Lite 版はファイル名を差し替え）：",
+      "command": "Get-FileHash smoco-desktop-1.2.0.zip -Algorithm MD5"
     },
     "archives": {
       "title": "過去のバージョン",
@@ -296,6 +306,17 @@
     "title": "変更履歴",
     "subtitle": "Smoco Desktop のバージョン移り変わり。",
     "versions": {
+      "v1.2.0": {
+        "version": "v1.2.0",
+        "date": "2026-07-20",
+        "tag": "Smoco クラウド ASR + デュアル版",
+        "items": [
+          "Smoco クラウド ASR API（socket.io ストリーミング）を直接統合、ローカル Whisper なしで文字起こし可能",
+          "中間結果をリアルタイム表示、最終結果を確定、文字起こし中はウィンドウ閉鎖をブロック、起動時に Smoco アカウントを自動検証",
+          "フル版（ローカル Whisper モデル搭載、~1.4GB）と Lite 版（Smoco クラウド ASR のみ、~91MB 軽量）の 2 版をリリース",
+          "時刻表示にサーバーの SRT タイムラインを使用、ASR 結果を履歴に保存"
+        ]
+      },
       "v1.1.0": {
         "version": "v1.1.0",
         "date": "2026-07-15",

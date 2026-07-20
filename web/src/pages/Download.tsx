@@ -4,7 +4,24 @@ import { Download as DownloadIcon } from 'lucide-react'
 import { Container, Card, Button, Tag, CodeBlock } from '../components/ui'
 import SEO from '../components/SEO'
 
+type VariantInfo = {
+  badge: string
+  version: string
+  date: string
+  platform: string
+  size: string
+  desc: string
+  button: string
+}
+
+// v1.2.0 起提供完整版与 Lite 版
+const VARIANTS = [
+  { key: 'full', href: '/download/smoco-desktop-1.2.0.zip' },
+  { key: 'lite', href: '/download/smoco-desktop-lite-1.2.0.zip' },
+]
+
 const ARCHIVES = [
+  { version: 'v1.1.0', date: '2026-07-15', size: '~1.4 GB', href: '/download/smoco-desktop-1.1.0.zip' },
   { version: 'v1.0.1', date: '2026-07-06', size: '~1.45 GB', href: '/download/smoco-desktop-1.0.1.zip' },
   { version: 'v1.0.0', date: '2026-06-29', size: '~438 MB', href: '/download/smoco-desktop-1.0.0.zip' },
 ]
@@ -39,50 +56,46 @@ export default function Download() {
         </motion.div>
       </Container>
 
-      {/* 主下载卡 */}
-      <Container size="md" className="mb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <Card className="relative overflow-hidden p-8 md:p-10">
-            <div
-              aria-hidden
-              className="absolute inset-0 bg-brand-gradient-subtle opacity-50 pointer-events-none"
-            />
-            <div className="relative">
-              <div className="flex items-center gap-3 mb-6">
-                <Tag color="success" dot>
-                  {t('downloadPage.main.version')}
-                </Tag>
-                <span className="text-sm text-content-muted">{t('downloadPage.main.date')}</span>
-              </div>
+      {/* 完整版 + Lite 版双卡 */}
+      <Container size="lg" className="mb-16">
+        <div className="grid gap-6 md:grid-cols-2">
+          {VARIANTS.map((v, idx) => {
+            const info = t(`downloadPage.variants.${v.key}`, { returnObjects: true }) as VariantInfo
+            return (
+              <motion.div
+                key={v.key}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 * idx }}
+              >
+                <Card className="relative overflow-hidden p-8 md:p-10 h-full">
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 bg-brand-gradient-subtle opacity-50 pointer-events-none"
+                  />
+                  <div className="relative flex flex-col h-full">
+                    <div className="flex items-center gap-3 mb-6">
+                      <Tag color="success" dot>
+                        {info.badge}
+                      </Tag>
+                      <span className="text-sm text-content-muted">{info.version} · {info.date}</span>
+                    </div>
 
-              <h2 className="text-2xl font-bold mb-2">Smoco Desktop {t('downloadPage.main.version')}</h2>
-              <p className="text-content-secondary mb-8">{t('downloadPage.main.platform')}</p>
+                    <h2 className="text-2xl font-bold mb-2">Smoco Desktop {info.version}</h2>
+                    <p className="text-sm text-content-muted mb-4">{info.platform}</p>
+                    <p className="text-content-secondary mb-8 flex-1">{info.desc}</p>
 
-              <Button as="a" href="/download/smoco-desktop-1.1.0.zip" size="lg" className="w-full sm:w-auto">
-                <DownloadIcon className="w-4 h-4" />
-                {t('downloadPage.main.button')} · {t('downloadPage.main.size')}
-              </Button>
-
-              <div className="mt-8 pt-6 border-t border-edge-subtle text-sm">
-                <div>
-                  <div className="text-content-muted text-xs uppercase tracking-wider mb-1">
-                    {t('downloadPage.main.md5Label')}
+                    <Button as="a" href={v.href} size="lg" className="w-full sm:w-auto">
+                      <DownloadIcon className="w-4 h-4" />
+                      {info.button} · {info.size}
+                    </Button>
                   </div>
-                  <code className="font-mono text-content-secondary text-xs break-all">
-                    {t('downloadPage.main.md5')}
-                  </code>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </motion.div>
+                </Card>
+              </motion.div>
+            )
+          })}
+        </div>
       </Container>
-
-
 
       {/* 历史版本 */}
       <Container size="md" className="mb-16">
@@ -112,7 +125,7 @@ export default function Download() {
         <Card>
           <dl className="divide-y divide-edge-subtle">
             {requirements.map((req) => (
-              <div key={req.label} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+              <div key={req.label} className="flex items-center justify-between py-3 first:pt-0 last:pb-0 gap-4">
                 <dt className="text-sm text-content-muted">{req.label}</dt>
                 <dd className="text-sm text-content-primary font-medium text-right">{req.value}</dd>
               </div>

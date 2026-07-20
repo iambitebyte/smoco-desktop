@@ -18,8 +18,8 @@
       "description": "Windows 系统音频实时转录工具，支持 Whisper 转录 + LLM 翻译，内嵌 OpenVINO-genai Local Whisper，零联网零安装。"
     },
     "download": {
-      "title": "下载 Smoco Desktop · Windows v1.1.0",
-      "description": "下载 Smoco Desktop v1.1.0 Windows zip，~1.4GB 自包含，零安装零联网。"
+      "title": "下载 Smoco Desktop · Windows v1.2.0",
+      "description": "下载 Smoco Desktop v1.2.0：完整版（~1.4GB，含本地 Whisper）或 Lite 版（~91MB，仅 Smoco 云端 ASR）。"
     },
     "docs": {
       "title": "文档 · Smoco Desktop",
@@ -27,7 +27,7 @@
     },
     "changelog": {
       "title": "更新日志 · Smoco Desktop",
-      "description": "Smoco Desktop 版本演进，最新 v1.1.0。"
+      "description": "Smoco Desktop 版本演进，最新 v1.2.0。"
     }
   },
   "nav": {
@@ -39,10 +39,10 @@
     "changelog": "更新"
   },
   "hero": {
-    "badge": "v1.1 · 现在可下载",
+    "badge": "v1.2 · 现在可下载",
     "title": "把任何系统音频，瞬间变成文字",
-    "subtitle": "Windows 桌面应用，实时转录浏览器、会议软件里的任何声音，并立即翻译成你的语言。完全本地化的 Whisper 引擎，无需联网、无需安装 Python。",
-    "ctaPrimary": "下载 Windows · 1.4GB",
+    "subtitle": "Windows 桌面应用，实时转录浏览器、会议软件里的任何声音，并立即翻译。可用本地 Whisper 引擎（离线），或直接调用 Smoco 云端 ASR（Lite 版仅 91MB）。",
+    "ctaPrimary": "下载 Windows",
     "ctaSecondary": "查看 GitHub",
     "tag1": "完全自包含",
     "tag2": "中/日/英三语",
@@ -161,8 +161,8 @@
     "eyebrow": "Download",
     "title": "准备好试试了吗？",
     "description": "完全自包含，零安装零联网。下载解压即可用。",
-    "ctaPrimary": "下载 Smoco Desktop v1.1.0",
-    "meta": "Windows 10/11 · 1.4GB · zip"
+    "ctaPrimary": "下载 Smoco Desktop v1.2.0",
+    "meta": "Windows 10/11 · 完整版 1.4GB / Lite 91MB"
   },
   "roadmap": {
     "eyebrow": "Roadmap",
@@ -170,17 +170,16 @@
     "description": "我们正在快速演进，这里是接下来会做的。",
     "versions": {
       "current": {
-        "title": "v1.1 · 当前",
+        "title": "v1.2 · 当前",
         "status": "已发布",
         "items": [
-          "核心转录 + 翻译",
-          "Local Whisper NPU（OpenVINO-genai）",
-          "麦克风采集（麦克风与扬声器二选一）",
-          "历史 / 日志 / 快捷键 / 辅助功能"
+          "集成 Smoco 云端 ASR（socket.io 流式），无需本地 Whisper 即可转录",
+          "发布完整版（含本地 Whisper）与 Lite 版（仅 Smoco 云端，~91MB 轻量）",
+          "核心转录 + 翻译、Local Whisper NPU、麦克风采集、历史 / 日志 / 快捷键"
         ]
       },
       "next": {
-        "title": "v1.2 · 计划中",
+        "title": "v1.3 · 计划中",
         "status": "2026 Q3",
         "items": [
           "双流并行：同时采集麦克风 + 扬声器，按时间合并生成完整的会议记录"
@@ -190,7 +189,7 @@
         "title": "v2.0 · 计划中",
         "status": "2026 Q4+",
         "items": [
-          "支持调用 smoco 的会议转录接口，提升精度"
+          "更多语言与翻译引擎、精度与性能持续优化"
         ]
       }
     }
@@ -198,42 +197,53 @@
   "downloadPage": {
     "eyebrow": "Download",
     "title": "下载 Smoco Desktop",
-    "subtitle": "完全自包含，零安装零联网。",
-    "main": {
-      "versionLabel": "版本",
-      "version": "v1.1.0",
-      "date": "2026-07-15",
-      "platform": "Windows 10/11 64-bit",
-      "size": "约 1.4 GB",
-      "md5Label": "MD5",
-      "md5": "4458a94bd26e33e640e8c5924d41bb1c",
-      "button": "下载 zip"
+    "subtitle": "v1.2.0 起提供完整版与 Lite 版两个版本，按需选择；亦可下载历史版本。",
+    "variants": {
+      "full": {
+        "badge": "完整版",
+        "version": "v1.2.0",
+        "date": "2026-07-20",
+        "platform": "Windows 10/11 64-bit",
+        "size": "约 1.4 GB",
+        "desc": "含本地 Whisper 模型，离线可用；同时支持 Smoco 云端 ASR。适合需要离线或最高精度的用户。",
+        "button": "下载完整版"
+      },
+      "lite": {
+        "badge": "Lite 版",
+        "version": "v1.2.0",
+        "date": "2026-07-20",
+        "platform": "Windows 10/11 64-bit",
+        "size": "约 91 MB",
+        "desc": "仅调用 Smoco 云端 ASR，体积非常小；需联网与 Smoco 账号，不含本地 Whisper。",
+        "button": "下载 Lite 版"
+      }
     },
     "requirements": {
       "title": "系统要求",
       "os": "操作系统",
       "osValue": "Windows 10/11 64-bit",
       "cpu": "处理器",
-      "cpuValue": "Intel Core i5 及以上（Intel Arc GPU 加速推荐）",
+      "cpuValue": "完整版：Intel Core i5 及以上（Intel Arc GPU 加速推荐）；Lite 版：无特殊要求",
       "disk": "磁盘空间",
-      "diskValue": "约 1.4 GB（含模型）",
+      "diskValue": "完整版约 1.4 GB（含模型）/ Lite 版约 91 MB",
       "ram": "内存",
       "ramValue": "8 GB 推荐"
     },
     "install": {
       "title": "安装步骤",
       "steps": [
-        "下载 zip 包到本地",
+        "下载对应版本的 zip（完整版或 Lite 版）",
         "解压到任意位置（如 D:\\SmocoDesktop\\）",
         "双击 SmocoDesktop.exe 启动应用",
-        "首次使用：设置 → 本地 Whisper 模型 → 启动服务",
+        "完整版：设置 → 本地 Whisper 模型 → 启动服务（或改用 Smoco 云端 ASR）",
+        "Lite 版：设置 → Smoco 云端 STT → 填写 Smoco 账号",
         "返回主页，选择音频设备，按 F5 开始转录"
       ]
     },
     "verify": {
       "title": "校验文件完整性",
-      "desc": "下载完成后，可在 PowerShell 跑这条命令验证 MD5：",
-      "command": "Get-FileHash smoco-desktop-1.1.0.zip -Algorithm MD5"
+      "desc": "下载完成后，可在 PowerShell 跑这条命令验证 MD5（示例为完整版，Lite 版替换文件名）：",
+      "command": "Get-FileHash smoco-desktop-1.2.0.zip -Algorithm MD5"
     },
     "archives": {
       "title": "历史版本",
@@ -296,6 +306,17 @@
     "title": "更新日志",
     "subtitle": "Smoco Desktop 的版本演进。",
     "versions": {
+      "v1.2.0": {
+        "version": "v1.2.0",
+        "date": "2026-07-20",
+        "tag": "Smoco 云端 ASR + 双版本",
+        "items": [
+          "集成直接调用 Smoco 云端 ASR API（socket.io 流式），无需本地 Whisper 即可转录",
+          "流式中间结果实时显示、最终结果落定；转录中禁止关闭窗口；启动自动验证 Smoco 账户",
+          "发布两个版本：完整版（含本地 Whisper 模型，~1.4GB）与 Lite 版（仅 Smoco 云端 ASR，~91MB 轻量）",
+          "时间显示改用服务端 SRT 时间轴；ASR 结果写入历史"
+        ]
+      },
       "v1.1.0": {
         "version": "v1.1.0",
         "date": "2026-07-15",

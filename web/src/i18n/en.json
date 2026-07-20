@@ -18,8 +18,8 @@
       "description": "Windows system audio real-time transcription tool. Supports Whisper transcription + LLM translation, with embedded OpenVINO-genai Local Whisper. Zero network, zero install."
     },
     "download": {
-      "title": "Download Smoco Desktop · Windows v1.1.0",
-      "description": "Download Smoco Desktop v1.1.0 Windows zip, ~1.4GB self-contained, zero install, zero network."
+      "title": "Download Smoco Desktop · Windows v1.2.0",
+      "description": "Download Smoco Desktop v1.2.0: Full (~1.4GB, with local Whisper) or Lite (~91MB, Smoco cloud ASR only)."
     },
     "docs": {
       "title": "Docs · Smoco Desktop",
@@ -27,7 +27,7 @@
     },
     "changelog": {
       "title": "Changelog · Smoco Desktop",
-      "description": "Smoco Desktop version history, latest v1.1.0."
+      "description": "Smoco Desktop version history, latest v1.2.0."
     }
   },
   "nav": {
@@ -39,10 +39,10 @@
     "changelog": "Changelog"
   },
   "hero": {
-    "badge": "v1.1 · Available now",
+    "badge": "v1.2 · Available now",
     "title": "Turn any system audio into text, instantly",
-    "subtitle": "A Windows desktop app that transcribes any sound from browsers and meeting software in real time — and translates it to your language immediately. Fully local Whisper engine. No network, no Python install.",
-    "ctaPrimary": "Download for Windows · 1.4GB",
+    "subtitle": "A Windows desktop app that transcribes any sound from browsers and meeting software in real time — and translates it immediately. Use the local Whisper engine (offline), or call the Smoco cloud ASR directly (Lite build is just 91MB).",
+    "ctaPrimary": "Download for Windows",
     "ctaSecondary": "View on GitHub",
     "tag1": "Fully self-contained",
     "tag2": "CN/JP/EN trilingual",
@@ -161,8 +161,8 @@
     "eyebrow": "Download",
     "title": "Ready to try it?",
     "description": "Fully self-contained. Zero install, zero network. Download, extract, run.",
-    "ctaPrimary": "Download Smoco Desktop v1.1.0",
-    "meta": "Windows 10/11 · 1.4GB · zip"
+    "ctaPrimary": "Download Smoco Desktop v1.2.0",
+    "meta": "Windows 10/11 · Full 1.4GB / Lite 91MB"
   },
   "roadmap": {
     "eyebrow": "Roadmap",
@@ -170,17 +170,16 @@
     "description": "We're moving fast. Here's what's next.",
     "versions": {
       "current": {
-        "title": "v1.1 · Current",
+        "title": "v1.2 · Current",
         "status": "Released",
         "items": [
-          "Core transcription + translation",
-          "Local Whisper NPU (OpenVINO-genai)",
-          "Microphone capture (microphone or speaker, switch between the two)",
-          "History / Logs / Shortcuts / Accessibility"
+          "Integrated Smoco cloud ASR (socket.io streaming) — transcribe without any local Whisper",
+          "Ships in two builds: Full (with local Whisper) and Lite (Smoco cloud only, ~91MB)",
+          "Core transcription + translation, Local Whisper NPU, mic capture, history / logs / shortcuts"
         ]
       },
       "next": {
-        "title": "v1.2 · Planned",
+        "title": "v1.3 · Planned",
         "status": "2026 Q3",
         "items": [
           "Dual-stream: capture microphone + speaker simultaneously, merge by time into complete meeting minutes"
@@ -190,7 +189,7 @@
         "title": "v2.0 · Planned",
         "status": "2026 Q4+",
         "items": [
-          "Call Smoco meeting transcription API for improved accuracy"
+          "More languages and translation engines, ongoing accuracy and performance improvements"
         ]
       }
     }
@@ -198,42 +197,53 @@
   "downloadPage": {
     "eyebrow": "Download",
     "title": "Download Smoco Desktop",
-    "subtitle": "Fully self-contained. Zero install, zero network.",
-    "main": {
-      "versionLabel": "Version",
-      "version": "v1.1.0",
-      "date": "2026-07-15",
-      "platform": "Windows 10/11 64-bit",
-      "size": "~1.4 GB",
-      "md5Label": "MD5",
-      "md5": "4458a94bd26e33e640e8c5924d41bb1c",
-      "button": "Download zip"
+    "subtitle": "From v1.2.0, two builds are available — Full and Lite. Pick what you need; older versions are also available.",
+    "variants": {
+      "full": {
+        "badge": "Full",
+        "version": "v1.2.0",
+        "date": "2026-07-20",
+        "platform": "Windows 10/11 64-bit",
+        "size": "~1.4 GB",
+        "desc": "Bundles the local Whisper model for offline use; also supports Smoco cloud ASR. Best for offline or maximum-accuracy needs.",
+        "button": "Download Full"
+      },
+      "lite": {
+        "badge": "Lite",
+        "version": "v1.2.0",
+        "date": "2026-07-20",
+        "platform": "Windows 10/11 64-bit",
+        "size": "~91 MB",
+        "desc": "Calls the Smoco cloud ASR only — very lightweight. Requires network and a Smoco account; no local Whisper.",
+        "button": "Download Lite"
+      }
     },
     "requirements": {
       "title": "System requirements",
       "os": "OS",
       "osValue": "Windows 10/11 64-bit",
       "cpu": "Processor",
-      "cpuValue": "Intel Core i5 or better (Intel Arc GPU acceleration recommended)",
+      "cpuValue": "Full: Intel Core i5 or better (Intel Arc GPU acceleration recommended); Lite: no special requirements",
       "disk": "Disk space",
-      "diskValue": "~1.4 GB (including model)",
+      "diskValue": "Full ~1.4 GB (incl. model) / Lite ~91 MB",
       "ram": "Memory",
       "ramValue": "8 GB recommended"
     },
     "install": {
       "title": "Installation steps",
       "steps": [
-        "Download the zip locally",
+        "Download the zip for your build (Full or Lite)",
         "Extract anywhere (e.g. D:\\SmocoDesktop\\)",
         "Double-click SmocoDesktop.exe to launch",
-        "First-time setup: Settings → Local Whisper → Start service",
+        "Full: Settings → Local Whisper → Start service (or use Smoco cloud ASR)",
+        "Lite: Settings → Smoco Cloud STT → enter your Smoco account",
         "Return home, pick an audio device, press F5 to start"
       ]
     },
     "verify": {
       "title": "Verify file integrity",
-      "desc": "After download, run this in PowerShell to verify MD5:",
-      "command": "Get-FileHash smoco-desktop-1.1.0.zip -Algorithm MD5"
+      "desc": "After download, run this in PowerShell to verify MD5 (example for Full; swap the filename for Lite):",
+      "command": "Get-FileHash smoco-desktop-1.2.0.zip -Algorithm MD5"
     },
     "archives": {
       "title": "Previous versions",
@@ -296,6 +306,17 @@
     "title": "Changelog",
     "subtitle": "Version history of Smoco Desktop.",
     "versions": {
+      "v1.2.0": {
+        "version": "v1.2.0",
+        "date": "2026-07-20",
+        "tag": "Smoco cloud ASR + dual builds",
+        "items": [
+          "Integrated direct Smoco cloud ASR API (socket.io streaming) — transcribe without any local Whisper",
+          "Live interim results stream in, final results commit; close is blocked while transcribing; Smoco account is validated on startup",
+          "Ships in two builds: Full (with local Whisper model, ~1.4GB) and Lite (Smoco cloud ASR only, ~91MB, lightweight)",
+          "Timestamps now use the server SRT timeline; ASR results are saved to history"
+        ]
+      },
       "v1.1.0": {
         "version": "v1.1.0",
         "date": "2026-07-15",
