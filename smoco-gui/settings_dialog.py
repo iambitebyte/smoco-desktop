@@ -27,6 +27,19 @@ from local_whisper_manager import get_local_whisper_manager, MODELS, DEFAULT_MOD
 from llm_client import get_llm_client
 from features import WHISPER_ENABLED
 
+# 缺省配置
+LLM_DEFAULTS = {
+    "base_url": "http://litellm.deepapp.sony.com.cn",
+    "api_key": "sk-5t9VXxIB1kLIH0CghyMqRg",
+    "model": "dx-chat-default",
+    "context_length": 1,
+}
+SMOCO_DEFAULTS = {
+    "host": "https://dx-smoco-dev.sony.com.cn",
+    "email": "shuyang.chen@sony.com",
+    "password": "morning",
+}
+
 
 class SettingsDialog(QDialog):
     """设置对话框 - 服务器列表管理"""
@@ -357,12 +370,16 @@ class SettingsDialog(QDialog):
 
         llm_layout.addLayout(llm_form)
 
-        # 验证按钮
+        # 验证按钮 + 使用缺省
         llm_btn_layout = QHBoxLayout()
 
         self.llm_validate_btn = QPushButton(i18n.t("llm_validate"))
         self.llm_validate_btn.clicked.connect(self._on_llm_validate)
         llm_btn_layout.addWidget(self.llm_validate_btn)
+
+        self.llm_default_btn = QPushButton(i18n.t("llm_use_default"))
+        self.llm_default_btn.clicked.connect(self._on_llm_default)
+        llm_btn_layout.addWidget(self.llm_default_btn)
 
         self.llm_validate_status = QLabel("")
         llm_btn_layout.addWidget(self.llm_validate_status)
@@ -411,6 +428,9 @@ class SettingsDialog(QDialog):
         self.smoco_validate_btn = QPushButton(i18n.t("smoco_validate"))
         self.smoco_validate_btn.clicked.connect(self._on_smoco_validate)
         smoco_btn_layout.addWidget(self.smoco_validate_btn)
+        self.smoco_default_btn = QPushButton(i18n.t("smoco_use_default"))
+        self.smoco_default_btn.clicked.connect(self._on_smoco_default)
+        smoco_btn_layout.addWidget(self.smoco_default_btn)
         self.smoco_validate_status = QLabel("")
         smoco_btn_layout.addWidget(self.smoco_validate_status)
         smoco_btn_layout.addStretch()
@@ -567,23 +587,42 @@ class SettingsDialog(QDialog):
                 print(f"加载设置失败: {e}")
 
             try:
-                # 加载 LLM 配置
+                # 加载 LLM 配置；首次为空时自动填入缺省值
                 llm_config = settings.get("llm", {})
-                self.llm_base_url_input.setText(llm_config.get("base_url", ""))
-                self.llm_api_key_input.setText(llm_config.get("api_key", ""))
-                self.llm_model_input.setText(llm_config.get("model", ""))
-                self.llm_context_length_spin.setValue(llm_config.get("context_length", 5))
+                llm_empty = not llm_config.get("base_url") and not llm_config.get("api_key") and not llm_config.get("model")
+                if llm_empty:
+                    self.llm_base_url_input.setText(LLM_DEFAULTS["base_url"])
+                    self.llm_api_key_input.setText(LLM_DEFAULTS["api_key"])
+                    self.llm_model_input.setText(LLM_DEFAULTS["model"])
+                    self.llm_context_length_spin.setValue(LLM_DEFAULTS["context_length"])
+                    settings["llm"] = dict(LLM_DEFAULTS)
+                    self._write_settings(settings)
+                else:
+                    self.llm_base_url_input.setText(llm_config.get("base_url", ""))
+                    self.llm_api_key_input.setText(llm_config.get("api_key", ""))
+                    self.llm_model_input.setText(llm_config.get("model", ""))
+                    self.llm_context_length_spin.setValue(llm_config.get("context_length", 5))
             except Exception as e:
                 print(f"加载 LLM 配置失败: {e}")
 
             try:
-                # 加载 Smoco 云端 STT 配置
+                # 加载 Smoco 云端 STT 配置；首次为空时自动填入缺省值
                 smoco = settings.get("smoco_stt", {})
-                self.smoco_host_input.setText(smoco.get("host", "https://dx-smoco-dev.sony.com.cn"))
-                self.smoco_email_input.setText(smoco.get("email", ""))
-                self.smoco_password_input.setText(smoco.get("password", ""))
-                self.smoco_punctuator_check.setChecked(smoco.get("use_punctuator", True))
-                self.smoco_insecure_check.setChecked(smoco.get("verify_ssl", False) is False)
+                smoco_empty = not smoco.get("email") and not smoco.get("password")
+                if smoco_empty:
+                    self.smoco_host_input.setText(SMOCO_DEFAULTS["host"])
+                    self.smoco_email_input.setText(SMOCO_DEFAULTS["email"])
+                    self.smoco_password_input.setText(SMOCO_DEFAULTS["password"])
+                    self.smoco_punctuator_check.setChecked(True)
+                    self.smoco_insecure_check.setChecked(True)
+                    settings["smoco_stt"] = dict(SMOCO_DEFAULTS, use_punctuator=True, verify_ssl=False)
+                    self._write_settings(settings)
+                else:
+                    self.smoco_host_input.setText(smoco.get("host", "https://dx-smoco-dev.sony.com.cn"))
+                    self.smoco_email_input.setText(smoco.get("email", ""))
+                    self.smoco_password_input.setText(smoco.get("password", ""))
+                    self.smoco_punctuator_check.setChecked(smoco.get("use_punctuator", True))
+                    self.smoco_insecure_check.setChecked(smoco.get("verify_ssl", False) is False)
             except Exception as e:
                 print(f"加载 Smoco STT 配置失败: {e}")
 
@@ -743,6 +782,16 @@ class SettingsDialog(QDialog):
                 json.dump(settings, f, indent=2, ensure_ascii=False)
         except Exception as e:
             print(f"保存设置失败: {e}")
+
+    @staticmethod
+    def _write_settings(settings: dict):
+        """直接写入设置文件（不依赖 UI 控件）"""
+        config_file = get_settings_path()
+        try:
+            with open(config_file, "w", encoding="utf-8") as f:
+                json.dump(settings, f, indent=2, ensure_ascii=False)
+        except Exception as e:
+            print(f"写入设置文件失败: {e}")
 
     def accept(self):
         """确定按钮"""
@@ -931,6 +980,19 @@ class SettingsDialog(QDialog):
         cursor = self.local_log_output.textCursor()
         self.local_log_output.setTextCursor(cursor)
         self.local_log_output.ensureCursorVisible()
+
+    def _on_llm_default(self):
+        """LLM 配置恢复缺省值"""
+        self.llm_base_url_input.setText(LLM_DEFAULTS["base_url"])
+        self.llm_api_key_input.setText(LLM_DEFAULTS["api_key"])
+        self.llm_model_input.setText(LLM_DEFAULTS["model"])
+        self.llm_context_length_spin.setValue(LLM_DEFAULTS["context_length"])
+
+    def _on_smoco_default(self):
+        """Smoco STT 配置恢复缺省值"""
+        self.smoco_host_input.setText(SMOCO_DEFAULTS["host"])
+        self.smoco_email_input.setText(SMOCO_DEFAULTS["email"])
+        self.smoco_password_input.setText(SMOCO_DEFAULTS["password"])
 
     def _on_llm_validate(self):
         """验证 LLM 配置"""

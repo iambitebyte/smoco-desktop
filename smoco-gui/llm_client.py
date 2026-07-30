@@ -49,14 +49,28 @@ class LLMClient(QObject):
         if not all(self._config.values()):
             return False, i18n.t("llm_config_incomplete")
 
-        try:
-            # 处理 base_url 可能包含 /v1 的情况
-            base_url = self._config['base_url'].rstrip('/')
-            if base_url.endswith('/v1'):
-                url = f"{base_url}/chat/completions"
-            else:
-                url = f"{base_url}/v1/chat/completions"
+        # 处理 base_url 可能包含 /v1 的情况
+        base_url = self._config['base_url'].rstrip('/')
+        if base_url.endswith('/v1'):
+            url = f"{base_url}/chat/completions"
+        else:
+            url = f"{base_url}/v1/chat/completions"
 
+        # 请求前就打印诊断信息，防止请求挂死时什么日志都没有
+        logger.info(f"LLM 验证: base_url={self._config['base_url']!r}")
+        logger.info(f"LLM 验证: 构造的请求 URL={url!r}")
+        logger.info(f"LLM 验证: model={self._config['model']!r}")
+        logger.info(f"LLM 验证: api_key 长度={len(self._config['api_key'])} 前缀={self._config['api_key'][:8]!r}...")
+
+        # 检查代理环境变量（企业网络常见问题）
+        import os
+        proxy_vars = {k: v for k, v in os.environ.items() if 'proxy' in k.lower()}
+        if proxy_vars:
+            logger.info(f"LLM 验证: 检测到代理环境变量: {proxy_vars}")
+        else:
+            logger.info(f"LLM 验证: 未检测到代理环境变量")
+
+        try:
             headers = {
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {self._config['api_key']}",
@@ -74,21 +88,27 @@ class LLMClient(QObject):
                 headers=headers,
                 timeout=10.0
             )
-            logger.debug(f"LLM 验证请求 URL: {url}")
-            logger.debug(f"LLM 验证模型: {self._config['model']}")
+
+            logger.info(f"LLM 验证: 响应状态码={response.status_code}")
 
             if response.status_code == 200:
+                logger.info(f"LLM 验证: 成功")
                 return True, i18n.t("llm_config_ok")
             else:
-                logger.warning(f"LLM 验证响应状态码: {response.status_code}")
-                logger.warning(f"LLM 验证响应内容: {response.text[:200]}")
+                logger.warning(f"LLM 验证: 响应内容={response.text[:500]!r}")
                 return False, f"{i18n.t('llm_config_error')} {response.status_code}"
 
-        except requests.exceptions.Timeout:
+        except requests.exceptions.Timeout as e:
+            logger.error(f"LLM 验证超时: url={url!r}, error={e}")
             return False, i18n.t("llm_config_timeout")
-        except requests.exceptions.ConnectionError:
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"LLM 验证连接错误: url={url!r}, error={e}")
+            # 展开 ConnectionError 的底层原因
+            if e.args:
+                logger.error(f"LLM 验证: 底层原因 args={e.args!r}")
             return False, i18n.t("llm_config_connection_error")
         except Exception as e:
+            logger.exception(f"LLM 验证未知异常: url={url!r}")
             return False, f"{i18n.t('llm_config_failed')}: {str(e)}"
 
     def translate(self, entries: list[dict], target_lang: str = "zh",
@@ -107,14 +127,16 @@ class LLMClient(QObject):
         if not all(self._config.values()):
             return False, [], i18n.t("llm_not_configured")
 
-        try:
-            # 处理 base_url 可能包含 /v1 的情况
-            base_url = self._config['base_url'].rstrip('/')
-            if base_url.endswith('/v1'):
-                url = f"{base_url}/chat/completions"
-            else:
-                url = f"{base_url}/v1/chat/completions"
+        # 处理 base_url 可能包含 /v1 的情况
+        base_url = self._config['base_url'].rstrip('/')
+        if base_url.endswith('/v1'):
+            url = f"{base_url}/chat/completions"
+        else:
+            url = f"{base_url}/v1/chat/completions"
 
+        logger.info(f"LLM 翻译请求: url={url!r}, model={self._config['model']!r}, entries={len(entries)}")
+
+        try:
             headers = {
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {self._config['api_key']}",
@@ -160,6 +182,8 @@ class LLMClient(QObject):
                 timeout=30.0
             )
 
+            logger.info(f"LLM 翻译: 响应状态码={response.status_code}")
+
             if response.status_code == 200:
                 result = response.json()
                 content = result["choices"][0]["message"]["content"]
@@ -168,19 +192,26 @@ class LLMClient(QObject):
                 try:
                     translations = json.loads(content)
                     if isinstance(translations, list):
+                        logger.info(f"LLM 翻译: 成功，返回 {len(translations)} 条翻译")
                         return True, translations, ""
                     else:
+                        logger.warning(f"LLM 翻译: 响应不是列表: {content[:200]!r}")
                         return False, [], i18n.t("llm_invalid_response")
-                except json.JSONDecodeError:
+                except json.JSONDecodeError as e:
+                    logger.warning(f"LLM 翻译: JSON 解析失败: {e}, content={content[:200]!r}")
                     return False, [], i18n.t("llm_json_parse_error")
             else:
+                logger.warning(f"LLM 翻译: 响应内容={response.text[:500]!r}")
                 return False, [], f"API 错误: {response.status_code}"
 
-        except requests.exceptions.Timeout:
+        except requests.exceptions.Timeout as e:
+            logger.error(f"LLM 翻译超时: url={url!r}, error={e}")
             return False, [], i18n.t("llm_timeout")
         except requests.exceptions.RequestException as e:
+            logger.error(f"LLM 翻译请求异常: url={url!r}, error={e}")
             return False, [], f"请求失败: {str(e)}"
         except Exception as e:
+            logger.exception(f"LLM 翻译未知异常: url={url!r}")
             return False, [], f"翻译异常: {str(e)}"
 
 

@@ -17,7 +17,7 @@ type VariantInfo = {
 // v1.2.0 起提供完整版与 Lite 版
 const VARIANTS = [
   { key: 'full', href: '/download/smoco-desktop-1.2.0.zip' },
-  { key: 'lite', href: '/download/smoco-desktop-lite-1.2.0.zip' },
+  { key: 'lite', href: '/download/smoco-desktop-lite-1.2.1.zip' },
 ]
 
 const ARCHIVES = [

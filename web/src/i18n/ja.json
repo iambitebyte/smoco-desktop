@@ -18,8 +18,8 @@
       "description": "Windows システムオーディオをリアルタイム文字起こし。Whisper + LLM 翻訳、OpenVINO-genai Local Whisper 内蔵、ネットワーク不要、インストール不要。"
     },
     "download": {
-      "title": "Smoco Desktop をダウンロード · Windows v1.2.0",
-      "description": "Smoco Desktop v1.2.0 をダウンロード：フル版（~1.4GB、ローカル Whisper 搭載）または Lite 版（~91MB、Smoco クラウド ASR のみ）。"
+      "title": "Smoco Desktop をダウンロード · Windows v1.2.1",
+      "description": "Smoco Desktop をダウンロード：フル版 v1.2.0（~1.4GB、ローカル Whisper 搭載）または Lite 版 v1.2.1（~91MB、Smoco クラウド ASR のみ）。"
     },
     "docs": {
       "title": "ドキュメント · Smoco Desktop",
@@ -27,7 +27,7 @@
     },
     "changelog": {
       "title": "変更履歴 · Smoco Desktop",
-      "description": "Smoco Desktop のバージョン移り変わり、最新 v1.2.0。"
+      "description": "Smoco Desktop のバージョン移り変わり、最新 Lite v1.2.1。"
     }
   },
   "nav": {
@@ -161,7 +161,7 @@
     "eyebrow": "Download",
     "title": "試してみませんか？",
     "description": "完全自己完結、インストール不要、ネットワーク不要。ダウンロードして解凍するだけ。",
-    "ctaPrimary": "Smoco Desktop v1.2.0 をダウンロード",
+    "ctaPrimary": "Smoco Desktop Lite v1.2.1 をダウンロード",
     "meta": "Windows 10/11 · フル版 1.4GB / Lite 91MB"
   },
   "roadmap": {
@@ -197,7 +197,7 @@
   "downloadPage": {
     "eyebrow": "Download",
     "title": "Smoco Desktop をダウンロード",
-    "subtitle": "v1.2.0 からフル版と Lite 版の 2 つを提供します。用途に合わせて選択ください。過去のバージョンもダウンロード可能です。",
+    "subtitle": "フル版（v1.2.0）と Lite 版（v1.2.1）の 2 つを提供します。用途に合わせて選択ください。過去のバージョンもダウンロード可能です。",
     "variants": {
       "full": {
         "badge": "フル版",
@@ -210,11 +210,11 @@
       },
       "lite": {
         "badge": "Lite 版",
-        "version": "v1.2.0",
-        "date": "2026-07-20",
+        "version": "v1.2.1",
+        "date": "2026-07-30",
         "platform": "Windows 10/11 64-bit",
         "size": "約 91 MB",
-        "desc": "Smoco クラウド ASR のみを呼び出す、非常に軽量な版。ネットワークと Smoco アカウントが必要、ローカル Whisper は含みません。",
+        "desc": "Smoco クラウド ASR のみを呼び出す、非常に軽量な版。ネットワークと Smoco アカウントが必要、ローカル Whisper は含みません。v1.2.1 で接続断時の自動再接続とデフォルト設定のワンクリック入力を追加。",
         "button": "Lite 版をダウンロード"
       }
     },
@@ -243,7 +243,7 @@
     "verify": {
       "title": "ファイル整合性の検証",
       "desc": "ダウンロード後、PowerShell で MD5 を検証できます（例はフル版、Lite 版はファイル名を差し替え）：",
-      "command": "Get-FileHash smoco-desktop-1.2.0.zip -Algorithm MD5"
+      "command": "Get-FileHash smoco-desktop-lite-1.2.1.zip -Algorithm MD5"
     },
     "archives": {
       "title": "過去のバージョン",
@@ -306,6 +306,16 @@
     "title": "変更履歴",
     "subtitle": "Smoco Desktop のバージョン移り変わり。",
     "versions": {
+      "v1.2.1": {
+        "version": "v1.2.1 (Lite)",
+        "date": "2026-07-30",
+        "tag": "自動再接続 + デフォルト設定",
+        "items": [
+          "Smoco STT が切断時に自動再接続し認識セッションを復旧、UI にトースト通知を表示",
+          "LLM と Smoco STT にデフォルト設定を追加 — 初回起動時に自動入力、「デフォルトを使用」ボタンでワンクリック復元",
+          "文字起こしテーブルの下部テキストが切れる問題を修正"
+        ]
+      },
       "v1.2.0": {
         "version": "v1.2.0",
         "date": "2026-07-20",

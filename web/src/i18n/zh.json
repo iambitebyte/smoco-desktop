@@ -18,8 +18,8 @@
       "description": "Windows 系统音频实时转录工具，支持 Whisper 转录 + LLM 翻译，内嵌 OpenVINO-genai Local Whisper，零联网零安装。"
     },
     "download": {
-      "title": "下载 Smoco Desktop · Windows v1.2.0",
-      "description": "下载 Smoco Desktop v1.2.0：完整版（~1.4GB，含本地 Whisper）或 Lite 版（~91MB，仅 Smoco 云端 ASR）。"
+      "title": "下载 Smoco Desktop · Windows v1.2.1",
+      "description": "下载 Smoco Desktop：完整版 v1.2.0（~1.4GB，含本地 Whisper）或 Lite 版 v1.2.1（~91MB，仅 Smoco 云端 ASR）。"
     },
     "docs": {
       "title": "文档 · Smoco Desktop",
@@ -27,7 +27,7 @@
     },
     "changelog": {
       "title": "更新日志 · Smoco Desktop",
-      "description": "Smoco Desktop 版本演进，最新 v1.2.0。"
+      "description": "Smoco Desktop 版本演进，最新 Lite v1.2.1。"
     }
   },
   "nav": {
@@ -161,7 +161,7 @@
     "eyebrow": "Download",
     "title": "准备好试试了吗？",
     "description": "完全自包含，零安装零联网。下载解压即可用。",
-    "ctaPrimary": "下载 Smoco Desktop v1.2.0",
+    "ctaPrimary": "下载 Smoco Desktop Lite v1.2.1",
     "meta": "Windows 10/11 · 完整版 1.4GB / Lite 91MB"
   },
   "roadmap": {
@@ -197,7 +197,7 @@
   "downloadPage": {
     "eyebrow": "Download",
     "title": "下载 Smoco Desktop",
-    "subtitle": "v1.2.0 起提供完整版与 Lite 版两个版本，按需选择；亦可下载历史版本。",
+    "subtitle": "提供完整版（v1.2.0）与 Lite 版（v1.2.1）两个版本，按需选择；亦可下载历史版本。",
     "variants": {
       "full": {
         "badge": "完整版",
@@ -210,11 +210,11 @@
       },
       "lite": {
         "badge": "Lite 版",
-        "version": "v1.2.0",
-        "date": "2026-07-20",
+        "version": "v1.2.1",
+        "date": "2026-07-30",
         "platform": "Windows 10/11 64-bit",
         "size": "约 91 MB",
-        "desc": "仅调用 Smoco 云端 ASR，体积非常小；需联网与 Smoco 账号，不含本地 Whisper。",
+        "desc": "仅调用 Smoco 云端 ASR，体积非常小；需联网与 Smoco 账号，不含本地 Whisper。v1.2.1 新增断连自动重试、缺省配置一键填入。",
         "button": "下载 Lite 版"
       }
     },
@@ -243,7 +243,7 @@
     "verify": {
       "title": "校验文件完整性",
       "desc": "下载完成后，可在 PowerShell 跑这条命令验证 MD5（示例为完整版，Lite 版替换文件名）：",
-      "command": "Get-FileHash smoco-desktop-1.2.0.zip -Algorithm MD5"
+      "command": "Get-FileHash smoco-desktop-lite-1.2.1.zip -Algorithm MD5"
     },
     "archives": {
       "title": "历史版本",
@@ -306,6 +306,16 @@
     "title": "更新日志",
     "subtitle": "Smoco Desktop 的版本演进。",
     "versions": {
+      "v1.2.1": {
+        "version": "v1.2.1 (Lite)",
+        "date": "2026-07-30",
+        "tag": "断连重试 + 缺省配置",
+        "items": [
+          "Smoco STT 断连后自动重连并恢复识别会话，UI 弹出连接状态提示",
+          "LLM 与 Smoco STT 新增缺省配置，首次启动自动填入，也可通过「使用缺省」按钮一键恢复",
+          "修复转录表格底部文字被裁剪的问题"
+        ]
+      },
       "v1.2.0": {
         "version": "v1.2.0",
         "date": "2026-07-20",

@@ -731,6 +731,7 @@ class MainWindow(QMainWindow):
                     transcript_callback=self._on_transcript_ready,
                     interim_callback=self._on_interim_ready,
                     error_callback=self._on_asr_error,
+                    status_callback=self._on_smoco_status,
                 )
             else:
                 # 应用设置到 Whisper ASR 控制器
@@ -799,6 +800,16 @@ class MainWindow(QMainWindow):
     def _on_interim_ready(self, text: str, start_time: float):
         """Smoco 中间增量结果：刷新临时行（不提交翻译）"""
         self._page_transcript.set_interim(text, start_time)
+
+    def _on_smoco_status(self, status: str):
+        """Smoco 连接状态变化"""
+        logger.info(f"smoco 状态: {status}")
+        if status == "disconnected":
+            from toast import show_toast
+            show_toast(self, "Smoco 连接已断开，正在尝试重连...", level="error", duration_ms=3000)
+        elif status == "reconnected":
+            from toast import show_toast
+            show_toast(self, "Smoco 已重新连接", level="success", duration_ms=2000)
 
     def _on_transcript_ready(self, text: str, chunk_start_time: float, entry_id: int):
         """转录完成回调"""

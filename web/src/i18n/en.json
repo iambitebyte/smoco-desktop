@@ -18,8 +18,8 @@
       "description": "Windows system audio real-time transcription tool. Supports Whisper transcription + LLM translation, with embedded OpenVINO-genai Local Whisper. Zero network, zero install."
     },
     "download": {
-      "title": "Download Smoco Desktop · Windows v1.2.0",
-      "description": "Download Smoco Desktop v1.2.0: Full (~1.4GB, with local Whisper) or Lite (~91MB, Smoco cloud ASR only)."
+      "title": "Download Smoco Desktop · Windows v1.2.1",
+      "description": "Download Smoco Desktop: Full v1.2.0 (~1.4GB, with local Whisper) or Lite v1.2.1 (~91MB, Smoco cloud ASR only)."
     },
     "docs": {
       "title": "Docs · Smoco Desktop",
@@ -27,7 +27,7 @@
     },
     "changelog": {
       "title": "Changelog · Smoco Desktop",
-      "description": "Smoco Desktop version history, latest v1.2.0."
+      "description": "Smoco Desktop version history, latest Lite v1.2.1."
     }
   },
   "nav": {
@@ -161,7 +161,7 @@
     "eyebrow": "Download",
     "title": "Ready to try it?",
     "description": "Fully self-contained. Zero install, zero network. Download, extract, run.",
-    "ctaPrimary": "Download Smoco Desktop v1.2.0",
+    "ctaPrimary": "Download Smoco Desktop Lite v1.2.1",
     "meta": "Windows 10/11 · Full 1.4GB / Lite 91MB"
   },
   "roadmap": {
@@ -197,7 +197,7 @@
   "downloadPage": {
     "eyebrow": "Download",
     "title": "Download Smoco Desktop",
-    "subtitle": "From v1.2.0, two builds are available — Full and Lite. Pick what you need; older versions are also available.",
+    "subtitle": "Two builds available — Full (v1.2.0) and Lite (v1.2.1). Pick what you need; older versions are also available.",
     "variants": {
       "full": {
         "badge": "Full",
@@ -210,11 +210,11 @@
       },
       "lite": {
         "badge": "Lite",
-        "version": "v1.2.0",
-        "date": "2026-07-20",
+        "version": "v1.2.1",
+        "date": "2026-07-30",
         "platform": "Windows 10/11 64-bit",
         "size": "~91 MB",
-        "desc": "Calls the Smoco cloud ASR only — very lightweight. Requires network and a Smoco account; no local Whisper.",
+        "desc": "Calls the Smoco cloud ASR only — very lightweight. Requires network and a Smoco account; no local Whisper. v1.2.1 adds auto-reconnect on drop & one-click default config.",
         "button": "Download Lite"
       }
     },
@@ -243,7 +243,7 @@
     "verify": {
       "title": "Verify file integrity",
       "desc": "After download, run this in PowerShell to verify MD5 (example for Full; swap the filename for Lite):",
-      "command": "Get-FileHash smoco-desktop-1.2.0.zip -Algorithm MD5"
+      "command": "Get-FileHash smoco-desktop-lite-1.2.1.zip -Algorithm MD5"
     },
     "archives": {
       "title": "Previous versions",
@@ -306,6 +306,16 @@
     "title": "Changelog",
     "subtitle": "Version history of Smoco Desktop.",
     "versions": {
+      "v1.2.1": {
+        "version": "v1.2.1 (Lite)",
+        "date": "2026-07-30",
+        "tag": "Auto-reconnect + default config",
+        "items": [
+          "Smoco STT now auto-reconnects and resumes recognition session on network drop, with UI toast notifications",
+          "LLM & Smoco STT now ship with default config — auto-filled on first launch; one-click restore via \"Use Default\" button",
+          "Fixed table row text clipping at the bottom of the transcript view"
+        ]
+      },
       "v1.2.0": {
         "version": "v1.2.0",
         "date": "2026-07-20",

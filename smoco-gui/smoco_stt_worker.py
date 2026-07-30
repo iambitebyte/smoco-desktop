@@ -230,11 +230,41 @@ class SmocoSttWorker(QObject):
         @sio.on("connect", namespace=NAMESPACE)
         def _on_connect():
             logger.info("smoco socket.io connected")
+            self._connected = True
+            # 重连（非首次连接）需要重新 join + start_ws 恢复识别会话
+            if self._running and self._room_name and self._sio is not None:
+                logger.warning("smoco 检测到重连，正在恢复识别会话...")
+                # 生成新 room，避免与旧会话冲突
+                self._room_name = str(uuid.uuid4())
+                try:
+                    self._sio.emit("join", {"room_name": self._room_name}, namespace=NAMESPACE)
+                    src = self._api_language()
+                    dummy_target = "chinese" if src != "chinese" else "english"
+                    self._sio.emit(
+                        "speech_translation_live_start_ws",
+                        {
+                            "room_name": self._room_name,
+                            "task_name": "smoco-desktop",
+                            "user_id": "smoco-desktop",
+                            "service_type": self._service_type,
+                            "source_language": src,
+                            "target_languages": [dummy_target],
+                            "use_punctuator": self._use_punctuator,
+                        },
+                        namespace=NAMESPACE,
+                    )
+                    logger.info(f"smoco 重连完成，新 room={self._room_name}")
+                    self.status_changed.emit("reconnected")
+                except Exception as e:
+                    logger.error(f"smoco 重连后恢复会话失败: {e}")
+                    self.error_occurred.emit(f"重连失败: {e}")
 
         @sio.on("disconnect", namespace=NAMESPACE)
         def _on_disconnect():
-            logger.info("smoco socket.io disconnected")
+            logger.warning("smoco socket.io disconnected（网络波动？）")
             self._connected = False
+            if self._running:
+                self.status_changed.emit("disconnected")
 
         @sio.on("connect_error", namespace=NAMESPACE)
         def _on_conn_err(data):

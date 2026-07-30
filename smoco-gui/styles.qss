@@ -139,7 +139,7 @@ QTableWidget#contentTable {
     font-size: 13px;
 }
 QTableWidget#contentTable::item {
-    padding: 8px;
+    padding: 8px 8px 24px 8px;  /* 下内边距多 16px，保证换行后底部文字不被裁剪 */
 }
 QTableWidget#contentTable::item:selected {
     background-color: #e3f2fd;
